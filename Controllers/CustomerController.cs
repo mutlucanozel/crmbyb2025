@@ -52,12 +52,11 @@ public class CustomerController : Controller
     private readonly WhatsAppService _whatsAppService;
     private readonly ViewRenderService _viewRenderService;
     private readonly ApprovalFormGenerator _approvalFormGenerator;
+    private readonly string _apiKey;
 
     // Dependency Injection for WhatsAppService
 
-    private static readonly string ApiKey = Environment.GetEnvironmentVariable(
-        "AIzaSyChnM_cbXZ4m1zFjGhp6WyG0QJKRfbV-wQ"
-    );
+
 
     public CustomerController(
         ILogger<CustomerController> logger,
@@ -69,6 +68,7 @@ public class CustomerController : Controller
         PdfService pdfService
     )
     {
+        _apiKey = configuration["GoogleMaps:ApiKey"];
         _context = context;
         _configuration = configuration;
         _logger = logger;
