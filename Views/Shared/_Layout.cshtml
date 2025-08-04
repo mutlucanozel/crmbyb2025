@@ -1,0 +1,377 @@
+﻿@using System.Security.Claims
+
+@using crm.Helpers
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Mvc.Razor
+@{
+var userName = TempData["UserName"] as string;
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] BYB CRM </title>
+
+    <!-- Meta and link elements -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@latest/css/boxicons.min.css">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon2.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png">
+    <link rel="manifest" href="~/site.webmanifest">
+    <link rel="shortcut icon" href="~/favicon.ico">
+
+    <link rel="stylesheet" type="text/css" href="~/css/loadingspinner.css" />
+    <link rel="stylesheet" type="text/css" href="~/css/listuser.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/loadingspinner.js"></script>
+
+
+
+    <link rel="stylesheet" href="~/css/sidebarstyles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</head>
+
+<body>
+    <div id="loading-spinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+    @{
+    var firstName = User.FindFirst("FirstName")?.Value;
+    var lastName = User.FindFirst("LastName")?.Value;
+    ViewBag.UserName = $"{firstName} {lastName}";
+    }
+    <div class="sidebar close">
+
+
+        <button class="close-btn mobile-only mt-5">
+            <i class="fas fa-times"></i>
+        </button>
+
+
+
+        <ul class="nav-links">
+            <li>
+
+                <a href="/">
+                    <i class='bx bx-grid-alt'></i>
+                    <span class="link_name">Ana Sayfa</span>
+                </a>
+                <ul class="sub-menu blank">
+                    <li><a class="link_name" href="#">Ana Sayfa</a></li>
+                </ul>
+            </li>  @if (User.IsInAnyRole("Yönetici","SATIŞ TEMSILCISI","Denetlemeci","Grafiker" ))
+            {
+            <li>
+                <div class="iocn-link">
+                    <a href="#">
+                        <i class='bx bxs-business'></i>
+                        <span class="link_name">Müşteri Yönetimi</span>
+                    </a>
+                    <i class='bx bxs-chevron-left arrow'></i>
+                </div>
+                <ul class="sub-menu showMenu">
+                    <li><a class="link_name" href="#"> Müşteri Yönetimi</a></li>
+                    <li><a href="/customer/potentialcustomerlist">Potansiyel Müşteri
+                            Listesi</a></li>
+                    <li><a href="/customer/listcustomer"> Müşteri
+                            Listesi</a></li>
+                            <li><a href="/erp/recipelist"> Reçete
+                                Listesi</a></li>
+
+
+                    <li><a href="/customer/listoffer">Teklif Listesi</a>
+                    <li><a href="/customer/recordlist"> Kayıt
+                            Listesi</a></li>
+            </li>
+        </ul>
+        </li>}
+        <!-- <li>
+                <div class="iocn-link">
+                    <a href="#">
+                        <i class='bx bx-receipt'></i>
+                        <span class="link_name">Sipariş Yönetimi</span>
+                    </a>
+                    <i class='bx bxs-chevron-left arrow'></i>
+                </div>
+                <ul class="sub-menu">
+                    <li><a class="link_name" href="#">Sipariş Yönetimi</a></li>
+                    <li><a href="#">Sipariş Ekle</a></li>
+                    <li><a href="#">Sipariş Listele</a></li>
+                </ul>
+            </li> -->
+            @if (User.IsInAnyRole("Yönetici"))
+        {
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bx-group'></i>
+                    <span class="link_name">Kullanıcı Yönetimi</span>
+                </a>
+                <i class='bx bxs-chevron-left arrow'></i>
+            </div>
+            <ul class="sub-menu">
+                <li><a class="link_name" href="/account/listuser">Kullanıcı Yönetimi</a></li>
+                <li><a href="/account/listuser">Kullanıcı Listesi</a>
+                </li>
+            </ul>
+        </li>}
+        @if (User.IsInAnyRole("Yönetici", "Denetlemeci", "Muhasebe"))
+        {
+            <li>
+                <div class="iocn-link">
+                    <a href="#">
+                        <i class='bx bx-line-chart'></i>
+                        <span class="link_name">Rapor ve Kayıtlar</span>
+                    </a>
+                    <i class='bx bxs-chevron-left arrow'></i>
+                </div>
+        
+                <ul class="sub-menu">
+                    <li><a class="link_name" href="#">Rapor ve Kayıtlar</a></li>
+        
+                    @* Sadece Muhasebe görür *@
+                    @if (User.IsInAnyRole("Muhasebe","Yönetici","Denetlemeci"))
+                    {
+                        <li><a href="/account/AccountingReport">Muhasebe Raporları</a></li>
+                    }
+        
+                    @* Muhasebe dışındakiler diğer raporları görür *@
+                    @if (User.IsInAnyRole("Yönetici", "Denetlemeci"))
+                    {
+                        <li><a href="#">Müşteri Raporları</a></li>
+                        <li><a href="#">Satış Raporları</a></li>
+                        <li><a href="/account/LogRecords">Log Kayıtları</a></li>
+                        <li><a href="/account/listloginhistory">Giriş Kayıtları</a></li>
+                    }
+                </ul>
+            </li>
+        }
+        
+        @if (User.IsInAnyRole("Yönetici"))
+        {
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bxs-wrench'></i>
+                    <span class="link_name">Yönetici Kontrolleri</span>
+                </a>
+                <i class='bx bxs-chevron-left arrow'></i>
+            </div>
+            <ul class="sub-menu">
+
+                <li><a href="/account/ManageRoles">Rol
+                        Yetkilendirme</a></li>
+
+
+                <li><a href="/account/TransferCustomers">Müşteri
+                        Sorumlusu Değiştirme</a></li>
+
+                <li><a href="/account/TransferInfo">Müşteri
+                        Bilgileri Aktarma</a></li>
+
+
+                <li><a class="link_name" href="/customer/definition">Yönetici Tanımları</a></li>
+                <li><a href="/customer/definition">Yönetici Tanımları</a>
+
+                <li><a class="link_name" href="/customer/costs">Maliyet Tanımları </a></li>
+                <li><a href="/customer/costs">Maliyet Tanımları</a>
+                </li>
+            </ul>
+        </li>
+    }  @if (User.IsInAnyRole("Yönetici","Depo Sorumlusu"))
+    {
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bx-search percentageColor'></i>
+                    <span class="link_name">Arama</span>
+                </a>
+                <i class='bx bxs-chevron-left arrow'></i>
+            </div>
+            <ul class="sub-menu">
+
+                <li><a href="/erp/searchlabelroll">Bobin Ara</a></li>
+
+
+            </ul>
+        </li>
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bxs-truck percentageColor'></i>
+                    <span class="link_name">Tedarik</span>
+                </a>
+                <i class='bx bxs-chevron-left arrow'></i>
+            </div>
+            <ul class="sub-menu">
+
+                <li><a href="/erp/waybill">İrsaliye Liste</a></li>
+
+
+            </ul>
+        </li>}
+        @if (User.IsInAnyRole("Yönetici"))
+        {
+        <li>
+            <div class="iocn-link">
+                <a href="#">
+                    <i class='bx bxs-book-bookmark'></i>
+                    <span class="link_name">ERP Tanım</span>
+                </a>
+                <i class='bx bxs-chevron-left arrow'></i>
+            </div>
+            <ul class="sub-menu">
+
+                <li><a href="/erp/labeldefinition">Baskı</a></li>
+                <li><a href="/erp/generaldefinition">Genel</a></li>
+                <li><a href="/erp/paperdefinition">Kağıt </a> </li>
+                <li><a href="/erp/carddefinition">Kart </a> </li>
+                <li><a href="/erp/accountingdefinition">Muhasebe </a> </li>
+                <li><a href="/erp/orderdefinition">Sipariş </a> </li>
+                <li><a href="/erp/ProductionDefinition">Üretim </a> </li>
+
+            </ul>
+        </li>
+        }
+        <li>
+            <div class="profile-details">
+                <div class="profile-content">
+                    @{
+                    var profilePicturePath = User.FindFirst("ProfilePicturePath")?.Value ??
+                    "~/profile_pictures/default_profile.jpg";
+                    }
+                    <img src="@Url.Content(profilePicturePath)" alt="profileImg">
+                </div>
+                <div class="name-job">
+                    <div class="profile_name">
+                        @{
+                        var fullName = $"{firstName} {lastName}";
+                        var roles = User.Claims.Where(c => c.Type == ClaimTypes.Role).Select(c => c.Value).ToList();
+                        }
+                        @fullName
+                    </div>
+                    <div class="job">
+                        <span>
+                            Roller:
+                            @foreach (var role in roles.Select((value, index) => new { value, index }))
+                            {
+                            <span>@ToTurkishTitleCase(role.value)@((role.index < roles.Count - 1) ? "," : "." )</span>
+                                    }
+                            </span>
+
+                            @functions {
+                            // Türkçe karakterleri ve kelime formatını düzelten yardımcı bir metot
+                            private string ToTurkishTitleCase(string input)
+                            {
+                            // Önce tüm harfleri küçük yapıyoruz
+                            string lowerCase = input.ToLower(new System.Globalization.CultureInfo("tr-TR"));
+
+                            // Ardından baş harfi büyük yapıyoruz
+                            string titleCase =
+                            System.Globalization.CultureInfo.GetCultureInfo("tr-TR").TextInfo.ToTitleCase(lowerCase);
+
+                            return titleCase;
+                            }
+                            }
+
+
+                    </div>
+                </div>
+                <i class='bx bx-log-out' id="logoutIcon"></i>
+            </div>
+        </li>
+        </ul>
+    </div>
+
+    <section class="home-section">
+        <div class="home-content">
+            <i class='bx bx-menu'></i>
+        </div>
+        <main class="main">
+            @RenderBody()
+        </main>
+    </section>
+
+    <!-- Hidden form for logout -->
+    <form id="logoutForm" method="post" asp-controller="Account" asp-action="Logout" style="display:none;">
+        @Html.AntiForgeryToken()
+    </form>
+
+    <script>
+        let arrow = document.querySelectorAll(".arrow");
+        for (var i = 0; i < arrow.length; i++) {
+            arrow[i].addEventListener("click", (e) => {
+                let arrowParent = e.target.parentElement.parentElement; //selecting main parent of arrow
+                arrowParent.classList.toggle("showMenu");
+            });
+        }
+        let sidebar = document.querySelector(".sidebar");
+        let sidebarBtn = document.querySelector(".bx-menu");
+        const closeButton = document.querySelector('.mobile-only'); // Kapatma butonunun sınıfını kullanın
+
+        console.log(sidebarBtn);
+        sidebarBtn.addEventListener("click", () => {
+            sidebar.classList.toggle("close");
+        });
+
+        closeButton.addEventListener('click', () => {
+            sidebar.classList.remove('open'); // Açık durumdan çıkarır
+            sidebar.classList.add('close'); // Kapama durumuna getirir
+        });
+
+
+        // Hover to auto open/close sidebar
+        sidebar.addEventListener("mouseenter", () => {
+            if (sidebar.classList.contains("close")) {
+                sidebar.classList.add("hover-open");
+                sidebar.classList.remove("close");
+            }
+        });
+
+        sidebar.addEventListener("mouseleave", () => {
+            if (sidebar.classList.contains("hover-open")) {
+                sidebar.classList.add("close");
+                sidebar.classList.remove("hover-open");
+            }
+        });
+
+
+        // Çıkış butonuna tıklandığında sessionStorage sıfırlanır ve form gönderilir
+        document.getElementById('logoutIcon').addEventListener('click', function () {
+            sessionStorage.clear(); // sessionStorage'ı sıfırla
+            document.getElementById('logoutForm').submit(); // Çıkış işlemi
+        });
+
+        // Sayfa yüklendiğinde menüleri göster
+        document.addEventListener("DOMContentLoaded", function () {
+            let arrows = document.querySelectorAll(".arrow");
+            for (let i = 0; i < arrows.length; i++) {
+                let arrowParent = arrows[i].parentElement.parentElement;
+                arrowParent.classList.add("showMenu"); // Menülerin varsayılan açık olmasını sağlar
+            }
+        });
+
+        // .mobile-only butonuna tıklandığında `active` sınıfını ekle/kaldır
+        document.querySelector('.mobile-only').addEventListener('click', function () {
+            this.classList.toggle('active');
+        });
+
+    </script>
+</body>
+
+</html>

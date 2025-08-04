@@ -1,0 +1,1907 @@
+@{
+    Layout = "_Layout";
+    string disCap = Model.OuterDiameter != null 
+    ? Convert.ToDecimal(Model.OuterDiameter).ToString("N2", new CultureInfo("tr-TR")) + " cm" 
+    : "";
+    var recipeFiles = Model.RecipeFiles as IEnumerable<crm.Models.RecipeFile>;
+        var lastImage = recipeFiles?
+            .Where(f => f.FileType == "1")
+            .OrderByDescending(f => f.CreatedAt)
+            .FirstOrDefault();
+    
+    }
+    @using System.Globalization
+
+
+    
+    <head>
+    
+    <link rel="stylesheet" type="text/css" href="~/css/detailscustomer.css" />
+        <link rel="stylesheet" type="text/css" href="~/css/recipedetail.css" />
+    
+    
+    </head>
+    <style>       .red-underline {
+        text-decoration: underline;
+        color: orange;
+        text-decoration-color:red;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 3px;
+        cursor: help;
+    }/* Modern görünüm: soft griler ve hover efektli */
+.offer-status-list li {
+    background-color: #ffffff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    font-size: 15px;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.offer-status-list li:hover {
+    background-color: #f9fafb;
+    color: #1f2937;
+    border-color: #d1d5db;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+
+    .btn-status-1 { background-color: #6c757d; color: #fff; } /* gri-mavi */
+.btn-status-2 { background-color: #ffc107; color: #000; } /* sarı */
+.btn-status-3 { background-color: #fd7e14; color: #fff; } /* turuncu */
+.btn-status-4 { background-color: #17a2b8; color: #fff; } /* açık mavi */
+.btn-status-5 { background-color: #1A1A8E; color: #fff; } /* yeşil */
+.btn-status-6 { background-color: #6f42c1; color: #fff; } /* mor */
+.btn-status-7 { background-color: #007bff; color: #fff; } /* koyu mavi */
+.btn-status-8 { background-color: #28a745; color: #fff; } /* koyu yeşil */
+.btn-status-98 { background-color: #dc3545; color: #fff; } /* kırmızı */
+.btn-status-99 { background-color: #343a40; color: #fff; } /* siyah */
+.btn-status-1:hover,
+.btn-status-3:hover,
+.btn-status-4:hover,
+.btn-status-5:hover,
+.btn-status-6:hover,
+.btn-status-7:hover,
+.btn-status-8:hover,
+.btn-status-98:hover,
+.btn-status-99:hover {
+    color: #fff !important;
+}
+
+    .tippy-box[data-theme~='red'] {
+        background-color: #dc3545;
+        color: #fff;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    .tippy-box[data-theme~='red'] > .tippy-arrow::before {
+        color: #dc3545;
+    }
+        .table td, .table th {
+    vertical-align: middle;
+    font-size: 0.92rem;
+    padding: 0.75rem;
+}
+.swal-wide-popup {
+    width: 700px !important;
+    max-width: 90vw !important;
+    padding: 20px !important;
+    border-radius: 12px;
+}
+
+.swal2-title {
+    color: #1A1A8E !important;
+}
+
+.badge {
+    border-radius: 0.5rem;
+}
+
+           .color-badge-group {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .color-badge {
+        display: flex;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: 0.2s ease-in-out;
+    }
+
+    .color-badge input {
+        display: none;
+    }
+
+    .color-badge label {
+        margin: 0;
+        padding: 0.75rem 1.2rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .color-badge.active {
+        border-color: black;
+        box-shadow: 0 0 0 7px #28A745 inset;
+    }
+
+    .badge-cyan {
+        background-color: cyan;
+        color: black;
+    }
+
+    .badge-magenta {
+        background-color: magenta;
+        color: black;
+    }
+
+    .badge-yellow {
+        background-color: yellow;
+        color: black;
+    }
+
+    .badge-key {
+        background-color: #343a40;
+        color: white;
+    }
+        .table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: #333;
+            width: 60%;
+        }
+    
+        .table td:last-child {
+            text-align: right;
+            color: #000;
+            width: 40%;
+        }
+    
+        /* Genel buton stili */
+        .responsive-btn {
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+    
+        /* 1. Buton – F4EEFF */
+        .btn-f4eeff {
+            background-color: #F4EEFF;
+            color: #424874;
+        }
+    
+        .btn-f4eeff:hover {
+            background-color: #e6ddfc;
+            color: #000;
+        }
+    
+        /* 2. Buton – DCD6F7 */
+        .btn-dcd6f7 {
+            background-color: #DCD6F7;
+            color: #424874;
+        }
+        .btn-BDB4F0 {
+    background-color: #CED4FA;
+    color: #312E81;
+}
+
+    
+        .btn-dcd6f7:hover {
+            background-color: #cfc7f0;
+            color: #000;
+        }
+    
+    
+        .btn-a6b1e1 {
+            background-color: #A6B1E1;
+            color: #fff;
+        }
+    
+        .btn-a6b1e1:hover {
+            background-color: #949ed8;
+            color: #fff;
+        }
+    
+        /* 4. Buton – 424874 */
+        .btn-424874 {
+            background-color: #424874;
+            color: #fff;
+        }
+    
+        .btn-424874:hover {
+            background-color: #32365d;
+            color: #fff;
+        }
+    </style>
+    
+    <div class="container-fluid px-3 py-4 mt-4">
+        <!-- Reçete Özet -->
+        <div class="card shadow-sm " style="border-color: navy;">
+    
+            <div class="card-header text-white text-center" style="background-color: navy ; opacity: 0.9;">
+                <strong class="w-100 d-block">Reçete Özet Bilgileri</strong>
+                <span class="text-white-50 small d-none d-md-inline">Genel bilgi ve işlem alanı</span>
+            </div>
+            <div id="update-message" style="display:none; position:fixed; top:20px; right:20px; background-color:#28a745; color:#fff; padding:10px 20px; border-radius:5px; z-index:9999;"></div>
+
+    
+            <div class="card-body py-3">
+                <div class="row">
+                   
+                    @{
+                        string statusText = Model.CurrentStatus switch
+                        {
+                            1 => " Reçete Kaydı Yapıldı",
+                            2 => " Grafiker İşlemi Bekliyor",
+                            3 => " Grafiker İşleminde",
+                            4 => " Müşteri Onayı Bekliyor",
+                            5 => " Müşteri Onaylı Reçete",
+                            6 => " Montaj Bekliyor",
+                            7 => " Bıçak / Klişe Bekliyor",
+                            8 => " Üretime Hazır Reçete",
+                            98 => " İptal Talebinde",
+                            99 => " İptal Edildi",
+                            _ => "Durum Bilinmiyor"
+                        };
+                    
+                        string statusClass = Model.CurrentStatus switch
+                        {
+                            1 => "btn-status-1",   // gri-mavi
+                            2 => "btn-status-2",   // sarı
+                            3 => "btn-status-3",   // turuncu
+                            4 => "btn-status-4",   // açık mavi
+                            5 => "btn-status-5",   // yeşil
+                            6 => "btn-status-6",   // mor
+                            7 => "btn-status-7",   // koyu mavi
+                            8 => "btn-status-8",   // koyu yeşil
+                            98 => "btn-status-98", // kırmızı
+                            99 => "btn-status-99", // siyah
+                            _ => "btn-secondary"
+                        };
+                    }
+                      <div class="col-6 col-md-3 mb-3">
+                        <input type="hidden" id="currentRecipeId" value="@Model.Id" />
+                        <button id="updateStatusBtn" style="opacity: 0.85;" class="btn @statusClass responsive-btn w-100 py-3" >
+                            @statusText
+                        </button>
+                    </div>
+                    
+                    <div class="col-6 col-md-3 mb-3">
+                        <a href="/Customer/DownloadApprovalForm/@Model.Id" target="_blank" class="btn btn-dcd6f7 responsive-btn w-100 py-3">
+                            <i class="fa fa-download me-1"></i> Onay Formunu İndir
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3 mb-3">
+                        <button type="button" class="btn btn-BDB4F0 responsive-btn w-100 py-3" onclick="copyRecipe(@Model.Id)">
+                            <i class="fa fa-copy me-1"></i> Reçeteyi Kopyala
+                        </button>
+                    </div>
+                  
+                    <div class="col-6 col-md-3 mb-3">
+                        <button type="button"
+                                class="btn responsive-btn w-100 py-3 @(Model.ArchiveStatus == 1 ? "btn-success" : "btn-danger")"  style="opacity: 0.90;"
+                                onclick="toggleArchive(@Model.Id, @(Model.ArchiveStatus == 1 ? "true" : "false"))">
+               
+                            @(Model.ArchiveStatus == 1 ? "Arşivlenmiş ✓" : "Arşivlenmemiş ❕")
+                        </button>
+                    </div>
+                    
+                  
+                 
+                </div>
+    
+    
+            </div>
+        </div>
+    
+        <!-- İçerik -->
+        <div class="row mt-3">
+            <!-- Kayıt Bilgileri -->
+            <div class="col-12 col-lg-4 mb-4" id="recipe-summary">
+                <div class="card h-100  border-primary">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between">
+                        <span><i class="fas fa-info-circle me-2"></i> Kayıt Bilgileri</span> <i class="fas fa-pen" onclick="getRecipe(@Model.Id)"></i>
+    
+                    </div>
+                    <div class="card-body p-2 table-responsive">
+                        <table class="table table-sm table-striped mb-0" style="table-layout: fixed; word-break: break-word;">
+                        
+                            <tr>
+                                <td colspan="2" style="white-space: normal; text-align: center; color: #017BFE; word-break: break-word;">
+                                    <button type="button"
+                                            class="btn btn-primary responsive-btn w-100"
+                                            style="white-space: normal; word-break: break-word;"
+                                            onclick="event.stopPropagation(); window.location.href='@Url.Action("CustomerDetail", "Customer", new { id = Model.Customer?.Id })'">
+                                        @Model.Customer?.Name <i class="fas fa-industry"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                         
+                            <tr>
+                                <td colspan="2" style="white-space: normal; text-align: center; word-break: break-word; color: #017BFE;">
+                                    @Model.RecipeName
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td>Kayıt Tarihi</td>
+                                <td>@Model.CreatedAt?.ToString("dd MMM yyyy")</td>
+                            </tr>
+                        
+                            <tr>
+                                <td>Kayıt Yapan</td>
+                                <td>@Model.CreatedByFullName</td>
+                            </tr>
+                            <tr>
+                                <td>Reçete Kodu</td>
+                                <td>#@Model.RecipeCode</td>
+                            </tr>
+                            <tr>
+                                <td>Kağıt Cinsi</td>
+                                <td>@Model.PaperInfo?.Name</td>
+                            </tr>
+                            <tr>
+                                <td>Yapıştırma</td>
+                                <td>@Model.AdhesiveInfo?.Name</td>
+                            </tr>
+                            <tr>
+                                <td>Baskı Durumu</td>
+                                <td>@(Model.ColorCyan > 0 || Model.ColorMagenta > 0 || Model.ColorYellow > 0 || Model.ColorKey > 0 ? "Baskılı" : "Baskısız")</td>
+                            </tr>
+                            <tr>
+                                <td>İlave İşlem (Baskı Türü)</td>
+                                <td>
+                                 
+                                    @foreach (var item in (IEnumerable<crm.Models.RecipeAdditionalProcessing>)Model.RecipeAdditionalProcessings)
+                                        {
+                                            if (item.AdditionalProcessing != null)
+                                            {
+                                                <span style="display:inline-block; background-color:#017BFE; color:white; font-size:0.75rem; padding:2px 6px; border-radius:6px; margin-right:4px;">
+                                                    @item.AdditionalProcessing.Name
+                                                </span>
+                                            }
+                                        }
+                                        
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Müşteri Ürün Kodu</td>
+                                <td>@Model.CustomerCode</td>
+                            </tr>
+                            <tr>
+                                <td>Müşteri Yapıştırması</td>
+                                <td>@Model.CustomerAdhesive?.Definition</td> @* Veya karşılığıyla gösterilecekse dropdown'dan gelen ad *@
+                            </tr>
+                          
+                            <tr>
+                                <td>Sevkiyat Şekli</td>
+                                <td>@Model.DeliveryMethod.Name</td> 
+                            </tr>
+                          
+                      
+                           
+                            <tr>
+                                <td>Paketleme</td>
+                                <td>@Model.Packaging?.Definition</td> @* Veya karşılığıyla *@
+                            </tr>
+                            <tr>
+                                <td>Bir Sarımdaki Etiket Adedi</td>
+                                <td>@Model.LabelPerWrap</td>
+                            </tr>
+                            <tr>
+                                <td>Sarım Dış Çapı</td>
+                                <td>@disCap</td>
+                            </tr>
+                            <tr>
+                                <td>Kuka Uzunluğu</td>
+                                <td>@Model.Core.Name</td> @* Veya karşılığı *@
+                            </tr>
+                            <tr>
+                                <td>Kuka Çapı</td>
+                                <td>@Model.ChuckDiameter.Definition</td> @* Veya karşılığı *@
+                            </tr>
+                            <tr>
+                                <td class="align-middle">Akış Yönü</td>
+                                <td>
+                                    <img src="~/img/winding/@(Model.WindingDirectionType + ".jpg")" style="width:1800px;" />
+                                </td>
+                                
+                                
+                            </tr>
+                            <tr>
+                                <td class="align-middle">Üretim İçin Not</td>
+                                <td>@Model.NoteForProduction</td>
+                            </tr>  
+                        </table>
+                        
+    
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Grafiker Bilgileri -->
+            <div class="col-12 col-lg-4 mb-4">
+                <div class="card h-100 border-success shadow-sm">
+                    <div class="card-header bg-success text-white d-flex justify-content-between">
+                        <span><i class="fas fa-paint-brush me-2"></i> Grafiker Bilgileri</span>
+              <i class="fas fa-pen" onclick="getDesignerInfo(@Model.Id)"></i>
+        
+                    </div>
+                    <div class="card-body p-2 table-responsive">
+                        <table class="table table-sm table-striped mb-0">
+            
+                            @{
+                                var adet = Model.Quantity as int?;
+                                var format = Model.Format as decimal?;
+                                var aaMontaj = Model.MountQtyAA as int?;
+                                var fireOran = 1.01m;
+                            
+                                string metrajSonuc;
+                                List<string> eksikBilgiler = new();
+                            
+                                if (adet == null) eksikBilgiler.Add("Adet");
+                                if (format == null) eksikBilgiler.Add("Format");
+                                if (aaMontaj == null || aaMontaj == 0) eksikBilgiler.Add("AA Montaj");
+                            
+                                if (eksikBilgiler.Any())
+                                {
+                                    metrajSonuc = "Eksik bilgi: " + string.Join(", ", eksikBilgiler);
+                                }
+                                else
+                                {
+                                    var metrajRaw = (adet.Value * format.Value / aaMontaj.Value) * fireOran;
+                                    var metraj = Math.Round(metrajRaw / 1000, 0, MidpointRounding.AwayFromZero);
+                            
+                                    metrajSonuc = $"{metraj:N0} Metre"; // binlik ayraçlı, ondalıksız
+                                }
+                            }
+                            
+                            <tr>
+                                <td>Gerekli Metraj</td>
+                                <td><strong>@metrajSonuc</strong></td>
+                            </tr>
+                            
+                            <tr><td>Grafikere Not</td><td class="text-black" style="color: red;">@(string.IsNullOrWhiteSpace(Model?.NoteToDesigner) ? "EKSİK" : Model.NoteToDesigner)</td></tr>
+                            <tr>
+                                <td>Grafiker</td><td>@(Model?.DesignerFullName ?? 0)</td>
+                            </tr>
+                            <tr>
+                                <td>Kullanılan Renkler</td>
+                                <td>
+                                    <div style="white-space: nowrap;">
+                                    @{
+                                        var renklerHtml = new List<string>();
+                                    
+                                        if (Model?.ColorCyan > 0)
+                                        {
+                                            renklerHtml.Add("<span class=\"badge\" style=\"background-color: cyan; color: black; font-weight: 500;\">Cyan</span>");
+                                        }
+                                        if (Model?.ColorMagenta > 0)
+                                        {
+                                            renklerHtml.Add("<span class=\"badge\" style=\"background-color: magenta; color: black; font-weight: 500;\">Magenta</span>");
+                                        }
+                                        if (Model?.ColorYellow > 0)
+                                        {
+                                            renklerHtml.Add("<span class=\"badge\" style=\"background-color: yellow; color: black; font-weight: 500;\">Yellow</span>");
+                                        }
+                                        if (Model?.ColorKey > 0)
+                                        {
+                                            renklerHtml.Add("<span class=\"badge\" style=\"background-color: #343a40; color: white; font-weight: 500;\">Key</span>");
+                                        }
+                                    }
+                                    
+                                    @Html.Raw(renklerHtml.Any() ? string.Join(" ", renklerHtml) : "-")
+                                </div>
+                                </td>
+                            </tr>
+            
+                            <tr>
+                                <td>Ekstra Renkler</td>
+                                <td>
+                                    @{
+                                        var extraList = new List<string>();
+            
+                                        if (!string.IsNullOrWhiteSpace(Model?.ExtraColor1)) extraList.Add(Model.ExtraColor1);
+                                        if (!string.IsNullOrWhiteSpace(Model?.ExtraColor2)) extraList.Add(Model.ExtraColor2);
+                                        if (!string.IsNullOrWhiteSpace(Model?.ExtraColor3)) extraList.Add(Model.ExtraColor3);
+                                        if (!string.IsNullOrWhiteSpace(Model?.ExtraColor4)) extraList.Add(Model.ExtraColor4);
+                                        if (!string.IsNullOrWhiteSpace(Model?.ExtraColor5)) extraList.Add(Model.ExtraColor5);
+                                    }
+                                    @(extraList.Any() ? string.Join(", ", extraList) : "-")
+                                </td>
+                            </tr>
+            
+                            <tr>
+                                <td>Kalıp Klişe</td>
+                                <td>@(Model?.MoldCliche?.Name ?? "-")</td>
+                            </tr>
+                            <tr><td>Kalıp Klişe Sayısı</td><td>@(Model?.PlateCount ?? 0)</td></tr>
+                            <tr><td>Kalıp Klişe Numarası</td><td>@(string.IsNullOrWhiteSpace(Model?.PlateNumber) ? "-" : Model.PlateNumber)</td></tr>
+                            <tr><td>Format</td><td>@(Model?.Format?.ToString("0.00") ?? "0,00")</td></tr>
+                            <tr><td>Kağıt Genişliği</td><td>@(Model?.PaperWidth ?? 0)</td></tr>
+                            <tr><td>YY Montaj Adedi</td><td>@(Model?.MountQtyYY ?? 0)</td></tr>
+                            <tr><td>AA Montaj Adedi</td><td>@(Model?.MountQtyAA ?? 0)</td></tr>
+                            
+                            <tr>
+                                <td>Bıçak Türü</td>
+                                <td>@(Model?.Knife?.Name ?? "-")</td>
+                            </tr>
+                            
+                            <tr><td>Bıçak Kodu</td><td>@(string.IsNullOrWhiteSpace(Model?.KnifeCode) ? "-" : Model.KnifeCode)</td></tr>
+                            <tr><td>Tedarikçi Seri No</td><td>@(string.IsNullOrWhiteSpace(Model?.SerialNumber) ? "-" : Model.SerialNumber)</td></tr>
+                            <tr><td>Zet Çap (Ø)</td><td>@(string.IsNullOrWhiteSpace(Model?.ZetDiameter) ? "-" : Model.ZetDiameter)</td></tr>
+                            <tr><td>BIÇAK AA</td><td>@(Model?.KnifeAA ?? 0)</td></tr>
+                            <tr><td>BIÇAK YY</td><td>@(Model?.KnifeYY ?? 0)</td></tr>
+                            <tr><td>BIÇAK YYAB</td><td>@(Model?.KnifeYYAB ?? 0)</td></tr>
+                            <tr><td>Radius</td><td>@(string.IsNullOrWhiteSpace(Model?.Radius) ? "-" : Model.Radius)</td></tr>
+                            @{
+                                var recipeMachines = Model.RecipeMachines as IEnumerable<crm.Models.RecipeMachine>;
+                            }
+                            <tr>
+                                <td>Kullanılan Makinalar</td>
+                                <td style="white-space: nowrap;">
+                                    @if (recipeMachines != null && recipeMachines.Any(x => x.Machine != null))
+                                    {
+                                        foreach (var name in recipeMachines.Where(x => x.Machine != null).Select(x => x.Machine.Name))
+                                        {
+                                            <span style="display:inline-block; background-color:#28a745; color:white; font-size:0.75rem; padding:2px 6px; border-radius:6px; margin-right:4px;">
+                                                @name
+                                            </span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        @:-
+                                    }
+                                </td>
+                            </tr>
+                            
+                            
+                            <tr><td>Grafiker Notu</td><td style="color: green;">@(string.IsNullOrWhiteSpace(Model?.DesignerNote) ? "-" : Model.DesignerNote)</td></tr>
+                            <tr>
+                                <td colspan="2" class="text-center py-3">
+                                    @if (lastImage != null)
+                                    {
+                                        <a href="javascript:void(0);" onclick="openAddFileModal(@Model.Id)">
+                                            <img src="/uploads/recipe/@lastImage.FileName"
+                                                 alt="Son yüklenen ürün görseli"
+                                                 class="img-fluid rounded shadow border border-success"
+                                                 style="max-width: 100%; height: auto; max-height: 400px;"
+                                                 data-tippy-content="Yeni görsel eklemek için tıklayın" 
+                                                 data-tippy-placement="top" />
+                                        </a>
+                                        
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">Ürün görseli bulunamadı.</span>
+                                    }
+                                </td>
+                            </tr>
+                            
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            
+            
+    
+            <!-- Reçete Dosyaları -->
+            <div class="col-12 col-lg-4 mb-4">
+                <div class="card h-100 border-danger shadow-sm">
+                    <div class="card-header bg-danger text-white d-flex justify-content-between">
+                        <span><i class="fas fa-receipt me-2"></i> Reçete Dosyaları</span>
+                        <i class="fas fa-plus" style="cursor:pointer;" onclick="openAddFileModal(@Model.Id)"></i>
+                    </div>
+                    <div class="card-body p-2 table-responsive">
+           
+<div class="table-responsive shadow-sm rounded border">
+    <table class="table table-bordered table-hover table-sm mb-0 text-center align-middle">
+        <thead class="bg-light text-dark">
+            <tr>
+                <th style="width: 60%;">Dosya</th>
+                <th style="width: 20%;">Tarih</th>
+                <th style="width: 20%;">Kayıt Yapan</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var file in Model.RecipeFiles)
+            {
+                var originalFileName = file.OriginalFileName ?? "-";
+                var shortName = originalFileName.Length > 30 
+                    ? originalFileName.Substring(0, 30) + "..." 
+                    : originalFileName;
+            
+                <tr>
+                    <td class="text-start red-underline">
+                        <a href="/uploads/recipe/@file.FileName" 
+                           target="_blank" 
+                           class="text-dark text-decoration-none">
+                            <span data-tippy-content="@originalFileName" id="defaultTooltip">@shortName</span>
+                        </a>
+                    </td>
+                    <td>@file.CreatedAt?.ToString("dd MMMM yyyy HH:mm:ss", new System.Globalization.CultureInfo("tr-TR"))</td>
+                    <td class="text-nowrap">
+                        @if (file.CreatedBy != null)
+                        {
+                            var userFullName = $"{file.CreatedBy.FirstName} {file.CreatedBy.LastName}";
+                            <span data-tippy-content="Dosyayı ekleyen kişi: @userFullName">
+                                @userFullName
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">-</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+            
+    </table>
+</div>         
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="addRecipeFileModal"  aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form id="addRecipeFileForm" enctype="multipart/form-data">
+                        <input type="hidden" name="RecipeId" id="recipeFileRecipeId" />
+                        <input type="hidden" name="FileType" id="recipeFileType" /> <!-- Otomatik atanacak -->
+            
+                        <div class="modal-content">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title">Reçete Dosyası Ekle</h5>
+                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-group">
+                                    <label>Dosya</label>
+                                    <div class="custom-file-wrapper">
+                                        <input type="file" name="File" class="d-none" id="recipeFileInput" required accept="image/*,application/pdf" />
+                                        <button type="button" class="btn btn-outline-danger w-100" onclick="document.getElementById('recipeFileInput').click();">
+                                            📁 Dosya Seç
+                                        </button>
+                                        <div id="filePreview" class="mt-3 text-center" style="display:none;">
+                                            <img id="imagePreview" src="#" class="img-fluid border rounded" style="max-height:200px;" />
+                                            <p id="fileNameText" class="text-muted mt-2"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-danger">Ekle</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+                        
+        </div>
+
+     
+        
+            <div class="card-body p-2 table-responsive">
+                @{
+                    var logs = Model.RecipeLogs as IEnumerable<crm.Models.RecipeLog>;
+                }
+                
+                @if (logs != null && logs.Any())
+                {
+                    <div class="card h-100 border-warning shadow-sm mt-4">
+                        <div class="card-header bg-warning text-white text-center">
+                            <strong class="w-100 d-block">Log Kayıtları</strong>
+                        </div>
+                        <div class="card-body p-2 table-responsive">
+                            <table class="table table-sm table-striped table-bordered text-center align-middle">
+                                <thead class="bg-light text-dark">
+                                    <tr>
+                                        <th style="min-width: 140px;">Tarih</th>
+                                        <th style="min-width: 140px;">Tanım</th>
+                                        <th style="min-width: 160px;">Eski Değer</th>
+                                        <th style="min-width: 160px;">Yeni Değer</th>
+                                        <th style="min-width: 160px;">Kayıt Yapan</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var log in logs.OrderByDescending(x => x.RecordDate))
+                                    {
+                                        <tr>
+                                            <td class="text-center">@log.RecordDate?.ToString("dd MMM yyyy HH:mm:ss", new System.Globalization.CultureInfo("tr-TR"))
+                                            </td>
+                                            <td class="text-center">@log.FieldName</td>
+
+                                            <td class="text-center">@(string.IsNullOrWhiteSpace(log.OldValue) ? "-" : log.OldValue)</td>
+                                            <td class="text-center">@(string.IsNullOrWhiteSpace(log.NewValue) ? "-" : log.NewValue)</td>
+                                            <td class="text-center">@(log.CreatedBy != null ? log.CreatedBy.FirstName + " " + log.CreatedBy.LastName : "-")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                }
+                
+            </div>
+
+       <!-- Modal -->
+<div class="modal fade custom-wide-modal2" id="editDesignerInfoModal"
+aria-labelledby="editDesignerInfoModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal-dialog modal-xl">
+    <div class="modal-content">
+        <div class="card h-300 border-success">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="editDesignerInfoModalLabel">Grafiker Bilgileri</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+            </div>
+            <div class="modal-body" style="overflow-y: auto; max-height: calc(95vh - 120px); padding: 20px;">
+                <form id="editDesignerInfoForm">
+                    <input type="hidden" id="editDesignerRecipeId" name="Id" />
+                    <div class="form-row">
+                       
+                        <div class="form-group col-md-12">
+                            <label for="noteToDesigner">Grafikere Not</label>
+                            <textarea class="form-control" id="noteToDesigner" name="noteToDesigner" rows="1" readonly style="color: red;"></textarea >
+                        </div>
+
+                
+                        <div class="form-group col-md-4">
+                            <label class="fw-bold">Kullanılan Renkler</label>
+                            <div class="color-badge-group mb-2">
+                                <div class="color-badge badge-cyan" onclick="selectBadge(this, 'Cyan')"><label>Cyan</label></div>
+                                <div class="color-badge badge-magenta" onclick="selectBadge(this, 'Magenta')"><label>Magenta</label></div>
+                                <div class="color-badge badge-yellow" onclick="selectBadge(this, 'Yellow')"><label>Yellow</label></div>
+                                <div class="color-badge badge-key" onclick="selectBadge(this, 'Key')"><label>Key</label></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group col-8">
+                            <label class="fw-bold">Ekstra Renkler</label>
+                            <div class="form-row">
+                                <div class="form-group col">
+                                    <input type="text" class="form-control" id="extraColor1" name="ExtraColor1" placeholder="Ekstra-1" />
+                                </div>
+                                <div class="form-group col">
+                                    <input type="text" class="form-control" id="extraColor2" name="ExtraColor2" placeholder="Ekstra-2" />
+                                </div>
+                                <div class="form-group col">
+                                    <input type="text" class="form-control" id="extraColor3" name="ExtraColor3" placeholder="Ekstra-3" />
+                                </div>
+                                <div class="form-group col">
+                                    <input type="text" class="form-control" id="extraColor4" name="ExtraColor4" placeholder="Ekstra-4" />
+                                </div>
+                                <div class="form-group col">
+                                    <input type="text" class="form-control" id="extraColor5" name="ExtraColor5" placeholder="Ekstra-5" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Kalıp Klişe</label>
+                            <select name="DieCutPlateTypeId" class="form-control" id="dieCutPlateType"></select>
+                        </div>
+                 
+                        <div class="form-group col-md-4">
+                            <label>Kalıp Klişe Sayısı</label>
+                            <select class="form-control select2" id="plateCount" name="PlateCount">
+                                <option value="">0</option>
+                                @for (int i = 0; i <= 10; i++)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="form-group col-md-4">
+                            <label>Kalıp Klişe Numarası</label>
+                            <input type="text" class="form-control" id="plateNumber" name="PlateNumber" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Format(mm)</label>
+                            <input type="text" class="form-control" id="format" name="Format" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Kağıt Genişliği(mm)</label>
+                            <input type="text" class="form-control" id="paperWidth" name="PaperWidth" />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>YY Montaj Adedi</label>
+                            <select class="form-control select2" id="mountQtyYY" name="MountQtyYY">
+                                <option value="">Seçiniz</option>
+                                @for (int i = 0; i <= 20; i++)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            </select>
+                        </div>
+                        
+                        <!-- AA Montaj Adedi (0 - 50) -->
+                        <div class="form-group col-md-4">
+                            <label>AA Montaj Adedi</label>
+                            <select class="form-control select2" id="mountQtyAA" name="MountQtyAA">
+                                <option value="">Seçiniz</option>
+                                @for (int i = 0; i <= 50; i++)
+                                {
+                                    <option value="@i">@i</option>
+                                }
+                            </select>
+                        </div>
+                     
+                        <div class="form-group col-md-4">
+                            <label>Bıçak Türü</label>
+                            <select name="KnifeTypeId" class="form-control" id="knifeType"></select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label>Bıçak Kodu</label>
+                            <input type="text" class="form-control" id="knifeCode" name="KnifeCode" />
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Bıçak AA</label>
+                            <input type="text" class="form-control" id="knifeAA" name="KnifeAA" />
+                        </div>
+                    
+                        <div class="form-group col-md-3">
+                            <label>Zet Çap (Ø)</label>
+                            <input type="text" class="form-control" id="zetDiameter" name="ZetDiameter" />
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Bıçak YY</label>
+                            <input type="number" class="form-control" id="knifeYY" name="KnifeYY" />
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Tedarikçi Seri No</label>
+                            <input type="text" class="form-control" id="serialNumber" name="SerialNumber" />
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label>Bıçak YYAB</label>
+                            <input type="number" class="form-control" id="knifeYYAB" name="KnifeYYAB" />
+                        </div>
+                        <div class="form-group col-md-2">
+                            <label>Radius</label>
+                            <input type="text" class="form-control" id="radius" name="Radius" />
+                        </div>
+                        <div class="form-group col-md-8">
+                            <label>Kullanılan Makinalar</label>
+                            <select name="SelectedMachineIds" class="form-control select2" id="selectedMachines" multiple="multiple">
+                                @using crm.Models
+                                @{
+                                    var machines = ViewBag.Machines as List<Machine> ?? new List<Machine>();
+                                    var recipeMachines = Model.RecipeMachines as IEnumerable<RecipeMachine> ?? new List<RecipeMachine>();
+                                    var selectedMachineIds = recipeMachines.Select(rm => rm.MachineId).ToList();
+                                }
+                        
+                                @foreach (var machine in machines)
+                                {
+                                    var selectedAttr = selectedMachineIds.Contains(machine.Id) ? "selected=\"selected\"" : "";
+                                    @Html.Raw($"<option value=\"{machine.Id}\" {selectedAttr}>{machine.Name}</option>")
+                                }
+                            </select>
+                        </div>
+                        
+                        
+                        
+                        <div class="form-group col-md-8">
+                            <label>Grafiker Notu 📝</label>
+                            <textarea type="text" class="form-control form-control-sm" id="DesignerNote" name="DesignerNote" rows="3" style="color: green;"></textarea>
+                        </div>
+
+                    <div class="form-group col-md-4 text-center mt-5">
+                        <button type="submit" class="btn btn-success btn-lg px-5 w-350 h-700">
+                            GRAFİKER BİLGİLERİNİ GÜNCELLE <i class="fa fa-save"></i>
+                        </button>
+                    </div>
+                    </div>
+
+                 
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<div class="modal fade custom-wide-modal2" id="editRecipeModal" aria-labelledby="editRecipeModalLabel"
+aria-hidden="true" data-backdrop="static" data-keyboard="false">
+<div class="modal-dialog modal-xl modal-dialog-centered">
+   <div class="modal-content" style="max-height: 95vh; overflow: hidden; display: flex; flex-direction: column;">
+       
+       <div class="modal-header bg-primary text-white">
+           <h5 class="modal-title" id="editRecipeModalLabel">Kayıt Bilgileri</h5>
+           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+               <span aria-hidden="true">&times;</span>
+           </button>
+       </div>
+
+
+       <div class="modal-body" style="overflow-y: auto; max-height: calc(95vh - 120px); padding: 20px;">
+                    <form id="editRecipeForm" enctype="multipart/form-data">
+                        <input type="hidden" id="editRecipeId" name="Id" />
+                        <input type="hidden" id="editRecipeCustomerId" name="CustomerId" />
+
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="editRecipeCustomerName">Müşteri Adı</label>
+                                <input type="text" class="form-control" id="editRecipeCustomerName" name="CustomerName"
+                                    readonly />
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="editRecipeName">Reçete Adı</label>
+                                <input type="text" class="form-control" id="editRecipeName" name="RecipeName"   style="color: #017BFE">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <label for="editRecipeWidth">En </label>
+                                <input type="number" class="form-control" id="editRecipeWidth" name="Width" required
+                                    min="0">
+                            </div>
+                            <div class="form-group col-md-1">
+                                <label for="editRecipeHeight">Boy(Akış)</label>
+                                <input type="number" class="form-control" id="editRecipeHeight" name="Height" required
+                                    min="0">
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeQuantity">Sipariş Miktarı</label>
+                                <input type="text" class="form-control" id="editRecipeQuantity" name="Quantity" required>
+                            </div>
+                            
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeUnitId">Sipariş Birimi</label>
+                                <select name="UnitId" class="form-control" id="editRecipeUnitId"></select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="editRecipePaperInfo">Kağıt Bilgisi</label>
+                                <select name="PaperTypeId" class="form-control" id="editRecipePaperInfo"></select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label for="editRecipeAdhesiveInfo">Tutkal Bilgisi</label>
+                                <select name="PaperAdhesionTypeId" class="form-control"
+                                    id="editRecipeAdhesiveInfo"></select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipePaperDetail">Detay</label>
+                                <select name="PaperDetailId" class="form-control" id="editRecipePaperDetail"></select>
+                            </div>
+
+
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeCustomerCode">Müşteri Ürün Kodu</label>
+                                <input type="text" class="form-control" id="editRecipeCustomerCode" name="customerCode"
+                                     />
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeIsPrinted">Baskılı / Baskısız</label>
+                                <select class="form-control" id="editRecipeIsPrinted" name="IsPrinted">
+                                    <option value="true" selected>Baskılı</option>
+                                    <option value="false">Baskısız</option>
+                                </select>
+                            </div>
+                            <div class="form-group col-md-2" id="editRecipeColorOptions" style="display: none;">
+                                <label for="editRecipeNumberOfColors">Renk Sayısı</label>
+                                <select class="form-control" id="editRecipeNumberOfColors" name="NumberOfColors">
+                                    <option value="1">1 Renk</option>
+                                    <option value="2">2 Renk</option>
+                                    <option value="3">3 Renk</option>
+                                    <option value="4" selected>4 Renk</option>
+                                    <option value="5">5 Renk</option>
+                                    <option value="6">6 Renk</option>
+                                    <option value="7">7 Renk</option>
+                                    <option value="8">8 Renk</option>
+                                </select>
+                            </div>
+                        
+
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeCustomerAdhesion">Müşteri Yapıştırması</label>
+                                <select name="CustomerAdhesionTypeId" class="form-control"
+                                    id="editRecipeCustomerAdhesion"></select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipePackage">Paketleme</label>
+                                <select name="PackageTypeId" class="form-control" id="editRecipePackage"></select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeLabelPerWrap">Birim sarım etiket adeti</label>
+                                <input type="text" name="LabelPerWrap" class="form-control" id="editRecipeLabelPerWrap">
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeOuterDiameter">Sarım dış çapı (cm)</label>
+                                <input type="number" name="OuterDiameter" class="form-control"
+                                    id="editRecipeOuterDiameter">
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeCoreLength">Kuka Uzunluğu</label>
+                                <select name="CoreLengthId" class="form-control" id="editRecipeCoreLength"></select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeCoreDiameter">Kuka Çapı</label>
+                                <select name="CoreDiameterId" class="form-control" id="editRecipeCoreDiameter"></select>
+                            </div>
+                            <div class="form-group col-md-2">
+                                <label for="editRecipeShipmentMethod">Teslim Şekli</label>
+                                <select name="ShipmentMethodId" class="form-control"
+                                    id="editRecipeShipmentMethod"></select>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="editRecipePrintType">İlave İşlem</label>
+                                <select name="AdditionalProcessing" class="form-control" id="editRecipePrintType"
+                                    multiple="multiple"></select>
+                            </div>
+                            <!-- Akış Yönü -->
+                            <div class="form-group col-md-8">
+                                <div class="row">
+                                    @for (int i = 1; i <= 8; i++) { <div class="col-md-3 mb-3">
+                                        <label class="winding-option">
+                                            <input type="radio" name="WindingDirectionType" value="@i" required />
+                                            <span class="custom-radio-indicator"></span>
+                                            <span class="tick-mark">&#10004;</span>
+                                            <img src="/img/winding/@(i).jpg" alt="Akış Yönü @(i)" />
+                                        </label>
+                                </div>
+                                }
+                            </div>
+                        </div>
+
+                        <!-- Notlar -->
+                        <div class="form-group col-md-4">
+                            <div class="form-group">
+                                <label for="editRecipeNoteToDesigner">Grafikere Not 📝</label>
+                                <textarea class="form-control form-control-sm" id="editRecipeNoteToDesigner"
+                                    name="NoteToDesigner" rows="3"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editRecipeNoteForProduction">Üretim için Not 🗓️</label>
+                                <textarea class="form-control form-control-sm" id="editRecipeNoteForProduction"
+                                    name="NoteForProduction" rows="3"></textarea>
+                            </div>
+                            <div class="form-group text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5 w-350">
+                                    REÇETEYİ GÜNCELLE <i class="fa fa-save"></i>
+                                </button>
+                            </div>
+                         
+                            
+                        </div>
+                     
+                     
+                </div>
+
+             
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/tippy.css" />
+<script src="https://unpkg.com/@@popperjs/core@2"></script>
+<script src="https://unpkg.com/tippy.js@6"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+    <script> 
+    document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("editRecipeQuantity");
+
+    // Sayı girişini formatla (virgül ayraçlı)
+    input.addEventListener("input", function () {
+        let value = this.value.replace(/\./g, "").replace(/\D/g, "");
+        this.value = value ? Number(value).toLocaleString("tr-TR") : "";
+    });
+});
+ document.getElementById("updateStatusBtn").addEventListener("click", function () {
+    Swal.fire({
+    title: 'Durum Seçin',
+    background: "#f3f4f6",
+    width: '700px', // genişlik
+    customClass: {
+        popup: 'swal-wide-popup',
+        cancelButton: 'swal-cancel-btn-custom'
+    },
+    html: `
+    <ul id="offer-status-list" class="offer-status-list modern-list">
+        <li data-value="1">📝 Reçete Kaydı Yapıldı</li>
+        <li data-value="2">🎨 Grafiker İşlemi Bekliyor</li>
+        <li data-value="3">✏️ Grafiker İşleminde</li>
+        <li data-value="4">📩 Müşteri Onayı Bekliyor</li>
+        <li data-value="5">✅ Müşteri Onaylı Reçete</li>
+        <li data-value="6">🛠️ Montaj Bekliyor</li>
+        <li data-value="7">🔪 Bıçak / Klişe Bekliyor</li>
+        <li data-value="8">🏭 Üretime Hazır Reçete</li>
+        <li data-value="98">❌ İptal Talebi</li>
+    </ul>
+`,
+    showCancelButton: true,
+    cancelButtonText: 'Kapat',
+    cancelButtonColor: '#ef4444', // modern kırmızı
+    
+    showConfirmButton: false,
+    didOpen: () => {     const cancelBtn = Swal.getCancelButton();
+        if (cancelBtn) {
+            cancelBtn.style.width = '100%';
+            cancelBtn.style.display = 'block';
+            cancelBtn.style.fontWeight = '600';
+            cancelBtn.style.padding = '10px 0';
+            cancelBtn.style.borderRadius = '8px';
+        }
+        document.querySelectorAll('#offer-status-list li').forEach(item => {
+            item.style.padding = '10px';
+            item.style.cursor = 'pointer';
+            item.style.marginBottom = '5px';
+            item.style.borderRadius = '6px';
+
+            item.addEventListener('mouseenter', () => item.style.filter = 'brightness(1.08)');
+            item.addEventListener('mouseleave', () => item.style.filter = 'none');
+
+            item.addEventListener('click', () => {
+                const selectedStatus = item.getAttribute('data-value');
+                Swal.close();
+                updateStatus(selectedStatus);
+            });
+        });
+    }
+});
+
+});
+
+
+    function updateStatus(statusValue) {
+    const recipeId = document.getElementById("currentRecipeId").value;
+
+    $.post('/Customer/UpdateRecipeStatus', {
+        id: recipeId,
+        status: statusValue
+    }, function (res) {
+        if (res.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Durum Güncellendi',
+                text: res.message || "Başarıyla güncellendi.",
+                timer: 2000,
+                showConfirmButton: false
+            });
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            Swal.fire('Hata', res.message || 'İşlem başarısız.', 'error');
+        }
+    }).fail(function () {
+        Swal.fire('Hata', 'Sunucu hatası oluştu.', 'error');
+    });
+}
+
+         const formatInput = document.getElementById("format");
+
+formatInput.addEventListener("input", function () {
+    let val = this.value;
+
+    // Virgülü noktaya çevir
+    val = val.replace(',', '.');
+
+    // Sadece rakam ve en fazla bir tane nokta kalsın
+    val = val.replace(/[^0-9.]/g, '');
+
+    // Birden fazla nokta varsa sadece ilkini bırak
+    const parts = val.split('.');
+    if (parts.length > 2) {
+        val = parts[0] + '.' + parts.slice(1).join('');
+    }
+
+    this.value = val;
+});
+    function copyRecipe(recipeId) {
+        Swal.fire({
+            title: "Sadece aynı bıçak ölçüsü olan işleri kopyalamanız tavsiye edilir, emin misiniz?",
+            icon: "question",
+            showCancelButton: true,
+            confirmButtonText: "Kopya Reçeteyi Oluştur ",
+            cancelButtonText: "İptal",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/Customer/CopyRecipe',
+                    type: 'POST',
+                    data: { id: recipeId },
+                    success: function (res) {
+                        if (res.success) {
+                            Swal.fire({
+                                title: 'Başarılı',
+                                text: res.message,
+                                icon: 'success',
+                                confirmButtonText: 'Yeni Reçeteye Git'
+                            }).then(() => {
+                                window.location.href = '/erp/recipeDetail/' + res.recipeId;
+                            });
+                        } else {
+                            Swal.fire('Hata', res.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Sunucu Hatası', 'Kopyalama işlemi sırasında hata oluştu.', 'error');
+                    }
+                });
+            }
+        });
+    }
+      tippy('#defaultTooltip', {
+        animation: 'scale',
+        theme: 'red',
+        delay: [700, 500],
+        maxWidth: 500,       
+        arrow: true,
+        placement: 'bottom-start',
+    });
+    
+        let selectedColors = {
+    Cyan: 0,
+    Magenta: 0,
+    Yellow: 0,
+    Key: 0
+};
+
+    
+function openAddFileModal(recipeId) {
+    $('#recipeFileRecipeId').val(recipeId);
+    $('#addRecipeFileModal').modal('show');
+}document.getElementById('recipeFileInput').addEventListener('change', function (e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const preview = document.getElementById('filePreview');
+    const img = document.getElementById('imagePreview');
+    const name = document.getElementById('fileNameText');
+    const fileTypeInput = document.getElementById('recipeFileType');
+
+    name.textContent = file.name;
+    preview.style.display = 'block';
+
+    if (file.type.startsWith('image/')) {
+        // Resim ise FileType = 1
+        fileTypeInput.value = "1";
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            img.src = e.target.result;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Diğer tüm dosyalar: FileType = 2
+        fileTypeInput.value = "2";
+        img.style.display = 'none';
+        img.src = "";
+    }
+});
+$('#addRecipeFileForm').submit(function (e) {
+    e.preventDefault();
+
+    var formData = new FormData(this);
+
+    $.ajax({
+        url: '/customer/AddRecipeFile',
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (res) {
+            if (res.success) {
+                $('#addRecipeFileModal').modal('hide');
+                location.reload();
+            } else {
+                Toastify({
+                    text: res.message || "❌ Bilinmeyen hata oluştu.",
+                    duration: 5000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545"
+                }).showToast();
+            }
+        },
+        error: function (xhr) {
+            Toastify({
+                text: "🛑 Sunucu hatası: " + (xhr.responseText || "Hata oluştu."),
+                duration: 5000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#dc3545"
+            }).showToast();
+        }
+    });
+});
+function toggleArchive(recipeId, isArchived) {
+        const actionText = isArchived ? "arşivden çıkarmak" : "arşivlemek";
+        const confirmText = isArchived ? "Arşivden çıkar!" : "Arşivle!";
+
+        Swal.fire({
+            title: `Bu reçeteyi ${actionText} istediğinize emin misiniz?`,
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonText: confirmText,
+            cancelButtonText: "İptal",
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/Customer/ToggleArchiveStatus',
+                    type: 'POST',
+                    data: { id: recipeId },
+                    success: function (res) {
+                        if (res.success) {
+    Toastify({
+        text: res.message || "İşlem başarılı.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#28a745", // yeşil
+        stopOnFocus: true
+    }).showToast();
+
+    setTimeout(() => location.reload(), 1500);
+} else {
+    Toastify({
+        text: res.message || "İşlem başarısız.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#dc3545", // kırmızı
+        stopOnFocus: true
+    }).showToast();
+}
+
+                    },
+                    error: function () {
+                        Swal.fire("Sunucu Hatası", "İşlem gerçekleştirilemedi.", "error");
+                    }
+                });
+            }
+        });
+    }
+
+function resetColorBadges() {
+    $('.color-badge').removeClass('selected');
+    selectedColors = {
+        Cyan: 0,
+        Magenta: 0,
+        Yellow: 0,
+        Key: 0
+    };
+}
+function populateColorBadges(r) {
+    $('.color-badge').removeClass('active');
+
+    selectedColors = {
+        Cyan: r.colorCyan ?? 0,
+        Magenta: r.colorMagenta ?? 0,
+        Yellow: r.colorYellow ?? 0,
+        Key: r.colorKey ?? 0
+    };
+
+    if (selectedColors.Cyan === 1) $('.badge-cyan').addClass('active');
+    if (selectedColors.Magenta === 1) $('.badge-magenta').addClass('active');
+    if (selectedColors.Yellow === 1) $('.badge-yellow').addClass('active');
+    if (selectedColors.Key === 1) $('.badge-key').addClass('active');
+
+    const selectedLabels = [];
+    document.querySelectorAll('.color-badge.active label').forEach(label => {
+        selectedLabels.push(label.textContent.trim());
+    });
+    $('#usedColors').val(selectedLabels.join(', '));
+}
+function getDesignerInfo(id) {
+    console.log('🎨 getDesignerInfo çağrıldı – ID:', id);
+
+    // Formu ve renk badge'lerini sıfırla
+    $('#editDesignerInfoForm')[0].reset();
+    resetColorBadges();
+
+    $('#editDesignerInfoModal').modal('hide');
+
+    $.ajax({
+        url: '/Customer/GetDesignerInfo?id=' + id,
+        type: 'GET',
+        success: function (response) {
+            console.log('📦 Gelen response:', response); // ✅ Buraya eklendi
+
+            if (response.success) {
+                const r = response.data;
+                console.log('🧩 Parsed data:', r); // ✅ Ayrı olarak parse edilen veri de yazdırılıyor
+
+                // Form alanlarını doldur
+                $('#editDesignerRecipeId').val(r.id);
+                $('#designerName').val(r.designerFullName ?? '');
+                $('#DesignerNote').val(r.designerNote);
+                $('#noteToDesigner').val(r.noteToDesigner);
+                $('#requiredLength').val(r.format);
+                $('#usedColors').val(`C:${r.colorCyan} M:${r.colorMagenta} Y:${r.colorYellow} K:${r.colorKey}`);
+                $('#extraColors').val([
+                    r.extraColor1, r.extraColor2, r.extraColor3,
+                    r.extraColor4, r.extraColor5
+                ].filter(Boolean).join(', '));
+                $('#format').val(r.format);
+                
+                $('#plateCount').val(r.plateCount).trigger('change');
+                $('#plateNumber').val(r.plateNumber);
+                $('#paperWidth').val(r.paperWidth);
+                $('#mountQtyYY').val(r.mountQtyYY).trigger('change');
+                $('#mountQtyAA').val(r.mountQtyAA).trigger('change');
+                $('#knifeType').val(r.knifeTypeId).trigger('change'); // ✅ düzeltilmiş
+                $('#knifeCode').val(r.knifeCode);
+                $('#dieCutPlateType').val(r.dieCutPlateTypeId).trigger('change');
+                
+                $('#designerNote').val(r.designerNote);
+                $('#zetDiameter').val(r.zetDiameter);
+                $('#serialNumber').val(r.serialNumber);
+                $('#knifeAA').val(r.knifeAA);
+                $('#knifeYY').val(r.knifeYY);
+                $('#knifeYYAB').val(r.knifeYYAB);
+                $('#radius').val(r.radius);
+
+                // Ekstra renk inputları
+                $('#extraColor1').val(r.extraColor1 || '');
+                $('#extraColor2').val(r.extraColor2 || '');
+                $('#extraColor3').val(r.extraColor3 || '');
+                $('#extraColor4').val(r.extraColor4 || '');
+                $('#extraColor5').val(r.extraColor5 || '');
+
+                // Badge renklerini işaretle
+                populateColorBadges(r);
+         // ✅ Makinaları set et
+         if (Array.isArray(r.selectedMachineIds)) {
+                    $('#selectedMachines').val(r.selectedMachineIds).trigger('change');
+                }
+
+                // Modalı göster
+                $('#editDesignerInfoModal').modal('show');
+            } else {
+                Toastify({
+                    text: response.message || "Reçete verisi alınamadı.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545"
+                }).showToast();
+            }
+        },
+        error: function () {
+            Toastify({
+                text: "Sunucu hatası: grafiker bilgisi getirilemedi.",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#dc3545"
+            }).showToast();
+        }
+    });
+}
+
+function selectBadge(elem, color) {
+    const isActive = elem.classList.toggle('active');
+    selectedColors[color] = isActive ? 1 : 0;
+
+    // Kullanılan renkleri yaz (görsel)
+    const selectedLabels = [];
+    document.querySelectorAll('.color-badge.active label').forEach(label => {
+        selectedLabels.push(label.textContent.trim());
+    });
+    $('#usedColors').val(selectedLabels.join(', '));
+}
+
+
+    
+$('#editDesignerInfoForm').submit(function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    formData.append('ColorCyan', selectedColors.Cyan);
+    formData.append('ColorMagenta', selectedColors.Magenta);
+    formData.append('ColorYellow', selectedColors.Yellow);
+    formData.append('ColorKey', selectedColors.Key);
+
+    $.ajax({
+        url: '/customer/UpdateDesignerInfo',
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            if (data.success) {
+                $('#editDesignerInfoModal').modal('hide');
+                getDesignerInfo(data.id);
+                localStorage.setItem('recipeUpdateMessage', 'Grafiker Bilgileri Başarıyla güncellendi!');
+                location.reload();
+            } else {
+                Toastify({
+                    text: data.message || "Güncelleme başarısız.",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545"
+                }).showToast();
+            }
+        },
+        error: function () {
+            Toastify({
+                text: "Sunucu hatası oluştu.",
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#dc3545"
+            }).showToast();
+        }
+    });
+});
+
+           $(document).ready(function () {
+    $('.select2').select2({
+        width: '100%',
+        placeholder: "Seçiniz",
+        allowClear: false
+    });
+
+    // Açıldığında arama kutusuna otomatik focus
+    $(document).on('select2:open', () => {
+        setTimeout(() => {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
+});
+          document.addEventListener("DOMContentLoaded", function () {
+        const message = localStorage.getItem('recipeUpdateMessage');
+        if (message) {
+            const box = document.getElementById('update-message');
+            box.textContent = message;
+            box.style.display = 'block';
+
+            setTimeout(() => {
+                box.style.display = 'none';
+                localStorage.removeItem('recipeUpdateMessage');
+            }, 5000);
+        }
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        const editLabelInput = document.getElementById('editRecipeLabelPerWrap');
+        const editDiameterInput = document.getElementById('editRecipeOuterDiameter');
+        const editForm = editLabelInput?.closest('form');
+
+        function toggleEditInputs() {
+            const labelVal = editLabelInput.value.replace(/\./g, '').trim();
+            const diameterVal = editDiameterInput.value.trim();
+
+            if (labelVal !== '') {
+                editDiameterInput.value = ''; // diğerini temizle
+                editDiameterInput.disabled = true;
+            } else if (diameterVal !== '') {
+                editLabelInput.value = ''; // diğerini temizle
+                editLabelInput.disabled = true;
+            } else {
+                editLabelInput.disabled = false;
+                editDiameterInput.disabled = false;
+            }
+        }
+
+        // 🔁 Modal her açıldığında input değerine göre kontrol yap
+        $('#editOfferModal').on('shown.bs.modal', function () {
+            toggleEditInputs();
+        });
+
+        // Değişim sırasında inputları dinle
+        if (editLabelInput && editDiameterInput) {
+            editLabelInput.addEventListener('input', function () {
+                let value = editLabelInput.value.replace(/\./g, '').replace(/\D/g, '');
+                editLabelInput.value = value ? Number(value).toLocaleString('tr-TR') : '';
+                toggleEditInputs();
+            });
+
+            editDiameterInput.addEventListener('input', toggleEditInputs);
+        }
+
+        // Form gönderim validasyonu
+       
+    });
+        $(document).ready(function () {
+            let cachedCustomerData = [];
+            let cachedPaperInfoData = [];
+            let cachedAdhesiveInfoData = [];
+            let cachedPaperDetailData = [];
+            let cachedCustomerAdhesionData = [];
+            let cachedCoreDiameterData = [];
+            let cachedMoldClicheData = [];
+            let cachedPackageData = [];
+            let cachedKnifes = [];
+            let cachedMachines = [];
+            let cachedCoreLengthData = [];
+            let cachedAdditionalProcessings = [];
+            let cachedDeliveryMethodData = [];
+            let cachedOrderMethodData = [];
+    
+    
+    
+    
+            // RECIPE Modal (EDIT) Select2 yüklemeleri
+            loadData('/Customer/GetPaperInfos', '#editRecipePaperInfo', cachedPaperInfoData);
+            loadData('/Customer/GetAdhesiveInfos', '#editRecipeAdhesiveInfo', cachedAdhesiveInfoData);
+            loadData('/Customer/GetPaperDetails', '#editRecipePaperDetail', cachedPaperDetailData);
+            loadData('/Customer/GetMoldCliches', '#dieCutPlateType', cachedMoldClicheData);
+            loadData('/Customer/GetCustomerAdhesion', '#editRecipeCustomerAdhesion', cachedCustomerAdhesionData);
+            loadData('/Customer/GetPackage', '#editRecipePackage', cachedPackageData);
+            loadData('/Customer/GetMachines', '#selectedMachines', cachedMachines);
+            loadData('/Customer/GetKnives', '#knifeType', cachedKnifes);
+            loadData('/Customer/GetCoreLenght', '#editRecipeCoreLength', cachedCoreLengthData);
+            loadData('/Customer/GetCoreDiameter', '#editRecipeCoreDiameter', cachedCoreDiameterData);
+            loadData('/Customer/GetAdditionalProcessings', '#editRecipePrintType', cachedAdditionalProcessings);
+            loadData('/Customer/GetDeliveryMethods', '#editRecipeShipmentMethod', cachedDeliveryMethodData);
+            loadData('/Customer/GetOrderMethods', '#editRecipeUnitId', cachedOrderMethodData);
+    
+            // Genel veri yükleme fonksiyonu
+            function loadData(url, selectSelector, cacheData, callback) {
+                $.ajax({
+                    url: url,
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        cacheData = data;
+                        initializeSelect2(selectSelector, data);
+                        if (callback) callback();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error(`${selectSelector} verileri yüklenirken hata oluştu:`, error);
+                    }
+                });
+            }
+    
+            // Select2 başlatıcı
+            function initializeSelect2(selectSelector, data) {
+                $(selectSelector).select2({
+                    placeholder: "Seçiniz",
+                    tags: selectSelector === '#name', // sadece müşteri için tag açık
+                    width: '100%',
+                    dropdownAutoWidth: false,
+                    dropdownParent: $(selectSelector).closest('.modal'),
+                    data: data.map(function (item) {
+                        return {
+                            id: item.id,
+                            text: item.name || item.text || item.label || item.definition || item.Definition
+                        };
+                    }),
+                    createTag: function (params) {
+                        var term = $.trim(params.term);
+                        if (term === '') return null;
+                        return {
+                            id: term,
+                            text: term,
+                            newOption: true
+                        };
+                    },
+                    templateResult: function (data) {
+                        var $result = $("<span></span>");
+                        $result.text(data.text);
+                        if (data.newOption) {
+                            $result.append(" <em>(yeni)</em>");
+                        }
+                        return $result;
+                    },
+                    templateSelection: function (data) {
+                        return data.text;
+                    }
+                });
+            }
+    
+            // RECIPE modal: Baskı kontrolü (ekliyorum çünkü onchange olayını istemiştin)
+            window.toggleEditRecipeColorOptions = function () {
+                const isPrinted = document.getElementById("editRecipeIsPrinted").value;
+                const colorOptions = document.getElementById("editRecipeColorOptions");
+                colorOptions.style.display = isPrinted === "true" ? "block" : "none";
+            };
+        });
+       
+
+        function getRecipe(id) {
+        console.log('💥 getRecipe çağrıldı — ID:', id);
+    
+        $('#editRecipeForm')[0].reset(); // Formu temizle
+        $('#editRecipeModal').modal('hide'); // Modali garanti kapat
+    
+        $.ajax({
+            url: '/Customer/GetRecipeById?id=' + id,
+            type: 'GET',
+            success: function (response) {
+                console.log('✅ Sunucudan gelen cevap:', response);
+    
+                if (response.success) {
+                    var r = response.data;
+    
+                    console.log('🔄 Form dolduruluyor...');
+                    $('#editRecipeId').val(r.id);
+                    $('#editRecipeCustomerId').val(r.customerId);
+                    $('#editRecipeCustomerName').val(r.customerName ?? '');
+    
+                    $('#editRecipeName').val(r.recipeName);
+                    $('#editRecipeCustomerCode').val(r.customerCode);
+                    $('#editRecipeWidth').val(r.width);
+                    $('#editRecipeHeight').val(r.height);$('#editRecipeQuantity').val(Number(r.quantity).toLocaleString('tr-TR'));
+                    $('#editRecipeUnitId').val(r.unitId).trigger('change');
+                    $('#editRecipePaperInfo').val(r.paperTypeId).trigger('change');
+                    $('#editRecipeAdhesiveInfo').val(r.paperAdhesionTypeId).trigger('change');
+                    $('#editRecipePaperDetail').val(r.paperDetailId).trigger('change');
+    
+                    $('#editRecipePaymentMethod').val('Havale'); // default
+                    $('#editRecipePaymentTerm').val('30'); // default
+                    $('#editRecipeDeliveryMethod').val('').trigger('change');
+    
+                    $('#editRecipeIsPrinted').val(r.isPrinted === true ? 'true' : 'false').trigger('change');
+                    $('#editRecipeNumberOfColors').val(r.numberOfColors).trigger('change');
+    
+                    // ✅ AdditionalProcessingIds düzeltildi
+                    var printTypeSelect = $('#editRecipePrintType');
+                    var selectedIds = Array.isArray(r.additionalProcessings)
+                        ? r.additionalProcessings.map(item => item.id)
+                        : [];
+                    printTypeSelect.val(selectedIds).trigger('change');
+    
+                    $('#editRecipeCustomerAdhesion').val(r.customerAdhesionTypeId).trigger('change');
+                    $('#editRecipePackage').val(r.packageTypeId).trigger('change');
+    
+                    $('#editRecipeLabelPerWrap').val(r.labelPerWrap);
+                    $('#editRecipeOuterDiameter').val(r.outerDiameter);
+                    $('#editRecipeCoreLength').val(r.coreLengthId).trigger('change');
+                    $('#editRecipeCoreDiameter').val(r.coreDiameterId).trigger('change');
+                    $('#editRecipeShipmentMethod').val(r.shipmentMethodId).trigger('change');
+    
+                    $('input[name="WindingDirectionType"][value="' + r.windingDirectionType + '"]').prop('checked', true);
+    
+                    $('#editRecipeNoteToDesigner').val(r.noteToDesigner);
+                    $('#editRecipeNoteForProduction').val(r.noteForProduction);
+    
+                    console.log('✅ Modal açılıyor...');
+                    $('#editRecipeModal').modal('show');
+                } else {
+                    console.warn('❌ Başarısız cevap:', response.message);
+                    Swal.fire('Hata', response.message, 'error');
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('🚨 AJAX error:', status, error);
+                Swal.fire('Hata', 'Reçete bilgileri alınamadı.', 'error');
+            }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const editLabelInput = document.getElementById('editRecipeLabelPerWrap');
+        const editDiameterInput = document.getElementById('editRecipeOuterDiameter');
+        const editForm = editLabelInput?.closest('form');
+
+        function toggleEditInputs() {
+            const labelVal = editLabelInput.value.replace(/\./g, '').trim();
+            const diameterVal = editDiameterInput.value.trim();
+
+            if (labelVal !== '') {
+                editDiameterInput.value = ''; // diğerini temizle
+                editDiameterInput.disabled = true;
+            } else if (diameterVal !== '') {
+                editLabelInput.value = ''; // diğerini temizle
+                editLabelInput.disabled = true;
+            } else {
+                editLabelInput.disabled = false;
+                editDiameterInput.disabled = false;
+            }
+        }
+
+        // 🔁 Modal her açıldığında input değerine göre kontrol yap
+        $('#editOfferModal').on('shown.bs.modal', function () {
+            toggleEditInputs();
+        });
+
+        // Değişim sırasında inputları dinle
+        if (editLabelInput && editDiameterInput) {
+            editLabelInput.addEventListener('input', function () {
+                let value = editLabelInput.value.replace(/\./g, '').replace(/\D/g, '');
+                editLabelInput.value = value ? Number(value).toLocaleString('tr-TR') : '';
+                toggleEditInputs();
+            });
+
+            editDiameterInput.addEventListener('input', toggleEditInputs);
+        }
+
+        // Form gönderim validasyonu
+       
+    }); document.addEventListener("DOMContentLoaded", function () {
+        // Edit form alanlarını seç
+        const widthInput = document.getElementById("editRecipeWidth");
+        const heightInput = document.getElementById("editRecipeHeight");
+        const paperInfoSelect = document.getElementById("editRecipePaperInfo");
+        const adhesiveInfoSelect = document.getElementById("editRecipeAdhesiveInfo");
+        const isPrintedSelect = document.getElementById("editRecipeIsPrinted");
+        const recipeNameInput = document.getElementById("editRecipeName");
+
+        function updateEditRecipeName() {
+            const widthValue = widthInput.value ? widthInput.value.padStart(3, '0') : "";
+            const heightValue = heightInput.value ? heightInput.value.padStart(3, '0') : "";
+
+            const paperInfoValue = $(paperInfoSelect).find("option:selected").text() || "";
+            const adhesiveInfoValue = $(adhesiveInfoSelect).find("option:selected").text() || "";
+            const isPrintedValue = $(isPrintedSelect).find("option:selected").text();
+
+            const generatedName = `${widthValue}X${heightValue} ${isPrintedValue} ${paperInfoValue} ${adhesiveInfoValue}`;
+
+            if (recipeNameInput) {
+                recipeNameInput.value = generatedName;
+            }
+        }
+
+        // Değişiklikleri dinle
+        widthInput.addEventListener("input", updateEditRecipeName);
+        heightInput.addEventListener("input", updateEditRecipeName);
+        $(paperInfoSelect).on("change", updateEditRecipeName);
+        $(adhesiveInfoSelect).on("change", updateEditRecipeName);
+        $(isPrintedSelect).on("change", updateEditRecipeName);
+
+        // Modal her açıldığında da güncelle (gerekirse)
+        $('#editRecipeModal').on('shown.bs.modal', function () {
+            updateEditRecipeName();
+        });
+    });
+    $('#editRecipeForm').submit(function (e) {
+    e.preventDefault();
+
+    // 🎯 Quantity alanını backend'e uygun formatla (noktasız)
+    const quantityInput = document.getElementById('editRecipeQuantity');
+    if (quantityInput) {
+        quantityInput.value = quantityInput.value.replace(/\./g, '');
+    }
+
+    var formData = new FormData(this);
+
+    $.ajax({
+        url: '/customer/UpdateRecipe',
+        type: 'POST',
+        data: formData,
+        contentType: false,
+        processData: false,
+        success: function (data) {
+            if (data.success) {
+                $('#editRecipeModal').modal('hide');
+                localStorage.setItem('recipeUpdateMessage', 'Kayıt Bilgileri Başarıyla güncellendi!');
+                location.reload();
+            } else {
+                alert(data.message || "Güncelleme başarısız.");
+            }
+        },
+        error: function () {
+            alert('Sunucu hatası oluştu.');
+        }
+    });
+});
+
+    
+    
+    function setSelect2Option(selector, id, text) {
+        const option = new Option(text, id, true, true);
+        $(selector).append(option).trigger('change');
+    }
+  
+    </script>

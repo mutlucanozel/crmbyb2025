@@ -1,0 +1,59 @@
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        table, th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .header { font-size: 12px; }
+        .content { margin-top: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <h1>Fiyat Teklif Formu</h1>
+    
+    <div class="header">
+        <p><strong>Teklifi Hazırlayan:</strong> BYB ETİKET A.Ş.</p>
+        <p><strong>Email:</strong> teklif@bybetiket.com</p>
+        <p><strong>Cep:</strong> +90 532 360 11 14</p>
+        <p><strong>Teklif No:</strong> @Model.Id</p>
+        <p><strong>Tarih:</strong> @DateTime.Now.ToString("dd/MM/yyyy")</p>
+        <p><strong>Firma:</strong> @Model.CustomerId</p>
+        <p><strong>Kağıt Bilgisi:</strong> @Model.PaperInfo</p>
+        <p><strong>Yapışkan Bilgisi:</strong> @Model.AdhesiveInfo</p>
+        <p><strong>Para Birimi:</strong> @Model.Currency</p>
+        <p><strong>Sipariş Miktarı:</strong> @Model.OrderQuantity</p>
+    </div>
+    
+    <div class="content">
+        <p>Talep ettiğiniz etiketler için geçerli tekliflerimizi aşağıda sunarız. Fiyatlara %18 KDV dahil değildir.</p>
+
+        <!-- Ürün tablosu -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Genişlik</th>
+                    <th>Yükseklik</th>
+                    <th>Fiyat</th>
+                    <th>Adet</th>
+                    <th>Toplam Fiyat</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>@Model.Width cm</td>
+                    <td>@Model.Height cm</td>
+                    <td>@Model.Price €</td>
+                    <td>@Model.OrderQuantity adet</td>
+                    <td>@(Model.Price * Model.OrderQuantity) €</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p>Teklifimizi olumlu değerlendirmenizi ümit eder, iyi çalışmalar dileriz.</p>
+    </div>
+
+    <footer>
+        <p>BYB ETİKET A.Ş. | www.bybetiket.com</p>
+    </footer>
+</body>
+</html>

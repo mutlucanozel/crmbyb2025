@@ -1,0 +1,1904 @@
+﻿@using System.Security.Claims
+
+@using crm.Helpers
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.AspNetCore.Mvc.Razor
+@{
+
+var userName = TempData["UserName"] as string ?? "Kullanıcı";
+}
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <title>Teklif Listesi</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/detailscustomer.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+
+    <link rel="apple-touch-icon" sizes="180x180" href="~/favicon/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon/favicon-16x16.png">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Select2 JavaScript -->
+
+    <link rel="manifest" href="~/favicon/site.webmanifest">
+    <link rel="shortcut icon" href="~/favicon/favicon.ico">
+
+</head>
+
+<body>
+    <div class="container">
+        @if (string.IsNullOrEmpty(userName))
+        {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Daha önce mesaj gösterilmiş mi kontrol et
+                if (!sessionStorage.getItem('toastShown')) {
+                    var userName = '@Html.Raw(userName)'; // HTML encoding sorunu çözümü
+
+                    // Toastify mesajını göster
+                    Toastify({
+                        text: `Hoşgeldin, ${userName} Mutlu Yıllar 🎄`,
+                        duration: 5000,
+                        gravity: "top", // 'top' veya 'bottom'
+                        position: "right", // 'left', 'center' veya 'right'
+                        backgroundColor: "navy", // Başarılı mesaj rengi (yeşil)
+                    }).showToast();
+
+                    // Mesaj gösterildiğini sessionStorage'a kaydet
+                    sessionStorage.setItem('toastShown', 'true');
+                }
+            });
+        </script>
+        }
+    </div>
+
+    </div>
+    <div class="container">
+        <h2 class="display-6 text-left">
+
+            <div style="display: flex; justify-content: left;">
+                <span class="logo_name" style="color: #2D3A59; font-family: 'Kanit', cursive; font-size: 50px;">
+                    <img src="/img/navybyb.png" alt="BYB Logo" style="width: 100px; height: auto;">|CRM
+                </span>
+            </div>
+
+
+
+
+        </h2>
+        <hr>
+        <div class="alert alert-success d-inline-block" role="alert">
+            🚨 @Model.Notification
+        </div>
+        @if (User.IsInAnyRole("Yönetici", "Denetlemeci", "SATIŞ TEMSILCISI"))
+        {
+
+        <hr>
+        <div class="d-flex justify-content mb-3">
+            <button class="btn btn-dark btn-lg mb-3"
+                style="background-color: #2D3A59; color: white; padding: 20px 40px; font-size: 14px;"
+                data-toggle="modal" data-target="#addOfferModal">
+                <i class="fa fa-plus-circle"></i> Hızlı Teklif
+            </button>
+        </div>
+        <h1 class="display-4 custom-title" style="color: #2D3A59;">Hızlı Kayıt Oluştur</h1>
+
+        <hr>
+        @if (User.IsInAnyRole("Yönetici","Denetlemeci"))
+        {
+        <a class="btn btn-warning btn-lg mb-3" style="padding: 20px 20px; font-size: 14px;" data-toggle="modal"
+            data-target="#missionModal">
+            <i class="fa fa-book" aria-hidden="true"></i> Görev Oluştur
+        </a>
+    }
+        <a class="btn btn-outline-dark btn-lg mb-3" style="padding: 20px 20px; font-size: 14px;" data-toggle="modal"
+            data-target="#visitRecordModal">
+            <i class="fa fa-car" aria-hidden="true"></i> Ziyaret Kaydı
+        </a>
+        <a class="btn btn-outline-dark btn-lg mb-3" style="padding: 20px 20px; font-size: 14px;" data-toggle="modal"
+            data-target="#phoneCallRecordModal">
+            <i class="fa fa-volume-control-phone" aria-hidden="true"></i> Telefon Arama Kaydı
+        </a>
+        <a class="btn btn-outline-dark btn-lg mb-3" style="padding: 20px 20px; font-size: 14px;" data-toggle="modal"
+            data-target="#emailRecordModal">
+            <i class="fa fa-envelope" aria-hidden="true"></i> E-Posta Kaydı
+        </a>
+        <a class="btn btn-outline-dark btn-lg mb-3" style="padding: 20px 20px; font-size: 14px;" data-toggle="modal"
+            data-target="#sampleRecordModal">
+            <i class="fa fa-microscope"></i> Numune Çalışma Kaydı
+        </a>
+
+        }
+
+
+
+
+        <div class="modal fade" id="phoneCallRecordModal" tabindex="-1" aria-labelledby="phoneCallRecordModalLabel"
+            aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="phoneCallRecordModalLabel">Telefon Arama Kaydı Oluştur</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="phoneCallRecordForm">
+                            <div class="form-group">
+                                <label for="phoneCallName">Müşteri Adı</label>
+                                <input name='tags-outside' class="form-control" id="phoneCallName"
+                                    placeholder="Müşteri Seçiniz" value="" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="plannedCallDate">Planlama
+                                    Tarihi</label>
+                                <input type="date" class="form-control" id="plannedCallDate" name="PlannedDate"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDate">Arama Tarihi</label>
+                                <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDescription ">Açıklama</label>
+                                <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                                    aria-hidden="true"></i></button>
+                            <label>**Girilmesi zorunlu alanlar kırmızı ile
+                                işaretlenmiştir.</label>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="emailRecordModal" tabindex="-1" aria-labelledby="emailRecordModalLabel"
+            aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="emailRecordModalLabel">E-Posta Kaydı Oluştur</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="emailRecordForm">
+                            <div class="form-group">
+                                <label for="emailName">Müşteri Adı</label>
+                                <input name='tags-outside' class="form-control" id="emailName"
+                                    placeholder="Müşteri Seçiniz" value="" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="plannedEmailDate">Planlama
+                                    Tarihi</label>
+                                <input type="date" class="form-control" id="plannedEmailDate" name="PlannedDate"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="visitDate">E-posta Gönderim Tarihi</label>
+                                <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDescription">Açıklama</label>
+                                <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                                    aria-hidden="true"></i></button>
+                            <label>**Girilmesi zorunlu alanlar kırmızı ile
+                                işaretlenmiştir.</label>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="sampleRecordModal" tabindex="-1" aria-labelledby="sampleRecordModalLabel"
+            aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="sampleRecordModalLabel">Numune Çalışma Kaydı Oluştur</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="sampleRecordForm">
+                            <div class="form-group">
+                                <div class="form-group">
+                                    <label for="sampleName">Müşteri Adı</label>
+                                    <input name="CustomerName" class="form-control" id="sampleName"
+                                        placeholder="Müşteri Seçiniz" value="" required />
+                                </div>
+
+                            </div>
+                            <div class="form-group">
+                                <label for="plannedSampleDate">Planlama
+                                    Tarihi</label>
+                                <input type="date" class="form-control" id="plannedSampleDate" name="PlannedDate"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDate">Gerçekleşme Tarihi</label>
+                                <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDescription">Açıklama</label>
+                                <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                                    aria-hidden="true"></i></button>
+                            <label>**Girilmesi zorunlu alanlar kırmızı ile
+                                işaretlenmiştir.</label>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="visitRecordModal" tabindex="-1" aria-labelledby="visitRecordModalLabel"
+            aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="visitRecordModalLabel">Ziyaret Kaydı Oluştur</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="visitRecordForm">
+                            <div class="form-group">
+                                <label for="visitName">Müşteri Adı</label>
+                                <input name='tags-outside' class="form-control" id="visitName"
+                                    placeholder="Müşteri Seçiniz" value="" required />
+                            </div>
+                            <div class="form-group">
+                                <label for="plannedVisitDate">Planlama
+                                    Tarihi</label>
+                                <input type="date" class="form-control" id="plannedVisitDate" name="PlannedDate"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDate">Ziyaret Tarihi</label>
+                                <input type="date" class="form-control" id="visitDate" name="ActualDate">
+                            </div>
+                            <div class="form-group">
+                                <label for="visitDescription">Açıklama</label>
+                                <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                                    aria-hidden="true"></i></button>
+                            <label>**Girilmesi zorunlu alanlar kırmızı ile
+                                işaretlenmiştir.</label>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="missionModal"  aria-labelledby="missionModalLabel" aria-hidden="true"
+            data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="missionModalLabel">Görev Oluştur</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="missionForm">
+                            <div class="form-group">
+                                <label for="missionName">Müşteri Adı</label>
+                                <input name='tags-outside' class="form-control" id="missionName"
+                                    placeholder="Müşteri Seçiniz" value="" data-id="" required />
+
+                            </div>
+                            <div class="form-group">
+                                <label for="customerResponsible">Müşteri Sorumlusu (Müşteri seçilen sorumluya atanacaktır !)</label>
+                                <select id="customerResponsible" name="customerResponsible" class="form-control" required></select>
+
+                                </select>
+                            </div>
+
+
+                            <div class="form-group">
+                                <label for="plannedMissionDate">Planlama
+                                    Tarihi</label>
+                                <input type="date" class="form-control" id="plannedMissionDate" name="PlannedDate"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="actualMissionDate">Gerçekleşme Tarihi</label>
+                                <input type="date" class="form-control" id="actualMissionDate" name="ActualDate"
+                                    readonly>
+                            </div>
+                            <div class="form-group">
+                                <label for="missionDescription">Açıklama</label>
+                                <textarea class="form-control" id="missionDescription" name="Information"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                                    aria-hidden="true"></i></button>
+                            <label>**Girilmesi zorunlu alanlar kırmızı ile
+                                işaretlenmiştir.</label>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="addContactModal" tabindex="-1" aria-labelledby="addContactModalLabel"
+            aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Müşteriye irtibat ekle</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="contactForm">
+                            <div class="mb-3">
+                                <input type="text" id="contactFullName" class="form-control" placeholder="Ad Soyad">
+                                <div class="invalid-feedback">Ad Soyad alanı zorunludur!</div>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" id="contactTitle" class="form-control" placeholder="Ünvan">
+                                <div class="invalid-feedback">Ünvan alanı zorunludur!</div>
+                            </div>
+                            <div class="mb-3">
+                                <input type="text" id="contactPhoneNumber" class="form-control"
+                                    placeholder="Telefon Numarası">
+                                <div class="invalid-feedback">Telefon numarası 10 veya 11 haneli olmalıdır!</div>
+                            </div>
+                            <div class="mb-3">
+                                <input type="email" id="contactEmail" class="form-control" placeholder="Email">
+                                <div class="invalid-feedback">Geçerli bir email adresi giriniz!</div>
+                            </div>
+                            <div class="mb-3">
+                                <select id="contactGender" class="form-control">
+                                    <option value="">Cinsiyet Seç</option>
+                                    <option value="Erkek">Erkek</option>
+                                    <option value="Kadın">Kadın</option>
+                                </select>
+                                <div class="invalid-feedback">Cinsiyet seçilmelidir!</div>
+                            </div>
+                            <div class="alert alert-danger text-center">
+                                <i class="fa-solid fa-info-circle"></i> Müşterinin irtibatı yok !
+
+                            </div>
+                            <div class="alert alert-info text-center">
+                                <i class="fa-solid fa-info-circle"></i> İrtibat eklendikten sonra teklifiniz
+                                kaydedilecektir.
+
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                        <button type="button" class="btn btn-primary" style="background-color: #2D3A59; color: white;"
+                            id="confirmAddContact">İrtibat Ekle</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div class="modal fade custom-wide-modal" id="addOfferModal" aria-labelledby="addOfferModalLabel"
+            aria-hidden="true" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addOfferModalLabel">Yeni Teklif Ekle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="overflow-y: auto; max-height: calc(95vh - 120px); padding: 20px;">
+                        <form id="addOfferForm" method="post" action="/customer/AddOffer" enctype="multipart/form-data">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="name">Müşteri Adı</label>
+                                    <select name="tags-outside" class="form-control" id="name" required>
+                                        <option value="" selected hidden>Müşteri Seçiniz</option>
+                                    </select>
+
+                                </div>
+
+
+                                <div class="form-group col-md-2">
+                                    <label for="city">İl</label>
+                                    <select class="form-control" id="city" name="city" required>
+                                        <option value="">Seçiniz</option>
+                                        <!-- Populate this dropdown dynamically -->
+                                    </select>
+                                    <div class="invalid-feedback">Lütfen ili seçin.</div>
+                                </div>
+                                <div class="form-group col-md-2">
+                                    <label for="width">En </label>
+                                    <input type="number" class="form-control" id="width" name="Width" placeholder="mm"
+                                        required min="0">
+                                </div>
+
+                                <div class="form-group col-md-2">
+                                    <label for="height">Boy / Akış</label>
+                                    <input type="number" class="form-control" id="height" name="Height" placeholder="mm"
+                                        required min="0">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="paperInfo">Kağıt Bilgisi</label>
+                                    <select name='tags-outside' class="form-control" id="paperInfo"
+                                        placeholder="Bir seçenek seçiniz..." value=""> </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="adhesiveInfo">Tutkal
+                                        Bilgisi</label>
+                                    <select name='tags-outside' class="form-control" id="adhesiveInfo"
+                                        placeholder="Bir seçenek seçiniz... " value=""> </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="isPrinted">Baskılı / Baskısız</label>
+                                    <select class="form-control" id="isPrinted" name="IsPrinted"
+                                        onchange="toggleColorOptions()">
+                                        <option value="true" selected>Baskılı</option>
+                                        <option value="false">Baskısız</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6" id="colorOptions" style="display: none;">
+                                    <label for="numberOfColors">Renk Sayısı</label>
+                                    <select class="form-control" id="numberOfColors" name="NumberOfColors">
+                                        <option value="1">1 Renk</option>
+                                        <option value="2">2 Renk</option>
+                                        <option value="3">3 Renk</option>
+                                        <option value="4" selected>4 Renk</option>
+                                        <!-- Varsayılan olarak 4 Renk seçili -->
+                                        <option value="5">5 Renk</option>
+                                        <option value="6">6 Renk</option>
+                                        <option value="7">7 Renk</option>
+                                        <option value="8">8 Renk</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="AdditionalProcessing">İlave İşlem</label>
+                                    <select name="AdditionalProcessing" class="form-control" id="AdditionalProcessing"
+                                        placeholder="İlave İşlem Seçiniz" multiple="multiple"></select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="orderQuantity">Sipariş
+                                        Miktarı</label>
+                                    <input type="text" class="form-control" id="orderQuantity" name="OrderQuantity"
+                                        placeholder="Miktar giriniz..." required>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="orderMethod">Sipariş Birimi</label>
+                                    <select name='tags-outside' class="form-control" id="orderMethod"
+                                        placeholder="Bir seçenek seçiniz..." value=""> </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="deliveryMethod">Teslim Şekli</label>
+                                    <select name='tags-outside' class="form-control" id="deliveryMethod"
+                                        placeholder="Bir seçenek seçiniz..." value=""> </select>
+                                </div>
+
+
+                                <div class="form-group col-md-6">
+                                    <label for="paymentMethod">Ödeme Yöntemi</label>
+                                    <select class="form-control" id="paymentMethod" name="PaymentMethod">
+                                        <option value="Çek">Çek</option>
+                                        <option value="Havale" selected>Havale</option>
+                                        <!-- Varsayılan olarak seçili -->
+                                    </select>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="paymentTerm">Ödeme Vadesi</label>
+                                    <select class="form-control" id="paymentTerm" name="PaymentTerm">
+                                        <option value="">Seçiniz...</option>
+                                        <option value="15">15 Gün</option>
+                                        <option value="30" selected>30 Gün</option>
+                                        <option value="45">45 Gün</option>
+                                        <option value="60">60 Gün</option>
+                                        <option value="75">75 Gün</option>
+                                        <option value="90">90 Gün</option>
+                                        <option value="105">105 Gün</option>
+                                        <option value="120">120 Gün</option>
+                                        <option value="135">135 Gün</option>
+                                        <option value="150">150 Gün</option>
+                                        <option value="165">165 Gün</option>
+                                        <option value="180">180 Gün</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group col-md-6">
+                                    <label for="productName">Teklif Adı</label>
+                                    <input type="text" class="form-control" id="productName" name="ProductName">
+                                </div>
+
+
+
+                                <div class="form-group col-md-6">
+                                    <label for="offerPicture">Ürün Resmi</label>
+                                    <div class="custom-file">
+                                        <!-- Galeriden veya kameradan seçim yapılabilen dosya girdi alanı -->
+                                        <input type="file" class="custom-file-input" id="offerPicture"
+                                            name="OfferPicture" accept=".jpg, .jpeg, .png, .gif">
+                                        <label class="custom-file-label" for="offerPicture">Galeriden seçin...</label>
+                                    </div>
+
+                                    <!-- Mobilde kamera açma butonu -->
+                                    <button type="button" id="mobileCameraButton" class="btn mt-2 d-block d-md-none"
+                                        style="background-color: #2D3A59; color: white;">Kamerayı Aç</button>
+
+                                    <!-- Gizli kamera dosya girdi alanı -->
+                                    <input type="file" class="d-none" id="mobileCameraInput" name="mobileCameraInput"
+                                        accept=".jpg, .jpeg, .png, .gif">
+
+                                    <!-- Önizleme resmi -->
+                                    <img id="OfferPicturePreview" src="#" alt="Preview" class="img-preview mt-3"
+                                        style="display:none; max-width: 200px; height: auto;" />
+                                </div>
+                                <div class="form-group col-md-12">
+                                    <label for="description">Açıklama</label>
+                                    <textarea placeholder="Dilerseniz açıklama ekleyebilirsiniz." class="form-control"
+                                        id="description" name="Description"
+                                        style="height: 75px; resize: none;"></textarea>
+                                    <small id="wordCountMessage" style="color: red; display: none;"> 30 kelime sınırına
+                                        ulaşıldı.</small>
+                                </div>
+
+
+                                <div class="form-group col-md-6 d-flex align-items-center">
+                                    <div class="form-check d-flex align-items-center">
+                                        <input class="form-check-input"
+                                            type="checkbox" id="sendEmail" name="SendEmail" checked>
+                                        <label class="form-check-label ms-2" for="sendEmail">
+                                            <span class="fw-bold">Yöneticiye Mail Gönder</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-row d-flex align-items-center mt-3">
+
+                                <div class="form-group col-md-4">
+                                    <button type="submit" class="btn btn-outline-dark btn-lg">Teklifi Ekle <i
+                                            class="fa fa-save" aria-hidden="true"></i></button>
+                                </div>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.3/tagify.min.css" />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tagify/4.9.3/tagify.min.js"></script>
+
+        <script>
+
+
+            document.addEventListener("DOMContentLoaded", function () {
+                // Form alanlarını seç
+                const widthInput = document.getElementById("width");
+                const heightInput = document.getElementById("height");
+                const paperInfoSelect = document.getElementById("paperInfo");
+                const adhesiveInfoSelect = document.getElementById("adhesiveInfo");
+                const productNameInput = document.getElementById("productName");
+                const isPrintedSelect = document.getElementById("isPrinted");
+
+                // Ürün adını otomatik oluşturma işlevi
+                function updateProductName() {
+                    // En ve boy değerlerini 3 basamaklı formata dönüştür
+                    const widthValue = widthInput.value ? widthInput.value.padStart(3, '0') : "";
+                    const heightValue = heightInput.value ? heightInput.value.padStart(3, '0') : "";
+
+                    // Kağıt ve tutkal bilgisi için seçilen değerleri al (Select2'dan seçilen değeri al)
+                    const paperInfoValue = $(paperInfoSelect).find("option:selected").text() || "";
+                    const adhesiveInfoValue = $(adhesiveInfoSelect).find("option:selected").text() || "";
+
+                    // Baskı durumu kontrolü (Seçilen baskı durumu)
+                    const isPrintedValue = $(isPrintedSelect).find("option:selected").text();
+
+                    // Ürün adını oluştur
+                    const productName = `${widthValue}X${heightValue} ${isPrintedValue} ${paperInfoValue} ${adhesiveInfoValue}`;
+
+                    // Ürün adı alanına otomatik olarak yaz
+                    productNameInput.value = productName;
+                }
+
+                // Değişiklik olduğunda updateProductName fonksiyonunu çağır
+                widthInput.addEventListener("input", updateProductName);
+                heightInput.addEventListener("input", updateProductName);
+                $(paperInfoSelect).on("change", updateProductName);
+                $(adhesiveInfoSelect).on("change", updateProductName);
+                $(isPrintedSelect).on("change", updateProductName);
+
+                // Sayfa yüklendiğinde varsayılan değerlerle ürün adını güncelle
+                updateProductName();
+            });
+            document.addEventListener("DOMContentLoaded", function () {
+                var selectElement = document.getElementById("city");
+
+                // Sayfa yüklendiğinde ilk kontrol
+                updateSelectBackground(selectElement);
+
+                // Seçim yapıldığında veya değiştirildiğinde arka plan rengini güncelle
+                selectElement.addEventListener("change", function () {
+                    updateSelectBackground(selectElement);
+                });
+
+                function updateSelectBackground(element) {
+                    if (element.value === "") { // Eğer değer boşsa (ilk seçenek)
+                        element.style.backgroundColor = "#f4cccc"; // Kırmızı arka plan
+                    } else {
+                        element.style.backgroundColor = "#ffffff"; // Beyaz arka plan
+                    }
+                }
+            });
+
+
+            function toggleColorOptions() {
+                var isPrinted = document.getElementById("isPrinted").value;
+                var colorOptions = document.getElementById("colorOptions");
+                var numberOfColors = document.getElementById("numberOfColors");
+
+                if (isPrinted === "true") {
+                    // Baskılı seçildiğinde renk seçeneklerini göster ve düzenlemeye izin ver
+                    colorOptions.style.display = "block";
+                    numberOfColors.disabled = false;
+                    numberOfColors.value = 4; // Varsayılan olarak 4 Renk seçili
+                } else {
+                    // Baskısız seçildiğinde renk sayısını 0 yap ve düzenlemeyi kapat
+                    colorOptions.style.display = "block"; // Gizlenmez, ama değer 0 olur
+                    numberOfColors.value = 0;
+                    numberOfColors.disabled = true;
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                toggleColorOptions();
+            });
+
+            $(document).ready(function () {
+                // Verileri saklamak için bir değişken oluştur
+                let cachedCustomerData = [];
+                let cachedPaperInfoData = [];
+                let cachedAdhesiveInfoData = [];
+                let cachedAdditionalProcessings = [];
+                let cachedDeliveryMethodData = [];
+                let cachedOrderMethodData = [];
+
+                loadData('/Customer/GetCustomerInfos', '#name', cachedCustomerData);
+                loadData('/Customer/GetPaperInfos', '#paperInfo', cachedPaperInfoData, function () {
+                    // ID 6'nın seçili olarak gelmesi
+                    $('#paperInfo').val('6').trigger('change');
+                });
+                loadData('/Customer/GetAdhesiveInfos', '#adhesiveInfo', cachedAdhesiveInfoData);
+                loadData('/Customer/GetAdditionalProcessings', '#AdditionalProcessing', cachedAdditionalProcessings);
+                loadData('/Customer/GetDeliveryMethods', '#deliveryMethod', cachedDeliveryMethodData);
+                loadData('/Customer/GetOrderMethods', '#orderMethod', cachedOrderMethodData);
+
+                // Verileri yükleyen genel fonksiyon
+                function loadData(url, selectSelector, cacheData, callback) {
+                    $.ajax({
+                        url: url,
+                        type: 'GET',
+                        dataType: 'json',
+                        success: function (data) {
+                            cacheData = data;
+                            initializeSelect2(selectSelector, cacheData);
+                            if (callback) callback(); // Callback varsa çalıştır
+                        },
+                        error: function (xhr, status, error) {
+                            console.error(`${selectSelector} verileri yüklenirken bir hata oluştu:`, error);
+                        }
+                    });
+                }
+                // Mobilde Kamerayı Aç butonuna tıklayınca gizli dosya girdi alanı tetiklenir
+                document.getElementById('mobileCameraButton').addEventListener('click', function () {
+                    document.getElementById('mobileCameraInput').click();
+                });
+
+                // Kamera ile fotoğraf çekildiğinde veya galeriden dosya seçildiğinde önizleme yapılır
+                document.getElementById('mobileCameraInput').addEventListener('change', function (event) {
+                    const [file] = event.target.files;
+                    if (file) {
+                        const preview = document.getElementById("OfferPicturePreview");
+                        preview.src = URL.createObjectURL(file); // Önizleme URL'sini oluştur
+                        preview.style.display = 'block'; // Önizlemeyi göster
+                        preview.onload = () => URL.revokeObjectURL(preview.src); // Bellek temizleme
+                    }
+                });
+
+                // Galeriden dosya seçildiğinde önizleme yapılır
+                document.getElementById('offerPicture').addEventListener('change', function (event) {
+                    const file = event.target.files[0]; // Seçilen dosya
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const preview = document.getElementById('OfferPicturePreview');
+                            preview.src = e.target.result; // Önizleme için base64 URL'sini ayarla
+                            preview.style.display = 'block'; // Önizlemeyi göster
+                        };
+                        reader.readAsDataURL(file); // Dosyayı okuyup URL'ye çevirir
+                    }
+                });
+
+                // Select2 bileşenlerini başlatma işlemi
+                function initializeSelect2(selectSelector, data) {
+                    $(selectSelector).select2({
+                        placeholder: "Seçiniz",
+                        tags: selectSelector === '#name', // Sadece #name için tags özelliği aktif
+                        width: '100%',
+                        dropdownAutoWidth: false,
+                        dropdownParent: $(selectSelector).parent(),
+                        data: data.map(function (item) {
+                            return { id: item.id, text: item.name };
+                        }),
+                        createTag: function (params) {
+                            var term = $.trim(params.term);
+                            if (term === '') {
+                                return null;
+                            }
+                            // Yeni müşteri olduğunda null ID veriyoruz
+                            return {
+                                id: term, // Yeni girilen müşteri adı ID olarak geçici ayarlanır
+                                text: term,
+                                newOption: true
+                            };
+                        },
+                        templateResult: function (data) {
+                            var $result = $("<span></span>");
+                            $result.text(data.text);
+                            if (data.newOption) {
+                                $result.append(" <em>(yeni müşteri)</em>");
+                            }
+                            return $result;
+                        },
+                        templateSelection: function (data) {
+                            return data.text;
+                        }
+                    });
+
+                    // Dropdown açıldığında otomatik olarak arama alanına odaklanma
+                    $(selectSelector).on('select2:open', function () {
+                        document.querySelector('.select2-search__field').focus();
+                    });
+                }
+            });
+            function submitForAdminReview(offerId) {
+                $.ajax({
+                    url: '/Customer/SubmitForAdminReview',
+                    type: 'POST',
+                    data: { offerId: offerId },
+                    success: function (adminResponse) {
+                        console.log(adminResponse); // Backend'den gelen veriyi kontrol etmek için
+
+                        // Success durumu true ise başarı mesajını göster
+                        if (adminResponse && adminResponse.success) {
+                            Toastify({
+                                text: adminResponse.message,
+                                duration: 3000, // 3 saniye görünür
+                                gravity: "top", // Üstte görünür
+                                position: "right", // Sağ köşede görünür
+                                backgroundColor: "#28a745", // Başarılı mesaj için yeşil renk
+                            }).showToast();
+
+
+                            $('#addOfferModal').modal('hide');
+                            // Modalı kapatma ve modal-backdrop class'ını kaldırma
+
+
+                            // Modal kapandıktan sonra modal-backdrop elementini kaldırma
+                            $('#addOfferModal').on('hidden.bs.modal', function () {
+                                $('body').removeClass('modal-open'); // Body'den modal-open class'ını kaldırma
+                                $('.modal-backdrop').remove(); // modal-backdrop elementini DOM'dan kaldırma
+                            });
+
+
+
+                        }
+                        // Hata durumu varsa hata mesajını göster
+                        else {
+                            Toastify({
+                                text: adminResponse.message || "Yönetici onayı başarısız.",
+                                duration: 5000, // 5 saniye görünür
+
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#dc3545", // Hata mesajı için kırmızı renk
+                            }).showToast();
+                        }
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        // Ajax hatası durumunda hata mesajını göster
+                        Toastify({
+                            text: 'Yönetici onayına gönderme sırasında bir hata oluştu: ' + jqXHR.responseText + " (Durum: " + textStatus + ",  " + errorThrown + ")",
+                            duration: 5000, // 5 saniye görünür
+
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#dc3545", // Hata mesajı için kırmızı renk
+                        }).showToast();
+                    }
+                });
+            }
+
+            $('form').on('submit', function (e) {
+                // 'orderQuantity' ve 'editOrderQuantity' alanındaki noktaları temizle
+                let orderQuantityInput = document.getElementById('orderQuantity');
+                if (orderQuantityInput) {
+                    orderQuantityInput.value = orderQuantityInput.value.replace(/\./g, ''); // Noktaları kaldır ve backend'e temiz değer gönder
+                }
+
+
+
+                let Price = document.getElementById('Price');
+                if (Price) {
+                    Price.value = Price.value.replace(/\./g, ''); // Noktaları kaldır ve backend'e temiz değer gönder
+                }
+
+            });
+
+            $(document).ready(function () {
+                // Modal açıldığında tetiklenecek olan event
+                $('#sampleRecordModal').on('shown.bs.modal', function () {
+                    setTodayAsDefault('#plannedSampleDate');  // Benzersiz ID'yi burada belirtiyoruz
+                });
+                $('#emailRecordModal').on('shown.bs.modal', function () {
+                    setTodayAsDefault('#plannedEmailDate');  // Benzersiz ID'yi burada belirtiyoruz
+                });
+                $('#visitRecordModal').on('shown.bs.modal', function () {
+                    setTodayAsDefault('#plannedVisitDate');  // Benzersiz ID'yi burada belirtiyoruz
+                });
+                $('#phoneCallRecordModal').on('shown.bs.modal', function () {
+                    setTodayAsDefault('#plannedCallDate');
+
+                      // Benzersiz ID'yi burada belirtiyoruz
+                }); var responsibleSelect = $('#customerResponsible').select2({
+                    placeholder: "Satış Temsilcisi Seçiniz",
+                    width: '100%',
+                    allowClear: false
+                });
+
+                // Modal açıldığında temsilcileri getir
+                $('#missionModal').on('shown.bs.modal', function () {
+                    const $dropdown = $('#customerResponsible');
+                    $dropdown.empty().append('<option value="">Yükleniyor...</option>');
+
+                    $.get('/Customer/GetAllSalesRepresentatives', function (data) {
+                        $dropdown.empty().append('<option value="">Seçiniz</option>');
+                        if (data && data.length > 0) {
+                            data.forEach(user => {
+                                const option = new Option(user.fullName, user.id, false, false);
+                                $dropdown.append(option);
+                            });
+
+                            $dropdown.trigger('change'); // Select2 refresh
+
+                            // Seçilen müşteri varsa müşteri sorumlusunu getir
+                            const selectedCustomer = missionTagify.value[0];
+                            if (selectedCustomer && selectedCustomer.id) {
+                                $.get('/Customer/GetCustomerResponsible', { customerId: selectedCustomer.id }, function (responsibleId) {
+                                    if (responsibleId) {
+                                        $dropdown.val(responsibleId).trigger('change');
+                                    }
+                                });
+                            }
+                        }
+                    }).fail(function () {
+                        $dropdown.empty().append('<option value="">Yüklenemedi</option>');
+                    });
+                    setTodayAsDefault('#plannedMissionDate');
+                }); $('#missionName').on('change', function () {
+                    const selectedCustomer = missionTagify.value[0];
+
+                    if (selectedCustomer && selectedCustomer.id) {
+                        console.log('[LOG] Seçilen müşteri:', selectedCustomer);
+
+                        $.get('/Customer/GetCustomerResponsible', { customerId: selectedCustomer.id }, function (responsibleId) {
+                            console.log('[LOG] Gelen sorumlu ID:', responsibleId);
+
+                            if (responsibleId) {
+                                $('#customerResponsible').val(responsibleId).trigger('change');
+                            } else {
+                                console.warn('[WARN] Müşteri sorumlusu bulunamadı.');
+                            }
+                        }).fail(function (xhr) {
+                            console.error('[ERROR] Müşteri sorumlusu alınamadı:', xhr.responseText);
+                        });
+                    } else {
+                        console.warn('[WARN] Seçilen müşteri yok.');
+                    }
+                });
+
+
+
+
+                document.getElementById('addOfferForm').addEventListener('submit', function (e) {
+                    // Butonu devre dışı bırak
+                    var submitButton = document.getElementById('submitButton');
+                    submitButton.disabled = true;
+                    submitButton.innerHTML = 'Gönderiliyor...'; // İsteğe bağlı: Butonun içeriğini değiştirebilirsiniz
+
+
+
+                    // Formu gönder
+                    setTimeout(() => {
+                        this.submit();
+                    }, 100); // Kısa bir gecikme ile form gönderilir.
+                });
+
+
+                var emailTagify = new Tagify(document.querySelector("#emailName"), {
+                    whitelist: [],  // Mevcut müşteriler burada listelenecek
+                    enforceWhitelist: false,  // Liste dışındaki öğelere de izin veriyoruz
+                    editTags: false,
+                    maxTags: 1,  // En fazla bir öğe seçilebilsin
+                    dropdown: {
+                        maxItems: 20,  // Açılır menüde gösterilecek maksimum öğe sayısı
+                        enabled: 0,
+                        closeOnSelect: true
+                    }
+                });
+
+                var customerTagify = new Tagify(document.querySelector("#phoneCallName"), {
+                    whitelist: [],
+                    enforceWhitelist: false,
+                    editTags: false,
+                    maxTags: 1,  // En fazla bir öğe seçilebilsin
+                    dropdown: {
+                        maxItems: 20,
+                        enabled: 0,
+                        closeOnSelect: true
+                    }
+                });
+                var visitTagify = new Tagify(document.querySelector("#visitName"), {
+                    whitelist: [],
+                    enforceWhitelist: false,
+                    editTags: false,
+                    maxTags: 1,  // En fazla bir öğe seçilebilsin
+                    dropdown: {
+                        maxItems: 20,
+                        enabled: 0,
+                        closeOnSelect: true
+                    }
+                });
+                var missionTagify = new Tagify(document.querySelector("#missionName"), {
+                    whitelist: [],
+                    enforceWhitelist: false,
+                    editTags: false,
+                    maxTags: 1,  // En fazla bir öğe seçilebilsin
+                    dropdown: {
+                        maxItems: 20,
+                        enabled: 0,
+                        closeOnSelect: true
+                    }
+                });
+
+                var sampleTagify = new Tagify(document.querySelector("#sampleName"), {
+                    whitelist: [],
+                    enforceWhitelist: false,
+                    editTags: false,
+                    maxTags: 1,  // En fazla bir öğe seçilebilsin
+                    dropdown: {
+                        maxItems: 20,
+                        enabled: 0,
+                        closeOnSelect: true
+                    }
+                });
+                $.ajax({
+                    url: '/Customer/GetCustomerInfos',
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function (data) {
+                        var whitelist = data.map(function (item) {
+                            return { value: item.name, id: item.id };
+                        });
+                        customerTagify.whitelist = whitelist; // Müşteri listesini Tagify'a ekle
+                        emailTagify.whitelist = whitelist;  // Müşteri listesini Tagify'a ekle
+                        sampleTagify.whitelist = whitelist;  // Müşteri listesini Tagify'a ekle
+                        visitTagify.whitelist = whitelist;  // Müşteri listesini Tagify'a ekle
+                        missionTagify.whitelist = whitelist;  // Müşteri listesini Tagify'a ekle
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Müşteri listesi yüklenemedi:', error);
+                    }
+                });
+
+
+
+
+                function closeModal(modalSelector) {
+                    const modal = $(modalSelector);
+                    modal.modal('hide');
+                    modal.on('hidden.bs.modal', function () {
+                        $('body').removeClass('modal-open');
+                        $('.modal-backdrop').remove();
+                    });
+                }
+
+                function displayError(message) {
+                    Toastify({
+                        text: ` ${message}`,
+                        duration: 5000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                    }).showToast();
+                }
+                // Hata mesajlarını input altına göstermek için fonksiyon
+                function showInputErrors(errors) {
+                    Object.keys(errors).forEach(key => {
+                        const inputElement = document.getElementById(key);
+                        if (inputElement) {
+                            const errorContainerId = `${key}-error-container`;
+                            let errorContainer = document.getElementById(errorContainerId);
+
+                            // Eğer hata bölgesi yoksa, oluştur ve input'un altına ekle
+                            if (!errorContainer) {
+                                errorContainer = document.createElement('div');
+                                errorContainer.id = errorContainerId;
+                                errorContainer.style.color = '#f44336';
+                                errorContainer.style.fontSize = '12px';
+                                errorContainer.style.marginTop = '4px';
+                                inputElement.parentNode.appendChild(errorContainer);
+                            }
+
+                            errorContainer.innerHTML = errors[key]; // Hata mesajını göster
+                        }
+                    });
+                }
+
+                // Input alanlarının hata mesajlarını temizlemek için fonksiyon
+                function clearInputErrors() {
+                    const errorContainers = document.querySelectorAll('[id$="-error-container"]'); // Tüm hata bölmelerini seç
+                    errorContainers.forEach(container => container.remove()); // Hata mesajlarını kaldır
+                }
+
+
+
+                $(document).ready(function () {
+                    $('#addOfferForm').on('submit', function (event) {
+                        event.preventDefault();
+
+                        var formData = new FormData(this);
+                        const mobileCameraInput = document.getElementById('mobileCameraInput');
+                        if (mobileCameraInput.files.length > 0) {
+                            formData.set('OfferPicture', mobileCameraInput.files[0]);
+                        }
+
+                        var submitButton = $(this).find('button[type="submit"]');
+                        submitButton.prop('disabled', true);
+
+                        setTimeout(function () {
+                            submitButton.prop('disabled', false);
+                        }, 5000);
+
+                        var selectedCustomer = $('#name').select2('data')[0];
+                        if (!selectedCustomer || !selectedCustomer.text) {
+                            Toastify({
+                                text: "Lütfen bir müşteri seçin veya ekleyin.",
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#FF5733",
+                            }).showToast();
+                            submitButton.prop('disabled', false);
+                            return;
+                        }
+
+                        formData.append('Name', selectedCustomer.text);
+
+                        var additionalProcessingIds = $('#AdditionalProcessing').select2('data').map(function (item) {
+                            return parseInt(item.id);
+                        });
+
+                        additionalProcessingIds.forEach(function (id) {
+                            formData.append('AdditionalProcessingIds', id);
+                        });
+
+                        appendSelect2TextAndIdToForm('paperInfo', 'PaperInfoId', 'PaperInfoName', formData);
+                        appendSelect2TextAndIdToForm('adhesiveInfo', 'AdhesiveInfoId', 'AdhesiveInfoName', formData);
+                        appendSelect2TextAndIdToForm('deliveryMethod', 'DeliveryMethodId', 'DeliveryMethodName', formData);
+                        appendSelect2TextAndIdToForm('orderMethod', 'OrderMethodId', 'OrderMethodName', formData);
+
+                        var isPrinted = $('#isPrinted').val();
+                        formData.append('IsPrinted', isPrinted);
+
+                        if (isPrinted === "true") {
+                            var numberOfColors = $('#numberOfColors').val();
+                            if (!numberOfColors) {
+                                Toastify({
+                                    text: "Baskılı seçildiğinde renk sayısı boş olamaz.",
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#FF5733",
+                                }).showToast();
+                                submitButton.prop('disabled', false);
+                                return;
+                            }
+                            formData.append('NumberOfColors', parseInt(numberOfColors));
+                        } else {
+                            $('#numberOfColors').val('');
+                            formData.append('NumberOfColors', 0);
+                        }
+
+                        if (selectedCustomer.id && !selectedCustomer.newOption) {
+                            $.post('/customer/CheckCustomerContact', { customerId: selectedCustomer.id }, function (response) {
+                                if (!response.hasContact) {
+                                    console.log("Modal kapanıyor...");
+
+                                    // 1️⃣ Önce Bootstrap modal'ı kapatmayı dene
+                                    $('#addOfferModal').modal('hide');
+
+                                    // 2️⃣ Eğer hala kapanmazsa, doğrudan `display: none;` ekle
+                                    $('#addOfferModal').removeClass('show').hide();
+
+                                    // 3️⃣ Body üzerindeki `modal-open` sınıfını kaldır ve backdrop temizle
+                                    $('body').removeClass('modal-open');
+                                    $('.modal-backdrop').remove();
+
+                                    // 4️⃣ Modal kapanma işlemi tamamlandıktan sonra `addContactModal` aç
+                                    setTimeout(function () {
+                                        var contactModal = new bootstrap.Modal(document.getElementById('addContactModal'));
+                                        contactModal.show();
+                                    }, 300); // Küçük bir gecikme ile çalıştır
+
+                                    $('#confirmAddContact').off('click').on('click', function () {
+                                        var fullName = $('#contactFullName').val().trim();
+                                        var title = $('#contactTitle').val().trim();
+                                        var phoneNumber = $('#contactPhoneNumber').val().trim();
+                                        var email = $('#contactEmail').val().trim();
+                                        var gender = $('#contactGender').val();
+
+                                        var phoneRegex = /^[0-9]{10,11}$/;
+                                        var emailRegex = /^[a-zA-Z0-9._%+-]+\u0040[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+                                        var isValid = true;
+
+                                        function setInvalid(id, condition) {
+                                            var element = $("#" + id);
+                                            if (condition) {
+                                                element.addClass("is-invalid");
+                                                isValid = false;
+                                            } else {
+                                                element.removeClass("is-invalid");
+                                            }
+                                        }
+
+                                        setInvalid("contactFullName", !fullName);
+                                        setInvalid("contactTitle", !title);
+                                        setInvalid("contactPhoneNumber", !phoneNumber || !phoneRegex.test(phoneNumber));
+                                        setInvalid("contactEmail", email && !emailRegex.test(email) || email.includes("byb"));
+                                        setInvalid("contactGender", !gender);
+
+                                        if (!isValid) return;
+
+                                        var contactData = {
+                                            fullName,
+                                            title,
+                                            phoneNumber,
+                                            email,
+                                            gender,
+                                            CustomerId: selectedCustomer.id
+                                        };
+
+                                        $.post('/customer/AddContact', contactData, function (response) {
+                                            if (response.success) {
+                                                Toastify({
+                                                    text: "İrtibat başarıyla eklendi!",
+                                                    duration: 3000,
+                                                    gravity: "top",
+                                                    position: "right",
+                                                    backgroundColor: "#4CAF50",
+                                                }).showToast();
+
+                                                formData.append('CustomerId', selectedCustomer.id);
+                                                addOffer(formData);
+                                            } else {
+                                                Toastify({
+                                                    text: response.message,
+                                                    duration: 3000,
+                                                    gravity: "top",
+                                                    position: "center",
+                                                    backgroundColor: "#FF5733",
+                                                }).showToast();
+                                            }
+                                        }).fail(function () {
+                                            Toastify({
+                                                text: "İrtibat eklenirken bir hata oluştu.",
+                                                duration: 3000,
+                                                gravity: "top",
+                                                position: "center",
+                                                backgroundColor: "#FF5733",
+                                            }).showToast();
+                                        });
+
+                                        $('#addContactModal').modal('hide');
+                                    });
+                                } else {
+                                    formData.append('CustomerId', selectedCustomer.id);
+                                    addOffer(formData);
+                                }
+                            });
+                        } else {
+                            addNewCustomer(selectedCustomer.text, formData);
+                        }
+                    });
+                });
+
+
+
+                function checkCustomerContact(customerId, formData) {
+                    $.post('/customer/CheckCustomerContact', { customerId: customerId }, function (response) {
+                        if (!response.hasContact) {
+                            // ✅ Önce modalı kapat
+                            $('#addOfferModal').modal('hide');
+
+                            // ✅ Arkaplanı temizle
+                            $('body').removeClass('modal-open');
+                            $('.modal-backdrop').remove();
+
+                            // ✅ Modalın tamamen kapanmasını bekle, sonra yeni modalı aç
+                            $('#addOfferModal').on('hidden.bs.modal', function () {
+                                showAddContactModal(customerId, formData);
+                            });
+                        }
+                        else {
+                            addOffer(formData); // İrtibat varsa teklifi ekle
+                        }
+                    });
+                }
+
+                function showAddContactModal(customerId, formData) {
+                    // Modal'ı aç
+                    var modal = new bootstrap.Modal(document.getElementById('addContactModal'));
+                    modal.show();
+
+                    // Onay butonuna tıklanınca
+                    document.getElementById('confirmAddContact').onclick = function () {
+                        var fullName = document.getElementById('contactFullName').value.trim();
+                        var title = document.getElementById('contactTitle').value.trim();
+                        var phoneNumber = document.getElementById('contactPhoneNumber').value.trim();
+                        var email = document.getElementById('contactEmail').value.trim();
+                        var gender = document.getElementById('contactGender').value;
+
+                        var phoneRegex = /^[0-9]{10,11}$/;
+                        var emailRegex = /^[a-zA-Z0-9._%+-]+\u0040[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+
+                        var isValid = true;
+
+                        // Validasyon Kontrolleri
+                        function setInvalid(id, condition) {
+                            var element = document.getElementById(id);
+                            if (condition) {
+                                element.classList.add("is-invalid");
+                                isValid = false;
+                            } else {
+                                element.classList.remove("is-invalid");
+                            }
+                        }
+
+                        setInvalid("contactFullName", !fullName);
+                        setInvalid("contactTitle", !title);
+                        setInvalid("contactPhoneNumber", !phoneNumber || !phoneRegex.test(phoneNumber));
+                        setInvalid("contactEmail", email && !emailRegex.test(email) || (email.includes("byb")));
+                        setInvalid("contactGender", !gender);
+
+                        // Eğer doğrulama başarısızsa işlemi durdur
+                        if (!isValid) return;
+
+                        // Bilgileri gönder
+                        const contactData = {
+                            fullName,
+                            title,
+                            phoneNumber,
+                            email,
+                            gender,
+                            CustomerId: customerId
+                        };
+
+                        // Modal'ı kapat
+                        modal.hide();
+
+                        // İlgili fonksiyonu çağır
+                        addContact(contactData, formData);
+                    };
+                }
+
+                // Select2'den seçilen verileri (hem id hem de text) FormData'ya ekleyen fonksiyon
+                function appendSelect2TextAndIdToForm(elementId, fieldIdName, fieldTextName, formData) {
+                    // Seçilen id değerini al
+                    var selectedId = $('#' + elementId).val();
+
+                    // Seçilen text değerini al
+                    var selectedText = $('#' + elementId + ' option:selected').text();
+
+                    // Eğer id değeri varsa formData'ya ekle
+                    if (selectedId && selectedId.length > 0) {
+                        formData.append(fieldIdName, selectedId); // ID değerini ekle
+                    }
+
+                    // Eğer text değeri varsa formData'ya ekle
+                    if (selectedText && selectedText.length > 0) {
+                        formData.append(fieldTextName, selectedText); // Text değerini ekle
+                    }
+                }
+
+
+                // Select2'den seçilen verileri (text değerlerini) FormData'ya ekleyen fonksiyon
+                function appendSelect2TextToForm(selectId, formFieldName, formData) {
+                    var selectData = $('#' + selectId).select2('data').map(function (item) {
+                        return item.text;  // Text değerini alıyoruz
+                    });
+
+                    if (selectData && selectData.length > 0) {
+                        selectData.forEach(function (text) {
+                            formData.append(formFieldName, text);  // Text olarak formData'ya ekle
+                        });
+                    } else {
+                        console.error(selectId + ' için text değeri alınamadı.');
+                    }
+                }
+
+                function addNewCustomer(customerName, formData) {
+                    $.ajax({
+                        url: '/Customer/FastAddCustomer',
+                        type: 'POST',
+                        data: JSON.stringify({
+                            Name: customerName,
+                            City: $('#city').val()
+                        }),
+                        contentType: 'application/json',
+                        success: function (response) {
+                            if (response.success) {
+                                formData.append('CustomerId', response.customer.id);
+                                checkCustomerContact(response.customer.id, formData); // İrtibat kontrolü yapılıyor
+                                Toastify({
+                                    text: "Müşteri başarıyla eklendi!",
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#4CAF50",
+                                    stopOnFocus: true
+                                }).showToast();
+                            } else if (response.requiresConfirmation) {
+                                confirmSimilarCustomer(response, customerName, formData);
+                            } else {
+                                showToastError(response.message);
+                            }
+                        },
+                        error: showToastError
+                    });
+                }
+
+                function confirmSimilarCustomer(response, customerName, formData) {
+                    Swal.fire({
+                        title: 'Benzer firma bulundu',
+                        text: response.message,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, ekle',
+                        cancelButtonText: 'Hayır, Müşteri adını tekrar gireceğim'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.ajax({
+                                url: '/Customer/FastAddCustomer',
+                                type: 'POST',
+                                data: JSON.stringify({
+                                    Name: customerName,
+                                    City: $('#city').val(),
+                                    forceAdd: true
+                                }),
+                                contentType: 'application/json',
+                                success: function (confirmResponse) {
+                                    if (confirmResponse.success) {
+                                        formData.append('CustomerId', confirmResponse.customer.id);
+                                        checkCustomerContact(confirmResponse.customer.id, formData); // İrtibat kontrolü yapılıyor
+                                        Toastify({
+                                            text: "Müşteri başarıyla eklendi!",
+                                            duration: 3000,
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#4CAF50",
+                                            stopOnFocus: true
+                                        }).showToast();
+                                    } else {
+                                        showToastError(confirmResponse.message);
+                                    }
+                                },
+                                error: showToastError
+                            });
+                        }
+                    });
+                }
+
+
+
+                function addContact(contactData, formData) {
+                    $.post('/customer/AddContact', contactData, function (response) {
+                        if (response.success) {
+                            Toastify({
+                                text: "İrtibat başarıyla eklendi!",
+                                duration: 3000,
+                                backgroundColor: "#4CAF50"
+                            }).showToast();
+                            addOffer(formData); // İrtibat eklendikten sonra teklifi ekle
+                        } else {
+                            Toastify({
+                                text: response.message,
+                                duration: 3000,
+                                backgroundColor: "#FF5733"
+                            }).showToast();
+                        }
+                    }).fail(function () {
+                        Toastify({
+                            text: "İrtibat eklenirken bir hata oluştu.",
+                            duration: 3000,
+                            backgroundColor: "#FF5733"
+                        }).showToast();
+                    });
+                }
+
+                function showToastError(message) {
+                    Toastify({
+                        text: message,
+                        duration: 3000,
+                        backgroundColor: "#FF5733"
+                    }).showToast();
+                }
+
+
+                function showToastError(message) {
+                    Toastify({
+                        text: " " + message,
+                        duration: 5000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+
+
+                // Function to add offer
+                function addOffer(formData) {
+                    $.ajax({
+                        url: '/Customer/AddOffer',
+                        type: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function (offerResponse) {
+                            if (offerResponse.success) {
+                                Toastify({
+                                    text: "Teklif başarıyla eklendi 🥳",
+                                    duration: 3000, // 3 saniye görünür
+                                    gravity: "top", // Üstte görünür
+                                    position: "right", // Ortada görünür
+                                    backgroundColor: "#28a745", // Başarılı mesaj için yeşil renk
+                                }).showToast();
+
+                                setTimeout(function () { // Toastify görünür olduktan sonra işlem yapılacak
+                                    if ($('#sendEmail').is(':checked')) {
+                                        Toastify({
+                                            text: "Yöneticiye mail gönderiliyor.⏳",
+                                            duration: 1000, // 1 saniye görünür
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#007bff", // Bilgi mesajı için mavi renk
+                                        }).showToast();
+
+                                        submitForAdminReview(offerResponse.offerId);
+                                        localStorage.setItem('offerSubmitted', 'true');
+                                    } else {
+                                        $('#addOfferModal').modal('hide'); // Modalı gizle
+                                        location.reload(); // Sayfayı yenile
+                                    }
+                                }, 3000); // 3 saniye bekle
+                            } else {
+                                Toastify({
+                                    text: " " + offerResponse.message + (offerResponse.errors ? '\n' + offerResponse.errors.join('\n') : ''),
+                                    duration: 5000, // 5 saniye görünür
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#dc3545", // Hata mesajı için kırmızı renk
+                                }).showToast();
+                            }
+                        },
+                        error: function (jqXHR, textStatus, errorThrown) {
+                            Toastify({
+                                text: 'Bir hata oluştu: ' + jqXHR.responseText + " (Durum: " + textStatus + ",  " + errorThrown + ")",
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#dc3545", // Hata mesajı için kırmızı renk
+                            }).showToast();
+                        }
+                    });
+                }
+                $(document).ready(function () {
+                    // Tüm kayıt formları için dinamik çağrılar
+                    handleFormSubmitWithCustomer('#visitRecordForm', 'Ziyaret', visitTagify, '#visitRecordModal');
+                    handleFormSubmitWithCustomer('#sampleRecordForm', 'Numune', sampleTagify, '#sampleRecordModal');
+                    handleFormSubmitWithCustomer('#emailRecordForm', 'E-mail', emailTagify, '#emailRecordModal');
+                    handleFormSubmitWithCustomer('#phoneCallRecordForm', 'Telefon', customerTagify, '#phoneCallRecordModal');
+                    handleFormSubmitWithCustomer('#missionForm', 'Görev', missionTagify, '#missionModal');
+                });
+
+                // Dinamik Form İşleme Fonksiyonu
+                function handleFormSubmitWithCustomer(formSelector, recordType, tagifyInstance, modalSelector) {
+                    $(formSelector).off('submit').on('submit', function (event) {
+                        event.preventDefault(); // Sayfa yenilemeyi engelle
+
+                        const formData = new FormData(this);
+                        const selectedCustomer = tagifyInstance.value[0]; // Tagify'dan seçilen müşteri
+
+                        // Müşteri seçilmediyse uyarı göster
+                        if (!selectedCustomer || !selectedCustomer.value) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata',
+                                text: 'Lütfen bir müşteri seçin veya yeni bir müşteri ekleyin.',
+                            });
+                            return;
+                        }
+
+                        if (selectedCustomer.id) {
+                            // Mevcut müşteri seçilmişse ID'yi ekleyip formu gönder
+                            formData.append('CustomerId', selectedCustomer.id);
+                            submitRecord(formData, recordType, modalSelector);
+                        } else {
+                            // Yeni müşteri eklenmesi
+                            $.ajax({
+                                url: '/Customer/FastAddCustomer',
+                                type: 'POST',
+                                data: JSON.stringify({ Name: selectedCustomer.value }),
+                                contentType: 'application/json',
+                                success: function (response) {
+                                    if (response.success) {
+                                        formData.append('CustomerId', response.customer.id);
+                                        console.log("✅ Gönderilen müşteri sorumlusu ID:", formData.get("customerResponsible"));
+
+                                        submitRecord(formData, recordType, modalSelector);
+
+                                        // ✅ Modalı kapat
+                                        $(modalSelector).modal('hide');
+
+                                        // ✅ Arkaplanı temizle
+                                        $('body').removeClass('modal-open');
+                                        $('.modal-backdrop').remove();
+
+                                        Toastify({
+                                            text: "Müşteri başarıyla eklendi!",
+                                            duration: 3000,
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#4CAF50",
+                                            stopOnFocus: true
+                                        }).showToast();
+                                    } else if (response.requiresConfirmation) {
+                                        // SweetAlert ile kullanıcıdan onay al
+                                        Swal.fire({
+                                            title: "Uyarı",
+                                            text: response.message,
+                                            icon: "warning",
+                                            showCancelButton: true,
+                                            confirmButtonText: "Evet, ekle",
+                                            cancelButtonText: "İptal",
+                                        }).then((result) => {
+                                            if (result.isConfirmed) {
+                                                // Kullanıcı onayladıysa, tekrar forceAdd ile AJAX çağrısını yap
+                                                $.ajax({
+                                                    url: '/Customer/FastAddCustomer',
+                                                    type: 'POST',
+                                                    data: JSON.stringify({ Name: selectedCustomer.value, forceAdd: true }),
+                                                    contentType: 'application/json',
+                                                    success: function (confirmResponse) {
+                                                        if (confirmResponse.success) {
+                                                            formData.append('CustomerId', confirmResponse.customer.id);
+                                                            submitRecord(formData, recordType, modalSelector);
+
+                                                            // ✅ Modalı kapat
+                                                            $(modalSelector).modal('hide');
+
+                                                            // ✅ Arkaplanı temizle
+                                                            $('body').removeClass('modal-open');
+                                                            $('.modal-backdrop').remove();
+
+                                                            Toastify({
+                                                                text: "Müşteri başarıyla eklendi!",
+                                                                duration: 3000,
+                                                                gravity: "top",
+                                                                position: "right",
+                                                                backgroundColor: "#4CAF50",
+                                                                stopOnFocus: true
+                                                            }).showToast();
+                                                        } else {
+                                                            displayError(confirmResponse.message);
+                                                        }
+                                                    },
+                                                    error: function (jqXHR) {
+                                                        displayError(jqXHR.responseText);
+                                                    }
+                                                });
+                                            }
+                                        });
+                                    } else {
+                                        displayError(response.message);
+                                    }
+                                },
+                                error: function (jqXHR) {
+                                    displayError(jqXHR.responseText);
+                                }
+                            });
+
+
+
+                            function displayError(message) {
+                                Toastify({
+                                    text: "" + message,
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#FF0000",
+                                    stopOnFocus: true
+                                }).showToast();
+                            }
+
+                        }
+                    });
+                }
+
+                // Genel Kayıt Gönderim Fonksiyonu
+                function submitRecord(formData, recordType, modalSelector) {
+                    // ActualDate var mı kontrol et
+                    var actualDate = formData.get('ActualDate');
+                    var information = formData.get('Information');
+
+                    // Eğer ActualDate varsa, Information 5 karakterden kısa olamaz
+                    if (actualDate && (!information || information.length < 5)) {
+                        Toastify({
+                            text: "Lütfen açıklama giriniz kayıt eklenemedi.",
+                            duration: 3000, // Uyarının görünme süresi
+                            gravity: "top", // Üst kısımda göster
+                            position: "right", // Sağda göster
+                            backgroundColor: "red", // Kırmızı arka plan
+                            stopOnFocus: true // Kullanıcı uyarıya tıkladığında durmasın
+                        }).showToast();
+                        return; // Formu göndermeden çık
+                    }
+
+                    formData.append('recordType', recordType);
+
+                    $.ajax({
+                        url: '@Url.Action("AddRecord", "Customer")',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            if (response.success) {
+                                Toastify({
+                                    text: `${recordType} kaydı başarıyla eklendi 🥳`,
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#28a745",
+                                    stopOnFocus: true
+                                }).showToast();
+
+                                closeModal(modalSelector);
+
+                                // 1 saniye sonra sayfayı yenile
+                                setTimeout(function () {
+                                    location.reload();
+                                }, 1000);
+                            } else {
+                                displayError(response.errors.join("\n"));
+                            }
+                        },
+                        error: function (jqXHR) {
+                            displayError(jqXHR.responseText);
+                        }
+                    });
+                }
+
+
+                // Hata Gösterim Fonksiyonu
+                function displayError(message) {
+                    Toastify({
+                        text: ` ${message}`,
+                        duration: 5000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+
+                /////
+                // Fonksiyonu güncelle:
+                function setTodayAsDefault(inputId) {
+                    var today = new Date();
+                    var day = String(today.getDate()).padStart(2, '0');
+                    var month = String(today.getMonth() + 1).padStart(2, '0');  // Aylar 0-11 arası olduğu için +1
+                    var year = today.getFullYear();
+
+                    var formattedDate = year + '-' + month + '-' + day;
+                    $(inputId).val(formattedDate);  // ID'yi parametre olarak alıp uygun elemana değeri set ediyoruz
+                    console.log("Tarih ayarlandı: " + $(inputId).val());
+                }
+
+
+                function submitVisitRecord(formData) {
+                    $.ajax({
+                        url: '@Url.Action("AddVisitRecord", "Customer")',
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (response) {
+                            if (response.success) {
+                                Toastify({
+                                    text: "Ziyaret kaydı başarıyla eklendi 🥳",
+                                    duration: 5000,
+
+                                    gravity: "top", // "top" or "bottom"
+                                    position: "right", // "left", "center" or "right"
+                                    backgroundColor: "#28a745",
+                                }).showToast();
+
+
+                                // Modalı kapatma
+                                $('#visitRecordModal').modal('hide'); // emailModal modal id'sini modalınızın id'si ile değiştirin
+                                $('#visitRecordModal').on('hidden.bs.modal', function () {
+                                    $('body').removeClass('modal-open'); // Body'den modal-open class'ını kaldırma
+                                    $('.modal-backdrop').remove(); // modal-backdrop elementini DOM'dan kaldırma
+                                });
+
+                            } else {
+                                Toastify({
+                                    text: " " + response.errors.join("\n"),
+                                    duration: 5000,
+
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#dc3545",
+                                }).showToast();
+                            }
+                        },
+                        error: function (jqXHR) {
+                            Toastify({
+                                text: "Bir hata oluştu: " + jqXHR.responseText,
+                                duration: 5000,
+
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#dc3545",
+                            }).showToast();
+                        }
+                    });
+                }
+
+
+
+            });
+            // Şehirleri yükleme
+            $.get('/Customer/GetCities', function (data) {
+                if (data && data.length > 0) {
+                    $('#city').empty();
+                    $('#city').append('<option value="">Seçiniz</option>');
+                    $.each(data, function (index, value) {
+                        $('#city').append('<option value="' + value + '">' + value + '</option>');
+                    });
+                } else {
+                    $('#city').append('<option value="">Veri yüklenemedi</option>');
+                }
+            });
+
+            document.getElementById('orderQuantity').addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\./g, ''); // Noktaları kaldır
+                if (value !== '' && /^[0-9]+$/.test(value)) {
+                    e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Üçlü gruplara böl ve nokta koy
+                } else if (value === '') {
+                    e.target.value = ''; // Eğer giriş boşsa hiçbir işlem yapma
+                }
+            });
+
+            // Form submit edilmeden önce noktaları kaldır
+            document.querySelector('form').addEventListener('submit', function (e) {
+                let input = document.getElementById('orderQuantity');
+                input.value = input.value.replace(/\./g, ''); // Noktaları kaldır ve backend'e temiz değer gönder
+            });
+
+            // Modal açıldığında çalışacak kod
+            $('#addOfferModal').on('shown.bs.modal', function () {
+                // Modal açıldığında Select2'de seçili müşterinin ID'sini al
+                var selectedCustomer = $('#name').select2('data')[0]; // Seçilen müşteri
+                var selectedCustomerId = selectedCustomer ? selectedCustomer.id : null; // Müşteri ID'si
+
+                if (selectedCustomerId) {
+                    // Müşteri ID'si varsa şehir bilgisi için AJAX isteği yap
+                    $.ajax({
+                        url: '/Customer/GetCustomerCity',  // Müşteri il bilgisini döndüren API endpoint
+                        type: 'GET',
+                        data: { customerId: selectedCustomerId },  // Seçili müşteri ID'sini gönder
+                        success: function (response) {
+                            if (response && response.city) {
+                                // Şehir bilgisi varsa dropdown'a ekle
+                                $('#city').val(response.city);
+                            } else {
+                                // Eğer şehir bilgisi yoksa boş bırak
+                                $('#city').val('');
+                            }
+                        },
+                        error: function () {
+                            console.error('Müşteri il bilgisi alınamadı.');
+                            $('#city').val('');  // Hata durumunda dropdown boş bırakılabilir
+                        }
+                    });
+                } else {
+                    $('#city').val('');  // Eğer müşteri seçilmediyse boş bırak
+                }
+            });
+
+            // Select2 değiştiğinde şehir bilgisini güncelle
+            $('#name').on('change', function () {
+                var selectedCustomer = $('#name').select2('data')[0]; // Seçilen müşteri
+                var selectedCustomerId = selectedCustomer ? selectedCustomer.id : null; // Müşteri ID'si
+
+                if (selectedCustomerId) {
+                    $.ajax({
+                        url: '/Customer/GetCustomerCity',  // Müşteri il bilgisini döndüren API endpoint
+                        type: 'GET',
+                        data: { customerId: selectedCustomerId },  // Seçilen müşteri ID'sini gönder
+                        success: function (response) {
+                            if (response && response.city) {
+                                // Şehir bilgisi varsa dropdown'a ekle
+                                $('#city').val(response.city);
+                            } else {
+                                // Eğer şehir bilgisi yoksa boş bırak
+                                $('#city').val('');
+                            }
+                        },
+                        error: function () {
+                            console.error('Müşteri il bilgisi alınamadı.');
+                            $('#city').val('');  // Hata durumunda dropdown boş bırakılabilir
+                        }
+                    });
+                } else {
+                    $('#city').val('');  // Eğer müşteri seçilmediyse boş bırak
+                }
+            });
+
+
+
+
+        </script>
+</body>

@@ -1,0 +1,555 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müşteri Listesi</title>
+    <link rel="stylesheet" type="text/css" href="~/css/listcustomer.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+</head>
+
+@using System.Security.Claims
+@{
+var firstName = System.Net.WebUtility.HtmlDecode(User.FindFirst("FirstName")?.Value ?? string.Empty);
+var lastName = System.Net.WebUtility.HtmlDecode(User.FindFirst("LastName")?.Value ?? string.Empty);
+bool isYetkili = User.IsInRole("Yönetici") || User.IsInRole("Denetlemeci");
+
+
+ViewBag.UserName = $"{firstName} {lastName}";
+}
+
+
+    <div class="container">
+        <h4 class="display-4 text-center">Potansiyel ❓ Müşteri Listesi</h4>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+            <input type="text" class="form-control search-input-custom" id="searchInput"
+                placeholder="Herhangi bir parametre ile ara..." style="margin: 0; flex-grow: 1; height: 60px;">
+
+        </div>
+        <hr>
+        <div class="button-container">
+            <div class="button-group">
+                @if (isYetkili)
+                {
+                <button class="btn btn-outline-dark mb-3 btn-lg" data-toggle="modal" data-target="#addCustomerModal">
+                    Potansiyel Müşteri Ekle <i class="fa-solid fa-user-plus"></i>
+                </button>
+
+                <button class="btn btn-outline-dark mb-3 btn-lg"
+                    onclick="exportTableToExcel('user-table', 'MusteriListesi.xlsx')">
+                    Tabloyu Excel'e Aktar <i class="fa-solid fa-download"></i>
+                </button>
+                }
+
+            </div>
+            <!-- <button class="btn btn-outline-dark mb-3 btn-lg" id="deleteSelected">
+            Seçilen Müşterileri Sil <i class="fa fa-trash"></i>
+        </button> -->
+        </div>
+        <div class="table-header" style="text-align: center;">
+            <h5 id="customerCount"
+                style="font-size: 1.2em; font-weight: bold; color: #4F75FF; border: 2px solid #4379F2; display: inline-block; padding: 10px 20px; border-radius: 8px; background-color: #f0f8ff;">
+                Listelenen Potansiyel Müşterilerinizin Sayısı: 0
+            </h5>
+        </div>
+        <div class="table-responsive">
+            <table id="user-table" class="user-table table table-bordered">
+
+                <thead>
+                    <tr>
+                        <!-- <th><input type="checkbox" id="selectAll"></th> -->
+                        <th>Id</th>
+                        <th>Ad</th>
+                        <th>İl</th>
+                        <th>İlçe</th>
+                        <th>Randevu Tarihi</th>
+                        <th>Müşteri Sorumlusu</th>
+                        <th>Durum </th>
+                        <th>İşlemler</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null)
+                    {
+                    foreach (var customer in Model)
+                    {
+                    <tr>
+                        <!-- <td><input type="checkbox" class="selectCustomer" data-id="@customer.Id"></td> -->
+                        <td>@customer.Id</td>
+                        <td>@customer.Name</td>
+                        <td>@customer.City</td>
+                        <td>@customer.District</td>
+                        <td>@(customer.LastVisitActualDate?.ToString("dd.MM.yyyy") ?? "Henüz ziyaret planlanmadı")</td>
+                        <td>@customer.CreatedBy</td>
+
+
+                        <td>
+                            @{
+                                // Records listesini statik bir tipe dönüştür
+                                var records = customer.Records as List<RecordViewModel>;
+                            
+                                // "Ziyaret" durumuna sahip kayıtları filtrele
+                                bool anyZiyaretRecordHasActualDate = records != null && records.Any(record => 
+                                    record.Status == "Ziyaret" && record.ActualDate != null);
+                            
+                                // Son kayıt (herhangi bir kayıt) Id'ye göre belirle
+                                var lastRecord = records?.OrderByDescending(r => r.Id).FirstOrDefault();
+                            
+                                // Son "Ziyaret" kaydını Id'ye göre belirle
+                                var lastZiyaretRecord = records?.Where(r => r.Status == "Ziyaret")
+                                                                .OrderByDescending(r => r.Id)
+                                                                .FirstOrDefault();
+                            
+                                string buttonClass = "btn btn-lg "; // Varsayılan buton sınıfı
+                                string buttonText = ""; // Gösterilecek metin
+                            
+                                if (anyZiyaretRecordHasActualDate)
+                                {
+                                    buttonClass += "btn-success"; // Yeşil buton
+                                    buttonText = "Gerçekleşti ✅";
+                                }
+                                else if (records == null || !records.Any())
+                                {
+                                    buttonClass += "btn-warning text-dark"; // Sarı buton
+                                    buttonText = "Eklendi ⚠️";
+                                }
+                                else if (customer.IsOwned)
+                                {
+                                    buttonClass += "btn-primary"; // Mavi buton
+                                    buttonText = "Sahiplenildi 🆗";
+                                }
+                                else if (lastZiyaretRecord != null)
+                                {
+                                    if (lastZiyaretRecord.Status == "Ziyaret")
+                                    {
+                                        buttonClass += "btn-info text-white"; // Açık mavi buton
+                                        buttonText = "Randevu oluşturuldu 🗓️";
+                                    }
+                                    else
+                                    {
+                                        buttonClass += "btn-secondary"; // Gri buton
+                                        buttonText = $"{lastZiyaretRecord.Status} kaydı eklendi.";
+                                    }
+                                }
+                                else if (lastRecord != null)
+                                {
+                                    buttonClass += "btn-info"; // Kırmızı buton
+                                    buttonText = $"{lastRecord.Status} kaydı eklendi.";
+                                }
+                                else
+                                {
+                                    buttonClass += "btn-info"; // Kırmızı buton
+                                    buttonText = "Hiçbir kayıt yok.";
+                                }
+                            }
+                            
+                            <button class="@buttonClass">
+                                @buttonText
+                            </button>
+                            
+                        </td>
+
+
+
+
+
+
+                        <!-- Table Cell -->
+                        <td style="text-align: center; vertical-align: middle;">
+                            <!-- Button Element -->
+                            <a class="btn btn-dark" href="@Url.Action("PotentialCustomerDetail","Customer" , new {
+                                id=customer.Id })"
+                                style="display: inline-flex; justify-content: center; align-items: center; width: 60px; height: 60px;">
+                                <i class='fas fa-sign-in-alt' style="font-size: 24px; margin: 0;"></i>
+                            </a>
+                        </td>
+
+                    </tr>
+                    }
+                    }
+                    else
+                    {
+                    <tr>
+                        <td colspan="8">Veri yüklenemedi</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <hr>
+    </div>
+
+    <!-- Add Customer Modal -->
+    <div class="modal fade" id="addCustomerModal" tabindex="-1" role="dialog" aria-labelledby="addCustomerModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="addCustomerModalLabel">Müşteri Ekle</h2>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="addPotentialCustomerForm" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-group">
+                            <label for="name">Firma Adı</label>
+                            <input type="text" class="form-control" id="name" name="Name" required>
+                            <div class="invalid-feedback">Lütfen firma adını girin.</div>
+                        </div>
+
+
+                        <div class="form-group">
+                            <label for="images">Resimler</label>
+                            <input type="file" class="form-control" id="images" name="UploadedImages" accept="image/*"
+                                capture="camera" multiple>
+
+                        </div>
+
+
+                        <div class="form-group">
+                            <label for="CreatedBy">Müşteri Sorumlusu</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="CreatedBy" name="CreatedBy" readonly
+                                    value="@Html.Raw(ViewBag.UserName)">
+                                <div class="input-group-append">
+                                    <span class="input-group-text"><i class="fa fa-handshake"
+                                            aria-hidden="true"></i></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="IsPotential" value="true">
+
+                        <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">
+                            Potansiyel Müşteri Ekle <i class="fa fa-check" aria-hidden="true"></i>
+                        </button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const table = document.getElementById("user-table");
+            const headers = table.querySelectorAll("thead th");
+            const tbody = table.querySelector("tbody");
+            let currentSortColumn = null;
+            let currentSortOrder = "asc";
+
+            headers.forEach((header, index) => {
+                header.addEventListener("click", function () {
+                    // Önce tüm sütunlardan aktif sınıfı ve ikonları kaldır.
+                    headers.forEach(h => {
+                        h.classList.remove("active");
+                        const icon = h.querySelector(".sort-icon");
+                        if (icon) icon.remove();
+                    });
+
+                    // Şimdiki sütuna aktif sınıfı ekle.
+                    header.classList.add("active");
+
+                    // Sıralama yönünü değiştir veya varsayılan olarak "asc" yap.
+                    if (currentSortColumn === index) {
+                        currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+                    } else {
+                        currentSortColumn = index;
+                        currentSortOrder = "asc";
+                    }
+
+                    // Sıralama ikonunu ekle.
+                    const sortIcon = document.createElement("span");
+                    sortIcon.classList.add("sort-icon");
+                    sortIcon.innerHTML = currentSortOrder === "asc" ? "▲" : "▼";
+                    header.appendChild(sortIcon);
+
+                    // Satırları sıralama.
+                    const isDateColumn = header.innerText.includes("Randevu Tarihi");
+                    const rows = Array.from(tbody.querySelectorAll("tr"));
+
+                    rows.sort((rowA, rowB) => {
+                        const cellA = rowA.children[index].innerText.trim();
+                        const cellB = rowB.children[index].innerText.trim();
+
+                        if (isDateColumn) {
+                            const dateA = new Date(cellA.split('.').reverse().join('-'));
+                            const dateB = new Date(cellB.split('.').reverse().join('-'));
+                            return currentSortOrder === "asc" ? dateA - dateB : dateB - dateA;
+                        } else {
+                            return currentSortOrder === "asc"
+                                ? cellA.localeCompare(cellB, 'tr')
+                                : cellB.localeCompare(cellA, 'tr');
+                        }
+                    });
+
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+        });
+        $('#addPotentialCustomerForm').on('submit', function (e) {
+            e.preventDefault();
+            var formData = new FormData(this);
+
+            $.ajax({
+                url: '/Customer/AddPotentialCustomer',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+
+                success: function (response) {
+                    if (response.success) {
+                        Toastify({
+                            text: "Potansiyel müşteri başarıyla eklendi",
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "green", // Başarı yeşil rengi
+                            close: false
+                        }).showToast(); setTimeout(function () {
+                            location.reload();
+                        }, 2000);
+
+                        // Formu sıfırla
+                        $('#addPotentialCustomerForm')[0].reset();
+                    } else if (response.message.includes('Bu isimle başlayan mevcut firmalar')) {
+                        // Benzer isimli müşteriler var ise Swal ile onay penceresi göster
+                        Swal.fire({
+                            title: 'Benzer İsimli Müşteri Mevcut!',
+                            text: response.message,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, Ekle',
+                            cancelButtonText: 'Hayır, İptal Et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                formData.append('ForceAdd', true); // ForceAdd parametresini ekle
+                                $.ajax({
+                                    url: '/Customer/AddPotentialCustomer',
+                                    type: 'POST',
+                                    data: formData,
+                                    processData: false,
+                                    contentType: false,
+                                    success: function (response) {
+                                        if (response.success) {
+                                            Toastify({
+                                                text: "Potansiyel müşteri başarıyla eklendi",
+                                                duration: 5000,
+                                                gravity: "top",
+                                                position: "right",
+                                                backgroundColor: "green",
+                                                close: false
+                                            }).showToast(); setTimeout(function () {
+                                                location.reload();
+                                            }, 2000);
+
+                                            // Formu sıfırla
+                                            $('#addPotentialCustomerForm')[0].reset();
+                                        } else {
+                                            Toastify({
+                                                text: response.message,
+                                                duration: 5000,
+                                                gravity: "top",
+                                                position: "right",
+                                                backgroundColor: "red", // Hata kırmızı rengi
+                                                close: false
+                                            }).showToast();
+                                        }
+                                    },
+                                    error: function (err) {
+                                        Toastify({
+                                            text: 'Hata oluştu: ' + (err.responseJSON?.message || 'Yetkiniz olduğundan emin olun ! '),
+                                            duration: 5000,
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "red",
+                                            close: false
+                                        }).showToast();
+                                    }
+                                });
+                            }
+                        });
+                    } else {
+                        Toastify({
+                            text: response.message,
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red", // Hata kırmızı rengi
+                            close: false
+                        }).showToast();
+                    }
+                },
+                error: function (err) {
+                    Toastify({
+                        text: '' + (err.responseJSON?.message || 'Bu işlem için yetkinizin olduğundan emin olun !'),
+                        duration: 5000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "red", // Hata kırmızı rengi
+                        close: false
+                    }).showToast();
+                }
+            });
+        });
+
+        async function exportTableToExcel(tableID, filename = 'MusteriListesi.xlsx') {
+            const table = document.getElementById(tableID);
+
+            // Yeni bir workbook oluştur
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("Sheet1");
+
+            // Controller'dan gelen Contacts bilgilerini alın
+            const contactsData = JSON.parse('@Html.Raw(ViewBag.ContactsJson)');
+
+            // Tablo başlıklarını al ve "İşlemler" başlığını hariç tut
+            const headerRow = table.querySelector("thead tr");
+            const headers = Array.from(headerRow.querySelectorAll("th"))
+                .map(cell => cell.textContent.trim())
+                .filter(header => header !== "İşlemler"); // "İşlemler" sütununu hariç tut
+
+            // Ek başlıklar ekle (Contacts bilgileri için)
+            headers.push("Id", "Görevi", "İsim Soyisim", "Telefon", "Cinsiyet", "Email");
+
+            const excelHeaderRow = worksheet.addRow(headers);
+            excelHeaderRow.eachCell(cell => {
+                cell.font = { bold: true }; // Başlıkları kalın yap
+                cell.alignment = { horizontal: "center", vertical: "middle" }; // Ortala
+            });
+
+            // Yalnızca görünür satırları alın
+            const rows = Array.from(table.querySelectorAll("tbody tr")).filter(row => {
+                return row.style.display !== "none"; // Görünür satırları filtrele
+            });
+
+            // Tablodaki görünür satır verilerini ekle
+            rows.forEach(row => {
+                const rowData = Array.from(row.querySelectorAll("td"))
+                    .map(cell => cell.textContent.trim());
+
+                // "İşlemler" sütununun indeksini belirle ve o sütunu hariç tut
+                const operationColumnIndex = Array.from(headerRow.querySelectorAll("th"))
+                    .findIndex(cell => cell.textContent.trim() === "İşlemler");
+
+                if (operationColumnIndex !== -1) {
+                    rowData.splice(operationColumnIndex, 1); // "İşlemler" sütununu çıkar
+                }
+
+                // Müşteri Id'sine göre Contacts bilgilerini ekle
+                const customerId = row.querySelector("td:first-child").textContent.trim();
+                const customerContacts = contactsData[customerId] || [];
+
+                // Contacts verilerini ayıkla ve ekle
+                rowData.push(
+                    customerContacts.map(contact => contact.Id).join(", ") || "",
+                    customerContacts.map(contact => contact.Title).join(", ") || "",
+                    customerContacts.map(contact => contact.FullName).join(", ") || "",
+                    customerContacts.map(contact => contact.PhoneNumber).join(", ") || "",
+                    customerContacts.map(contact => contact.Gender).join(", ") || "",
+                    customerContacts.map(contact => contact.Email).join(", ") || ""
+                );
+
+                // Satırları Excel'e ekle
+                const excelRow = worksheet.addRow(rowData);
+
+                // Hücreleri ortala
+                excelRow.eachCell(cell => {
+                    cell.alignment = { horizontal: "center", vertical: "middle" }; // Ortala
+                });
+            });
+
+            // Kolon genişliklerini ayarla
+            worksheet.columns = headers.map(() => ({ width: 20 }));
+
+            // Excel dosyasını indir
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+
+        document.getElementById('searchInput').addEventListener('keyup', function () {
+            // Kullanıcının girdiği arama değerini al ve Türkçe karakterlere duyarlı olarak küçült
+            var searchValue = this.value.toLocaleLowerCase('tr-TR').trim();
+
+            // Arama değerini boşluklara göre böl ve kelimeleri al
+            var searchTerms = searchValue.split(' ').filter(function (term) {
+                return term.trim() !== ''; // Boş olmayan terimleri al
+            });
+
+            // Arama işlemini başlat
+            filterTable(searchTerms);
+        });
+
+        function filterTable(searchTerms) {
+            // Tablo satırlarını seç
+            var tableRows = document.querySelectorAll('.user-table tbody tr');
+
+            // Her bir satırı kontrol et
+            tableRows.forEach(function (row) {
+                // Satırın text içeriğini Türkçe karakterlere duyarlı olarak küçült
+                var rowText = row.textContent.toLocaleLowerCase('tr-TR').trim();
+
+                // Her bir arama teriminin satır metninde olup olmadığını kontrol et
+                var matchesSearch = searchTerms.every(function (term) {
+                    return rowText.includes(term);
+                });
+
+                // Arama kriterlerine uyan satırları göster, uymayanları gizle
+                if (matchesSearch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            updateCustomerCount();
+        }
+        function updateCustomerCount() {
+            const visibleRows = document.querySelectorAll(".user-table tbody tr:not([style*='display: none'])");
+            const totalCustomers = visibleRows.length;
+            document.getElementById("customerCount").innerText = "Listelenen Potansiyel Müşterilerin Sayısı: " + totalCustomers;
+        }
+        // Sayfa yüklendiğinde müşteri sayısını ilk olarak güncelle
+        document.addEventListener("DOMContentLoaded", function () {
+            updateCustomerCount();
+        });
+
+        $(document).ready(function () {
+
+
+            $(document).ready(function () {
+                // Tablo satırlarını al
+                var rows = $('.user-table tbody tr');
+
+                // Satırları sıralamak için bir dizi oluştur
+                rows.sort(function (a, b) {
+                    var idA = parseInt($(a).find('td').eq(0).text()); // İlk hücredeki ID
+                    var idB = parseInt($(b).find('td').eq(0).text()); // İlk hücredeki ID
+                    return idB - idA; // Büyükten küçüğe sıralama
+                });
+
+                // Sıralanmış satırları tekrar tabloya ekle
+                $('.user-table tbody').empty().append(rows);
+            });
+
+
+
+
+
+        });
+    </script>

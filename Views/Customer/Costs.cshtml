@@ -1,0 +1,1955 @@
+@model crm.Models.GeneralCostsViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maliyet Tanımları </title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+
+        <h2 class="display-4 text-center">Maliyet Tanımları </h2>
+        <hr />
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <h3 class="centered-text">Vade-Fiyat İlişkisi </h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Fiyata Etkisi %</th>
+                                <th>Güncellenme Tarihi</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addTermModal">Yeni Vade Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Terms)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@(item.Percent) %</td>
+
+                                <td>@item.UpdateTime.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                <td>
+                                    <button class="btn btn-info btn-edit-historyterm" data-id="@item.Id">
+                                        <i class="fa fa-history" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-edit-term" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <button class="btn btn-danger btn-delete-term" data-id="@item.Id">
+                                        <i class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3 class="centered-text">Kağıt-Tutkal Maliyetleri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Saatlik Maliyet (EUR/cm²)</th>
+                                <th>Güncellenme Tarihi</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addCombinationModal">Yeni Kombinasyon Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.CombinationPaperAdhesives)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@(item.Cost != null ? item.Cost + " EUR" : "")</td>
+
+                                <td>@item.UpdateTime.ToString("dd/MM/yyyy HH:mm")</td>
+
+
+                                <td>
+                                    <button class="btn btn-info btn-edit-historycombination" data-id="@item.Id">
+                                        <i class="fa fa-history" aria-hidden="true"></i>
+                                    </button>
+
+                                    <button class="btn btn-warning btn-edit-combination" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <button class="btn btn-danger btn-delete-combination" data-id="@item.Id">
+                                        <i class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3 class="centered-text">Makina Maliyetleri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Saatlik Maliyet(EUR/saat)</th>
+                                <th>Güncellenme Tarihi</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addMachineModal">Yeni Makina Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Machines)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@(item.Cost != null ? item.Cost + " EUR" : "")</td>
+
+                                <td>@item.UpdateTime.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                <td>
+                                    <button class="btn btn-info btn-edit-historymachine" data-id="@item.Id">
+                                        <i class="fa fa-history" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-edit-machine" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <button class="btn btn-danger btn-delete-machine" data-id="@item.Id">
+                                        <i class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h3 class="centered-text">İlave İşlem Maliyetleri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Maliyet(EUR/cm²)</th>
+                                <th>Güncellenme Tarihi</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addAdditionalProcessingModal">Yeni İlave İşlem Ekle <i
+                                            class="fa fa-plus" aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.AdditionalProcessings)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@(item.Cost != null ? item.Cost + " EUR" : "")</td>
+                                <td>@item.UpdateTime.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                <td>
+                                    <button class="btn btn-info btn-edit-historyadditional" data-id="@item.Id">
+                                        <i class="fa fa-history" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-edit-additionalProcessing" data-id="@item.Id"><i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <button class="btn btn-danger btn-delete-additionalProcessing" data-id="@item.Id"><i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3 class="centered-text">Diğer Maliyetler</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Miktar</th>
+                                <th>EUR/Birim</th>
+                                <th>Güncelleme Tarihi</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addotherCostModal">Yeni Diğer Maliyet Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OtherCosts)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@item.Amount</td>
+                                <td>@(item.Cost != null ? item.Cost + " EUR" : "")</td>
+                                <td>@item.UpdateTime.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                <td>
+                                    <button class="btn btn-info btn-edit-historyothercost" data-id="@item.Id">
+                                        <i class="fa fa-history" aria-hidden="true"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-edit-othercost" data-id="@item.Id"><i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <button class="btn btn-danger btn-delete-othercost" data-id="@item.Id"><i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+            <div class="modal fade" id="addCombinationModal" tabindex="-1" role="dialog"
+            aria-labelledby="addCombinationModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCombinationModalLabel">Yeni Kombinasyon Ekle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form asp-action="CreateCombination">
+                            <div class="form-group">
+                                <label for="CombinationName">Adı</label>
+                                <input type="text" class="form-control" id="CombinationName" name="Name"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="CombinationCost">Saatlik Maliyeti (EUR/cm²)</label>
+                                <input type="number" class="form-control" id="CombinationCost" name="Cost"
+                                    required step="0.00001">
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="editTermModal" tabindex="-1" role="dialog"
+            aria-labelledby="editTermModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editTermModalLabel">Vade Fiyat İlişkisi Düzenle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editTermForm">
+                            <input type="hidden" id="editTermId" name="Id" />
+                            <div class="form-group">
+                                <label for="editTermName">Adı</label>
+                                <input type="text" class="form-control" id="editTermName" name="Name"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editTermPercent">Saatlik Maliyet (EUR/saat)</label>
+                                <input type="number" class="form-control" id="editTermPercent" name="Percent"
+                                    required step="0.00001">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Güncelle</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="editMachineModal" tabindex="-1" role="dialog"
+            aria-labelledby="editMachineModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editMachineModalLabel">İlave İşlem Düzenle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editMachineForm">
+                            <input type="hidden" id="editMachineId" name="Id" />
+                            <div class="form-group">
+                                <label for="editMachineName">Adı</label>
+                                <input type="text" class="form-control" id="editMachineName" name="Name"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editMachineCost">Saatlik Maliyet (EUR/saat)</label>
+                                <input type="number" class="form-control" id="editMachineCost" name="Cost"
+                                    required step="0.00001">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Güncelle</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal fade" id="editCombinationModal" tabindex="-1" role="dialog"
+            aria-labelledby="editCombinationModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editCombinationModalLabel">İlave İşlem Düzenle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editCombinationForm">
+                            <input type="hidden" id="editCombinationId" name="Id" />
+                            <div class="form-group">
+                                <label for="editCombinationName">Adı</label>
+                                <input type="text" class="form-control" id="editCombinationName" name="Name"
+                                    required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="editCombinationCost">Saatlik Maliyeti (EUR/cm²)</label>
+                                <input type="number" class="form-control" id="editCombinationCost" name="Cost"
+                                    required step="0.00001">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Güncelle</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="addTermModal" tabindex="-1" role="dialog"
+        aria-labelledby="addTermModalLabel" aria-hidden="true" data-backdrop="static"
+        data-keyboard="false">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addTermModalLabel">Yeni Vade  Ekle</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form asp-action="CreateTerm">
+                        <div class="form-group">
+                            <label for="TermName">Adı</label>
+                            <input type="text" class="form-control" id="TermName" name="Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="PercentRatio">Fiyata etkisi %</label>
+                            <input type="number" class="form-control" id="PercentRatio" name="Percent" required
+                                step="0.00001">
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary"
+                                data-dismiss="modal">İptal</button>
+                            <button type="submit" class="btn btn-primary">Kaydet</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+        <div class="modal fade" id="addMachineModal" tabindex="-1" role="dialog"
+            aria-labelledby="addMachineModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addMachineModalLabel">Yeni Makina Ekle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form asp-action="CreateMachine">
+                            <div class="form-group">
+                                <label for="MachineName">Adı</label>
+                                <input type="text" class="form-control" id="MachineName" name="Name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="HourlyCost">Saatlik Maliyeti (EUR/saat)</label>
+                                <input type="number" class="form-control" id="HourlyCost" name="Cost" required
+                                    step="0.00001">
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary"
+                                    data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+            <div class="modal fade" id="addotherCostModal" tabindex="-1" role="dialog"
+                aria-labelledby="addotherCostModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addotherCostModalLabel">Yeni Diğer Maliyet Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateOtherCost">
+                                <div class="form-group">
+                                    <label for="otherCostName">Adı</label>
+                                    <input type="text" class="form-control" id="otherCostName" name="Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="otherCostAmount">Miktar</label>
+                                    <input type="text" class="form-control" id="otherCostAmount" name="Amount" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="otherCostCost">Maliyet(EUR/cm²)</label>
+                                    <input type="text" class="form-control" id="otherCostCost" name="Cost" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editOtherCostModal" tabindex="-1" role="dialog"
+                aria-labelledby="editOtherCostModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editOtherCostModalLabel">Diğer Maliyet Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editOtherCostForm">
+                                <input type="hidden" id="editOtherCostId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editOtherCostName">Adı</label>
+                                    <input type="text" class="form-control" id="editOtherCostName" name="Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editOtherCostAmount">Miktar</label>
+                                    <input type="text" class="form-control" id="editOtherCostAmount" name="Amount"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editOtherCostCost">Maliyet(EUR/cm²)</label>
+                                    <input type="text" class="form-control" id="editOtherCostCost" name="Cost" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="addAdditionalProcessingModal" tabindex="-1" role="dialog"
+                aria-labelledby="addAdditionalProcessingModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addAdditionalProcessingModalLabel">Yeni İlave İşlem Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateAdditionalProcessing">
+                                <div class="form-group">
+                                    <label for="additionalProcessingName">Adı</label>
+                                    <input type="text" class="form-control" id="additionalProcessingName" name="Name"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="additionalProcessingCost">Maliyet(EUR/cm²)</label>
+                                    <input type="text" class="form-control" id="additionalProcessingCost" name="Cost"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editAdditionalProcessingModal" tabindex="-1" role="dialog"
+                aria-labelledby="editAdditionalProcessingModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editAdditionalProcessingModalLabel">İlave İşlem Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editAdditionalProcessingForm">
+                                <input type="hidden" id="editAdditionalProcessingId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editAdditionalProcessingName">Adı</label>
+                                    <input type="text" class="form-control" id="editAdditionalProcessingName"
+                                        name="Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editAdditionalProcessingCost">Maliyet(EUR/cm²)</label>
+                                    <input type="text" class="form-control" id="editAdditionalProcessingCost"
+                                        name="Cost" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="priceHistoryAdditionalModal" tabindex="-1" role="dialog"
+                aria-labelledby="priceHistoryAdditionalModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="priceHistoryAdditionalModalLabel">Fiyat Geçmişi</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Eski Fiyat</th>
+                                        <th>Güncellenme Tarihi(Fiyatın geçerli olduğu son tarih)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="priceHistoryAdditionalTable">
+                                    <tr>
+                                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Fiyat Geçmişi Modal -->
+            <div class="modal fade" id="priceHistoryCombinationModal" tabindex="-1" role="dialog"
+                aria-labelledby="priceHistoryCombinationModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="priceHistoryCombinationModalLabel">Fiyat Geçmişi</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Eski Fiyat</th>
+                                        <th>Güncellenme Tarihi(Fiyatın geçerli olduğu son tarih)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="priceHistoryCombinationTable">
+                                    <tr>
+                                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="priceHistoryMachineModal" tabindex="-1" role="dialog"
+                aria-labelledby="priceHistoryMachineModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="priceHistoryMachineModalLabel">Fiyat Geçmişi</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Eski Fiyat</th>
+                                        <th>Güncellenme Tarihi(Fiyatın geçerli olduğu son tarih)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="priceHistoryMachineTable">
+                                    <tr>
+                                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="priceHistoryTermModal" tabindex="-1" role="dialog"
+                aria-labelledby="priceHistoryTermModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="priceHistoryTermModalLabel">Fiyat Geçmişi</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Eski Oran</th>
+                                        <th>Güncellenme Tarihi(Fiyatın geçerli olduğu son tarih)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="priceHistoryTermTable">
+                                    <tr>
+                                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="priceHistoryOtherCost" tabindex="-1" role="dialog"
+                aria-labelledby="priceHistoryOtherCostModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="priceHistoryOtherCostModalLabel">Fiyat Geçmişi</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Eski Fiyat</th>
+                                        <th>Güncellenme Tarihi(Fiyatın geçerli olduğu son tarih)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="priceHistoryOtherCostTable">
+                                    <tr>
+                                        <td colspan="2" class="text-center">Yükleniyor...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                        </div>
+                    </div>
+
+                </div>
+               
+
+                <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+                <script>
+                    $(document).ready(function () {
+                        $(document).on('click', '.btn-edit-othercost', function () {
+                            console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                            var id = $(this).data('id');
+                            $.get('/Customer/GetOtherCostById/' + id, function (data) {
+                                $('#editOtherCostId').val(data.id);
+                                $('#editOtherCostName').val(data.name);
+                                $('#editOtherCostCost').val(data.cost);
+                                $('#editOtherCostAmount').val(data.amount);
+                                $('#editOtherCostModal').modal('show');
+                            });
+                        });
+
+                        $(document).on('click', '.btn-delete-additionalProcessing', function () {
+                            console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeleteAdditionalProcessing/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                        $(".btn-edit-historyothercost").click(function () {
+                            var combinationId = $(this).data("id");
+
+                            if (!combinationId) {
+                                console.error("Combination ID is missing!");
+                                return;
+                            }
+
+                            console.log("Fetching price history for ID:", combinationId);
+
+                            var tbody = $("#priceHistoryOtherCostTable");
+                            tbody.html("<tr><td colspan='2' class='text-center'>Yükleniyor...</td></tr>"); // Show loading message
+
+                            $.ajax({
+                                url: "/Customer/GetPriceHistoryOtherCost",
+                                type: "GET",
+                                data: { id: combinationId },
+                                success: function (data) {
+                                    console.log("Received data:", data);
+
+                                    tbody.empty(); // Clear the loading message
+
+                                    if (!Array.isArray(data) || data.length === 0) {
+                                        tbody.append("<tr><td colspan='2' class='text-center'>Geçmiş fiyat bulunamadı.</td></tr>");
+                                    } else {
+                                        data.forEach(function (item) {
+                                            let formattedCost = Number.isInteger(item.oldCost) ? item.oldCost : item.oldCost.toFixed(5).replace(/0+$/, "").replace(/\.$/, "");
+                                            let formattedDate = new Date(item.updatedAt).toLocaleString("tr-TR");
+
+                                            tbody.append(`
+                            <tr>
+                                <td>${formattedCost} EUR</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `);
+                                        });
+                                    }
+
+                                    $("#priceHistoryOtherCost").modal("show");
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error("Error fetching data:", error);
+                                    console.error("Response:", xhr.responseText);
+                                    tbody.html("<tr><td colspan='2' class='text-center text-danger'>Veri yüklenirken hata oluştu.</td></tr>"); // Show error message
+                                    alert("Geçmiş fiyatları getirirken hata oluştu.");
+                                }
+                            });
+                        });
+
+
+
+                        $('#editOtherCostForm').on('submit', function (event) {
+                            event.preventDefault();
+                            var formData = $(this).serialize();
+                            $.post('/Customer/UpdateOtherCost', formData, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla güncellendi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Güncelleme başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        });
+                        // AdditionalProcessing form submit
+
+
+                        $(".btn-edit-historycombination").click(function () {
+                            var combinationId = $(this).data("id");
+
+                            if (!combinationId) {
+                                console.error("Combination ID is missing!");
+                                return;
+                            }
+
+                            console.log("Fetching price history for ID:", combinationId);
+
+                            var tbody = $("#priceHistoryCombinationTable");
+                            tbody.html("<tr><td colspan='2' class='text-center'>Yükleniyor...</td></tr>"); // Show loading message
+
+                            $.ajax({
+                                url: "/Customer/GetPriceHistoryCombination",
+                                type: "GET",
+                                data: { id: combinationId },
+                                success: function (data) {
+                                    console.log("Received data:", data);
+
+                                    tbody.empty(); // Clear the loading message
+
+                                    if (!Array.isArray(data) || data.length === 0) {
+                                        tbody.append("<tr><td colspan='2' class='text-center'>Geçmiş fiyat bulunamadı.</td></tr>");
+                                    } else {
+                                        data.forEach(function (item) {
+                                            let formattedCost = Number.isInteger(item.oldCost) ? item.oldCost : item.oldCost.toFixed(5).replace(/0+$/, "").replace(/\.$/, "");
+                                            let formattedDate = new Date(item.updatedAt).toLocaleString("tr-TR");
+
+                                            tbody.append(`
+                            <tr>
+                                <td>${formattedCost} EUR</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `);
+                                        });
+                                    }
+
+                                    $("#priceHistoryCombinationModal").modal("show");
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error("Error fetching data:", error);
+                                    console.error("Response:", xhr.responseText);
+                                    tbody.html("<tr><td colspan='2' class='text-center text-danger'>Veri yüklenirken hata oluştu.</td></tr>"); // Show error message
+                                    alert("Geçmiş fiyatları getirirken hata oluştu.");
+                                }
+                            });
+                        });
+                        $(".btn-edit-historyadditional").click(function () {
+                            var combinationId = $(this).data("id");
+
+                            if (!combinationId) {
+                                console.error("Combination ID is missing!");
+                                return;
+                            }
+
+                            console.log("Fetching price history for ID:", combinationId);
+
+                            var tbody = $("#priceHistoryAdditionalTable");
+                            tbody.html("<tr><td colspan='2' class='text-center'>Yükleniyor...</td></tr>"); // Show loading message
+
+                            $.ajax({
+                                url: "/Customer/GetPriceHistoryAdditional",
+                                type: "GET",
+                                data: { id: combinationId },
+                                success: function (data) {
+                                    console.log("Received data:", data);
+
+                                    tbody.empty(); // Clear the loading message
+
+                                    if (!Array.isArray(data) || data.length === 0) {
+                                        tbody.append("<tr><td colspan='2' class='text-center'>Geçmiş fiyat bulunamadı.</td></tr>");
+                                    } else {
+                                        data.forEach(function (item) {
+                                            let formattedCost = Number.isInteger(item.oldCost) ? item.oldCost : item.oldCost.toFixed(5).replace(/0+$/, "").replace(/\.$/, "");
+                                            let formattedDate = new Date(item.updatedAt).toLocaleString("tr-TR");
+
+                                            tbody.append(`
+                            <tr>
+                                <td>${formattedCost} EUR</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `);
+                                        });
+                                    }
+
+                                    $("#priceHistoryAdditionalModal").modal("show");
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error("Error fetching data:", error);
+                                    console.error("Response:", xhr.responseText);
+                                    tbody.html("<tr><td colspan='2' class='text-center text-danger'>Veri yüklenirken hata oluştu.</td></tr>"); // Show error message
+                                    alert("Geçmiş fiyatları getirirken hata oluştu.");
+                                }
+                            });
+                        });
+                    });
+
+
+
+
+
+
+                    ///////////
+                    $(document).ready(function () {
+                        $(document).on('click', '.btn-edit-additionalProcessing', function () {
+                            console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                            var id = $(this).data('id');
+                            $.get('/Customer/GetAdditionalProcessingById/' + id, function (data) {
+                                $('#editAdditionalProcessingId').val(data.id);
+                                $('#editAdditionalProcessingName').val(data.name);
+                                $('#editAdditionalProcessingCost').val(data.cost);
+                                $('#editAdditionalProcessingModal').modal('show');
+                            });
+                        });
+
+                        $(document).on('click', '.btn-delete-additionalProcessing', function () {
+                            console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeleteAdditionalProcessing/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+
+                        // AdditionalProcessing form submit
+
+
+                        $(".btn-edit-historycombination").click(function () {
+                            var combinationId = $(this).data("id");
+
+                            if (!combinationId) {
+                                console.error("Combination ID is missing!");
+                                return;
+                            }
+
+                            console.log("Fetching price history for ID:", combinationId);
+
+                            var tbody = $("#priceHistoryCombinationTable");
+                            tbody.html("<tr><td colspan='2' class='text-center'>Yükleniyor...</td></tr>"); // Show loading message
+
+                            $.ajax({
+                                url: "/Customer/GetPriceHistoryCombination",
+                                type: "GET",
+                                data: { id: combinationId },
+                                success: function (data) {
+                                    console.log("Received data:", data);
+
+                                    tbody.empty(); // Clear the loading message
+
+                                    if (!Array.isArray(data) || data.length === 0) {
+                                        tbody.append("<tr><td colspan='2' class='text-center'>Geçmiş fiyat bulunamadı.</td></tr>");
+                                    } else {
+                                        data.forEach(function (item) {
+                                            let formattedCost = Number.isInteger(item.oldCost) ? item.oldCost : item.oldCost.toFixed(5).replace(/0+$/, "").replace(/\.$/, "");
+                                            let formattedDate = new Date(item.updatedAt).toLocaleString("tr-TR");
+
+                                            tbody.append(`
+                            <tr>
+                                <td>${formattedCost} EUR</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `);
+                                        });
+                                    }
+
+                                    $("#priceHistoryCombinationModal").modal("show");
+                                },
+                                error: function (xhr, status, error) {
+                                    console.error("Error fetching data:", error);
+                                    console.error("Response:", xhr.responseText);
+                                    tbody.html("<tr><td colspan='2' class='text-center text-danger'>Veri yüklenirken hata oluştu.</td></tr>"); // Show error message
+                                    alert("Geçmiş fiyatları getirirken hata oluştu.");
+                                }
+                            });
+                        });
+
+                    });
+
+
+
+                    $(".btn-edit-historymachine").click(function () {
+                        var combinationId = $(this).data("id");
+
+                        if (!combinationId) {
+                            console.error("Combination ID is missing!");
+                            return;
+                        }
+
+                        console.log("Fetching price history for ID:", combinationId);
+
+                        var tbody = $("#priceHistoryMachineTable");
+                        tbody.html("<tr><td colspan='2' class='text-center'>Yükleniyor...</td></tr>"); // Show loading message
+
+                        $.ajax({
+                            url: "/Customer/GetPriceHistoryMachine",
+                            type: "GET",
+                            data: { id: combinationId },
+                            success: function (data) {
+                                console.log("Received data:", data);
+
+                                tbody.empty(); // Clear the loading message
+
+                                if (!Array.isArray(data) || data.length === 0) {
+                                    tbody.append("<tr><td colspan='2' class='text-center'>Geçmiş fiyat bulunamadı.</td></tr>");
+                                } else {
+                                    data.forEach(function (item) {
+                                        let formattedCost = Number.isInteger(item.oldCost) ? item.oldCost : item.oldCost.toFixed(5).replace(/0+$/, "").replace(/\.$/, "");
+                                        let formattedDate = new Date(item.updatedAt).toLocaleString("tr-TR");
+
+                                        tbody.append(`
+                            <tr>
+                                <td>${formattedCost} EUR</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `);
+                                    });
+                                }
+
+                                $("#priceHistoryMachineModal").modal("show");
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error fetching data:", error);
+                                console.error("Response:", xhr.responseText);
+                                tbody.html("<tr><td colspan='2' class='text-center text-danger'>Veri yüklenirken hata oluştu.</td></tr>"); // Show error message
+                                alert("Geçmiş fiyatları getirirken hata oluştu.");
+                            }
+                        });
+                    });
+                    //
+                    $(".btn-edit-historyterm").click(function () {
+                        var combinationId = $(this).data("id");
+
+                        if (!combinationId) {
+                            console.error("Combination ID is missing!");
+                            return;
+                        }
+
+                        console.log("Fetching price history for ID:", combinationId);
+
+                        var tbody = $("#priceHistoryTermTable");
+                        tbody.html("<tr><td colspan='2' class='text-center'>Yükleniyor...</td></tr>"); // Show loading message
+
+                        $.ajax({
+                            url: "/Customer/GetPriceHistoryTerm",
+                            type: "GET",
+                            data: { id: combinationId },
+                            success: function (data) {
+                                console.log("Received data:", data);
+
+                                tbody.empty(); // Clear the loading message
+
+                                if (!Array.isArray(data) || data.length === 0) {
+                                    tbody.append("<tr><td colspan='2' class='text-center'>Geçmiş fiyat bulunamadı.</td></tr>");
+                                } else {
+                                    data.forEach(function (item) {
+                                        let formattedCost = Number.isInteger(item.oldCost) ? item.oldCost : item.oldCost.toFixed(5).replace(/0+$/, "").replace(/\.$/, "");
+                                        let formattedDate = new Date(item.updatedAt).toLocaleString("tr-TR");
+
+                                        tbody.append(`
+                            <tr>
+                                <td>${formattedCost} %</td>
+                                <td>${formattedDate}</td>
+                            </tr>
+                        `);
+                                    });
+                                }
+
+                                $("#priceHistoryTermModal").modal("show");
+                            },
+                            error: function (xhr, status, error) {
+                                console.error("Error fetching data:", error);
+                                console.error("Response:", xhr.responseText);
+                                tbody.html("<tr><td colspan='2' class='text-center text-danger'>Veri yüklenirken hata oluştu.</td></tr>"); // Show error message
+                                alert("Geçmiş fiyatları getirirken hata oluştu.");
+                            }
+                        });
+                    });
+                    //
+
+
+                    $(document).ready(function () {
+                        var swalMessage = '@TempData["SwalMessage"]';
+                        var swalType = '@TempData["SwalType"]';
+
+                        if (swalMessage && swalType) {
+                            Swal.fire({
+                                icon: swalType,  // "success" veya "error" olarak ikon alır
+                                title: swalMessage,
+                                showConfirmButton: false,
+                                timer: 2000
+                            });
+                        }
+                    });
+                    $('#editMachineForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateMachine', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+                    $(document).on('click', '.btn-edit-machine', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetMachineById/' + id, function (data) {
+                            $('#editMachineId').val(data.id);
+                            $('#editMachineName').val(data.name);
+                            $('#editMachineCost').val(data.cost);
+                            $('#editMachineModal').modal('show');
+                        });
+                    });
+
+                    $(document).on('click', '.btn-delete-machine', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeleteMachine/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    $('#editMachineForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateMachine', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+                    $(document).on('click', '.btn-edit-machine', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetMachineById/' + id, function (data) {
+                            $('#editMachineId').val(data.id);
+                            $('#editMachineName').val(data.name);
+                            $('#editMachineCost').val(data.cost);
+                            $('#editMachineModal').modal('show');
+                        });
+                    });
+
+                    $(document).on('click', '.btn-delete-machine', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeleteMachine/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    //
+                    $('#editTermForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateTerm', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+                    $(document).on('click', '.btn-edit-term', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetTermById/' + id, function (data) {
+                            $('#editTermId').val(data.id);
+                            $('#editTermName').val(data.name);
+                            $('#editTermPercent').val(data.percent);
+                            $('#editTermModal').modal('show');
+                        });
+                    });
+
+                    $(document).on('click', '.btn-delete-term', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeleteTerm/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    //
+                    $(document).on('click', '.btn-delete-combination', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeleteCombination/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+
+                    $(document).on('click', '.btn-edit-combination', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetCombinationById/' + id, function (data) {
+                            $('#editCombinationId').val(data.id);
+                            $('#editCombinationName').val(data.name);
+                            $('#editCombinationCost').val(data.cost);
+                            $('#editCombinationModal').modal('show');
+                        });
+                    });
+
+                    $('#editCombinationForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateCombination', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+                    $(document).ready(function () {
+                        // Modal açıldığında mevcut verileri doldur
+                        $('.btn-edit').on('click', function () {
+                            const id = $(this).data('id');
+                            const notification = $(this).data('notification');
+
+                            $('#notificationId').val(id);
+                            $('#notificationText').val(notification);
+                        });
+
+                        // Form gönderildiğinde
+                        $('#notificationForm').on('submit', function (e) {
+                            e.preventDefault();
+
+                            const notificationData = {
+                                Id: $('#notificationId').val(),
+                                Notification: $('#notificationText').val()
+                            };
+
+                            $.ajax({
+                                url: '/Customer/SaveNotification', // Backend endpoint
+                                type: 'POST',
+                                contentType: 'application/json',
+                                data: JSON.stringify(notificationData),
+                                success: function (response) {
+                                    Toastify({
+                                        text: "Not başarıyla kaydedildi!",
+                                        duration: 3000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "green",
+                                    }).showToast();
+                                    $('#notificationModal').modal('hide');
+                                    location.reload();
+                                },
+                                error: function (xhr) {
+                                    Toastify({
+                                        text: "Hata: " + (xhr.responseJSON?.message || "Bir sorun oluştu!"),
+                                        duration: 3000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "red",
+                                    }).showToast();
+                                }
+                            });
+                        });
+                    });
+
+
+                    $(document).ready(function () {
+                        // AdditionalProcessing verilerini tabloya ekle
+                        $.get('/Customer/GetAdditionalProcessings', function (response) {
+                            console.log(response);  // Gelen veriyi kontrol edin
+                            appendToTable(response); // Gelen veriyi tabloya ekleme işlemi
+                        });
+
+                        // AdditionalProcessing delete operation - Dinamik elemanlar için `document` üzerinden
+                        $(document).on('click', '.btn-delete-additional-processing', function () {
+                            var id = $(this).data('id');
+
+                            // Kullanıcıdan silme işlemi için onay almak
+                            Toastify({
+                                text: "Silmek istediğinize emin misiniz? (Evet için tıklayın)",
+                                duration: 5000,
+                                gravity: "top",
+                                position: "center",
+                                backgroundColor: "#FF0000",
+                                close: true,
+                                onClick: function () {
+                                    // Onay verildiğinde silme işlemini gerçekleştir
+                                    $.post('/Customer/DeleteAdditionalProcessing/' + id, function (response) {
+                                        if (response.success) {
+                                            Toastify({
+                                                text: "Başarıyla silindi!",
+                                                duration: 3000,
+                                                gravity: "top",
+                                                position: "center",
+                                                backgroundColor: "#4CAF50",
+                                                className: "success-toast",
+                                            }).showToast();
+
+                                            setTimeout(() => {
+                                                location.reload();
+                                            }, 1500);
+                                        } else {
+                                            Toastify({
+                                                text: "Silme işlemi başarısız! " + response.message,
+                                                duration: 5000,
+                                                gravity: "top",
+                                                position: "center",
+                                                backgroundColor: "#FF0000",
+                                                className: "error-toast",
+                                            }).showToast();
+                                        }
+                                    });
+                                }
+                            }).showToast();
+                        });
+
+
+
+                        // AdditionalProcessing form submit
+                        $('#editAdditionalProcessingForm').on('submit', function (event) {
+                            event.preventDefault();
+                            var formData = $(this).serialize();
+                            $.post('/Customer/UpdateAdditionalProcessing', formData, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla güncellendi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Güncelleme başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        });
+                    });
+
+                    // Verileri tabloya ekleyen fonksiyon
+                    function appendToTable(data) {
+                        var tableBody = $('#additionalProcessingTable tbody'); // Tablo gövdesini seçin
+                        tableBody.empty(); // Eski verileri temizleyin
+                        data.forEach(function (item) {
+                            var row = `<tr>
+            <td>${item.id}</td>
+            <td>${item.name}</td>
+            <td>
+                <button class="btn btn-warning btn-edit-additional-processing" data-id="${item.id}">Düzenle <i class="fa fa-pencil" aria-hidden="true"></i></button>
+                <button class="btn btn-danger btn-delete-additional-processing" data-id="${item.id}">Sil <i class="fa fa-trash" aria-hidden="true"></i></button>
+            </td>
+        </tr>`;
+                            tableBody.append(row);
+                        });
+                    }
+
+
+                    $(document).ready(function () {
+                        $('.btn-delete-adhesive').on('click', function () {
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeleteAdhesiveInfo/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+                        // PaperInfo silme işlemi
+                        $('.btn-delete-paper').on('click', function () {
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeletePaperInfo/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+                        // DeliveryMethod silme işlemi
+                        $('.btn-delete-delivery').on('click', function () {
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeleteDeliveryMethod/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+
+                        // OrderMethod silme işlemi
+                        $('.btn-delete-order').on('click', function () {
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeleteOrderMethod/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                        $('.btn-delete-mail').on('click', function () {
+                            var id = $(this).data('id');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post('/Customer/DeleteMailInfo/' + id, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                        var swalMessage = '@TempData["SwalMessage"]';
+                        if (swalMessage) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: swalMessage,
+                                showConfirmButton: false,
+                                timer: 1500
+                            });
+                        }
+                    });
+                    $('.btn-edit-adhesive').on('click', function () {
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetAdhesiveInfoById/' + id, function (data) {
+                            $('#editAdhesiveInfoId').val(data.id);
+                            $('#editAdhesiveName').val(data.name);
+                            $('#editAdhesiveInfoModal').modal('show');
+                        });
+                    });
+
+                    $('#editAdhesiveInfoForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateAdhesiveInfo', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+                    $('#editMailInfoForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateMailInfo', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+
+                    // PaperInfo Düzenleme
+                    $('.btn-edit-paper').on('click', function () {
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetPaperInfoById/' + id, function (data) {
+                            $('#editPaperInfoId').val(data.id);
+                            $('#editPaperName').val(data.name);
+                            $('#editPaperInfoModal').modal('show');
+                        });
+                    });
+
+                    $('#editPaperInfoForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdatePaperInfo', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+                    // DeliveryMethod Düzenleme
+                    $('.btn-edit-delivery').on('click', function () {
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetDeliveryMethodById/' + id, function (data) {
+                            $('#editDeliveryMethodId').val(data.id);
+                            $('#editDeliveryMethodName').val(data.name);
+                            $('#editDeliveryMethodModal').modal('show');
+                        });
+                    });
+
+                    $('#editDeliveryMethodForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateDeliveryMethod', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+                    $('.btn-edit-mail').on('click', function () {
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetMailInfoById/' + id, function (data) {
+                            $('#editMailInfoId').val(data.id);
+                            $('#editMailInfoMail').val(data.mail);
+                            $('#editMailInfoModal').modal('show');
+                        });
+                    });
+
+                    // OrderMethod Düzenleme
+                    $('.btn-edit-order').on('click', function () {
+                        var id = $(this).data('id');
+                        $.get('/Customer/GetOrderMethodById/' + id, function (data) {
+                            $('#editOrderMethodId').val(data.id);
+                            $('#editOrderMethodName').val(data.name);
+                            $('#editOrderMethodModal').modal('show');
+                        });
+                    });
+
+                    $('#editOrderMethodForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+
+                        $.post('/Customer/UpdateOrderMethod', formData, function (response) {
+                            if (response.success) {
+                                Toastify({
+                                    text: "Başarıyla güncellendi!",
+                                    duration: 3000,
+                                    gravity: "top", // Toast'ın ekranda görünme pozisyonu
+                                    position: "center", // Toast'ın ekrandaki konumu
+                                    backgroundColor: "#4CAF50", // Başarılı durum için yeşil renk
+                                    className: "success-toast", // İsteğe bağlı: toast için özel sınıf
+                                }).showToast();
+
+                                setTimeout(() => {
+                                    location.reload();
+                                }, 1500); // Sayfanın 1,5 saniye sonra yeniden yüklenmesi
+                            } else {
+                                Toastify({
+                                    text: "Güncelleme başarısız! " + response.message,
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "center",
+                                    backgroundColor: "#FF0000", // Başarısız durum için kırmızı renk
+                                    className: "error-toast",
+                                }).showToast();
+                            }
+                        });
+                    });
+
+                </script>
+</body>
+
+</html>

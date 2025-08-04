@@ -1,0 +1,211 @@
+@model crm.Models.User
+
+@{
+Layout = null;
+}
+@{
+   
+}
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="~/favicon-16x16.png">
+    <link rel="manifest" href="~/site.webmanifest">
+    <link rel="shortcut icon" href="~/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="stylesheet" type="text/css" href="~/css/style.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.14.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <title>BYB CRM </title>
+</head>
+
+<body>
+
+
+    <div class="container" id="main">
+
+        <div class="sign-up">
+            <form asp-controller="Account" asp-action="NewUser" method="post">
+                <h2>Kayıt Olun</h2>
+                <div class="social-container">
+                    <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+                    <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+                <div class="inputs">
+                    <input asp-for="Email" placeholder="Email" required />
+                    <input asp-for="Password" type="password" placeholder="Password" required />
+                </div>
+                <button class="btn1" type="submit">Kayıt Ol</button>
+            </form>
+        </div>
+        <div class="sign-in">
+            <!-- Mobil cihazlar için görsel -->
+
+
+            <form asp-controller="Account" asp-action="Login" method="post" id="loginForm">
+                <h2>Giriş Yapın</h2>
+                <div class="social-container">
+                    <a href="https://www.facebook.com/bybetiket/" class="social"><i class="fab fa-facebook-f"></i></a>
+                    <a href="https://www.instagram.com/bybetiket/" class="social"><i class="fab fa-instagram"></i></a>
+                    <a href="https://tr.linkedin.com/company/bybetiket" class="social"><i
+                            class="fab fa-linkedin-in"></i></a>
+                </div>
+                <div class="inputs">
+                    <input asp-for="Email" placeholder="Email" required />
+                    <input asp-for="Password" type="password" placeholder="Password" required />
+                    <input asp-for="Location" type="hidden" id="location" />
+                </div>
+                <h1></h1>
+                <a id="locationText" style="font-size: smaller; color: black; margin-top:5px;"></a>
+                <button type="submit" class="btn1">Giriş Yap<i class="fas fa-sign-in-alt"></i></button>
+            </form>
+        </div>
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-left">
+                    <img src="~/img/byb-logo.png" width="200" alt="">
+                    <p>BYB etiket CRM sisteminde kayıtlı hesabınız varsa </p>
+                    <button id="signIn"><i class="fas fa-sign-in-alt"></i> Giriş Yapın</button>
+                </div>
+                <div class="overlay-right">
+                    <img src="~/img/byb-logo.png" width="200" alt="">
+                    <br>
+                    <br>
+                    <br>
+                    <!-- <button id="signUp"> Kayıt olun <i class="fas fa-user-plus"></i></button> -->
+                    <p>Giriş yapmak için konum erişimine izin vermeniz gerekmektedir.</p>
+                    <br>
+                    <br>
+                    <br>
+                    <p>
+                        Copyright © BYB Etiket Anonim Şirketi Tüm hakları saklıdır.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script type="text/javascript">
+        // const signUpButton = document.getElementById('signUp');
+        const signInButton = document.getElementById('signIn');
+        const main = document.getElementById('main');
+        const loginForm = document.getElementById('loginForm');
+        const locationText = document.getElementById('locationText');
+
+        // signUpButton.addEventListener('click', () => {
+        //     main.classList.add("right-panel-active");
+        // });
+        signInButton.addEventListener('click', () => {
+            main.classList.remove("right-panel-active");
+        });
+
+        function getLocation() {
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+    const isHttps = window.location.protocol === "https:";
+
+    // Eğer localdeyseniz ya da HTTPS değilse konum sorgulaması yapılmaz
+    if (isLocal || !isHttps) {
+        locationText.textContent = "Local ortamda ya da HTTPS olmayan bir ortamdasınız, konum bilgisi gerekli değil.";
+        document.getElementById('location').value = "Local (Fabrika)"; // Localde konum bilgisi için varsayılan değer veriliyor
+        return;
+    }
+
+    // Konum sorgulaması burada yapılıyor
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(showPosition, showError);
+    } else {
+        locationText.textContent = "Tarayıcınız konum hizmetlerini desteklemiyor.";
+    }
+}
+
+function showPosition(position) {
+    const lat = position.coords.latitude;
+    const lon = position.coords.longitude;
+    const apiKey = '19cb31aac8bd4630a6ce0969c66a632b'; // OpenCage API key
+    const geocodeUrl = `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lon}&key=${apiKey}`;
+
+    fetch(geocodeUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.results && data.results.length > 0) {
+                const locationName = data.results[0].formatted;
+                document.getElementById('location').value = locationName;
+                locationText.innerHTML = "Konum Bilgileriniz: " + locationName;
+            } else {
+                showError();
+            }
+        })
+        .catch(error => {
+            console.error(error);
+            showError();
+        });
+}
+
+function showError(error) {
+    let errorMessage = "";
+    if (error) {
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = "Konum iznini reddettiniz, giriş yapmak için erişime izin veriniz.";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = "Konum bilgisi mevcut değil.";
+                break;
+            case error.TIMEOUT:
+                errorMessage = "Konum bilgisi alma isteği zaman aşımına uğradı.";
+                break;
+            case error.UNKNOWN_ERROR:
+                errorMessage = "Bilinmeyen bir hata oluştu.";
+                break;
+            default:
+                errorMessage = "Konum bilgisi alınamadı.";
+                break;
+        }
+    } else {
+        errorMessage = "Konum bilgisi alınamadı.";
+    }
+    locationText.textContent = errorMessage;
+}
+
+
+        loginForm.addEventListener('submit', function (event) {
+            if (document.getElementById('location').value === "") {
+                event.preventDefault();
+                Toastify({
+                    text: "Lütfen konum erişimine izin verin.",
+                    duration: 3000,
+                    gravity: "top", // "top" or "bottom"
+                    position: "center", // "left", "center" or "right"
+                    backgroundColor: "#FFCC00", // Uyarı rengi (altın sarısı)
+                }).showToast();
+            }
+        });
+
+
+        window.onload = getLocation;
+    </script>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+    <script type="text/javascript">
+    Toastify({
+        text: "E-posta ya da şifre hatalı",
+        duration: 3000,
+        gravity: "top", // "top" veya "bottom"
+        position: "center", // "left", "center" veya "right"
+        backgroundColor: "#dc3545", // Hata rengi (Domates kırmızısı)
+    }).showToast();
+</script>
+
+    }
+</body>
+
+</html>

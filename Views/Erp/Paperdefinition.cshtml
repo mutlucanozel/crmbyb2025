@@ -1,0 +1,878 @@
+@model crm.Models.GeneralInfoViewModel
+@{
+var swalMessage = TempData["SwalMessage"] as string;
+var swalIcon = !string.IsNullOrEmpty(swalMessage) && swalMessage.Contains("başarı") ? "success" : "error";
+}
+
+@if (!string.IsNullOrEmpty(swalMessage))
+{
+<script>
+    Swal.fire({
+        icon: '@swalIcon',
+        title: '@swalMessage',
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Bilgiler</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Kağıt Tanımları </h2>
+        <hr />
+        <div class="row g-4">
+
+           
+            <div class="modal fade" id="editCoreModal" tabindex="-1" role="dialog"
+            aria-labelledby="editCoreModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editCoreModalLabel">Kuka Bilgisi Düzenle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editCoreForm">
+                            <input type="hidden" id="editCoreId" name="Id" />
+                            <div class="form-group">
+                                <label for="editCoreName">Adı</label>
+                                <input type="text" class="form-control" id="editCoreName" name="Name" required>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Güncelle</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <div class="col-md-6">
+                <!-- PaperInfo Table -->
+                <h3 class="centered-text">Kağıt Bilgileri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addPaperInfoModal">Yeni
+                                        Kağıt
+                                        Bilgisi Ekle <i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.PaperInfos)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+
+                                <td>
+                                    <button class="btn btn-warning btn-edit-paper" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-paper" data-id="@item.Id"> <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <!-- OrderMethod Table -->
+                <h3 class="centered-text">Kağıt Detay</h3>
+
+                <div class="table-responsive">
+
+
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addPaperDetailModal">Kağıt Detay Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.PaperDetails)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>
+                                    <button class="btn btn-warning btn-edit-paperdetail" data-id="@item.Id">Düzenle
+                                        <i class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-paperdetail" data-id="@item.Id">Sil <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- OrderMethod Table -->
+                <h3 class="centered-text">Kağıt Marka</h3>
+
+                <div class="table-responsive">
+
+
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addPaperBrandModal">Kağıt Marka Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.PaperBrands)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>
+                                    <button class="btn btn-warning btn-edit-paperbrand" data-id="@item.Id">Düzenle
+                                        <i class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-paperbrand" data-id="@item.Id">Sil <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- AdhesiveInfo Table -->
+                <h3 class="centered-text">Tutkal Bilgileri</h3>
+
+                <div class="table-responsive">
+
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+
+                                <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addAdhesiveInfoModal">Yeni
+                                        Tutkal Bilgisi Ekle <i class="fa fa-plus" aria-hidden="true"></i></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.AdhesiveInfos)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+
+                                <td>
+                                    <button class="btn btn-warning btn-edit-adhesive" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-adhesive" data-id="@item.Id"> <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- PaperInfo Table -->
+                <h3 class="centered-text">Kuka Uzunluk Bilgileri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addCoreModal">Yeni
+                                        Kuka
+                                        Uzunluğu Ekle <i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Cores)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+
+                                <td>
+                                    <button class="btn btn-warning btn-edit-core" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-core" data-id="@item.Id"> <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal fade" id="addAdhesiveInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="addAdhesiveInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addAdhesiveInfoModalLabel">Yeni Tutkal Bilgisi Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateAdhesiveInfo">
+                                <div class="form-group">
+                                    <label for="adhesiveName">Adı</label>
+                                    <input type="text" class="form-control" id="adhesiveName" name="Name" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Add PaperInfo Modal -->
+            <div class="modal fade" id="addPaperInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="addPaperInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addPaperInfoModalLabel">Yeni Kağıt Bilgisi Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreatePaperInfo">
+                                <div class="form-group">
+                                    <label for="paperName">Adı</label>
+                                    <input type="text" class="form-control" id="paperName" name="Name" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="addCoreModal" tabindex="-1" role="dialog"
+            aria-labelledby="addCoreModalLabel" aria-hidden="true" data-backdrop="static"
+            data-keyboard="false">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addCoreModalLabel">Yeni Kuka Bilgisi Ekle</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form asp-action="CreateCore">
+                            <div class="form-group">
+                                <label for="coreName">Adı</label>
+                                <input type="text" class="form-control" id="coreName" name="Name" required>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+            <div class="modal fade" id="addPaperDetailModal" tabindex="-1" role="dialog"
+                aria-labelledby="addPaperDetailModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 claass="modal-title" id="addPaperDetailModalLabel"> Kağıt Detay Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreatePaperDetail">
+                                <div class="form-group">
+                                    <label for="PaperDetailName">Adı</label>
+                                    <input type="text" class="form-control" id="PaperDetailName" name="Name" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="addPaperBrandModal" tabindex="-1" role="dialog"
+                aria-labelledby="addPaperBrandModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 claass="modal-title" id="addPaperBrandModalLabel"> Kağıt Marka Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreatePaperBrand">
+                                <div class="form-group">
+                                    <label for="PaperBrandName">Adı</label>
+                                    <input type="text" class="form-control" id="PaperBrandName" name="Name" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editAdhesiveInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="editAdhesiveInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editAdhesiveInfoModalLabel">Tutkal Bilgisi Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editAdhesiveInfoForm">
+                                <input type="hidden" id="editAdhesiveInfoId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editAdhesiveName">Adı</label>
+                                    <input type="text" class="form-control" id="editAdhesiveName" name="Name" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit PaperInfo Modal -->
+            <div class="modal fade" id="editPaperInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="editPaperInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editPaperInfoModalLabel">Kağıt Bilgisi Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editPaperInfoForm">
+                                <input type="hidden" id="editPaperInfoId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editPaperName">Adı</label>
+                                    <input type="text" class="form-control" id="editPaperName" name="Name" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editPaperDetailModal" tabindex="-1" role="dialog"
+                aria-labelledby="editPaperDetailModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editPaperDetailModalLabel">Kağıt Detay Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editPaperDetailForm">
+                                <input type="hidden" id="editPaperDetailId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editPaperDetailName">Adı</label>
+                                    <input type="text" class="form-control" id="editPaperDetailName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editPaperBrandModal" tabindex="-1" role="dialog"
+                aria-labelledby="editPaperBrandModal" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editPaperBrandModalLabel">Kağıt Marka Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editPaperBrandForm">
+                                <input type="hidden" id="editPaperBrandId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editPaperBrandName">Adı</label>
+                                    <input type="text" class="form-control" id="editPaperBrandName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+            <script>
+                   $('.btn-edit-adhesive').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/erp/GetAdhesiveInfoById/' + id, function (data) {
+                        $('#editAdhesiveInfoId').val(data.id);
+                        $('#editAdhesiveName').val(data.name);
+                        $('#editAdhesiveInfoModal').modal('show');
+                    });
+                });
+
+                $('#editAdhesiveInfoForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/erp/UpdateAdhesiveInfo', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+                   $('.btn-delete-adhesive').on('click', function () {
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/DeleteAdhesiveInfo/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                // PaperInfo silme işlemi
+                $('.btn-delete-paper').on('click', function () {
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeletePaperInfo/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
+                // PaperInfo Düzenleme
+                $('.btn-edit-paper').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/erp/GetPaperInfoById/' + id, function (data) {
+                        $('#editPaperInfoId').val(data.id);
+                        $('#editPaperName').val(data.name);
+                        $('#editPaperInfoModal').modal('show');
+                    });
+                });
+
+                $('#editPaperInfoForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/erp/UpdatePaperInfo', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+                $(document).on('click', '.btn-delete-paperdetail', function () {
+                    console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeletePaperDetail/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+
+                });
+                $('.btn-edit-core').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/erp/GetCoreById/' + id, function (data) {
+                        $('#editCoreId').val(data.id);
+                        $('#editCoreName').val(data.name);
+                        $('#editCoreModal').modal('show');
+                    });
+                });
+
+                $('#editCoreForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/erp/UpdateCore', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+                $(document).on('click', '.btn-delete-core', function () {
+                    console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeleteCore/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+
+                });
+                $(document).on('click', '.btn-delete-paperbrand', function () {
+                    console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeletePaperBrand/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+
+                });
+
+                $('#editPaperDetailForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Erp/UpdatePaperDetail', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+                $('#editPaperBrandForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Erp/UpdatePaperBrand', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+
+                $(document).on('click', '.btn-edit-paperdetail', function () {
+                    console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                    var id = $(this).data('id');
+                    $.get('/ERP/GetPaperDetailById/' + id, function (data) {
+                        $('#editPaperDetailId').val(data.id);
+                        $('#editPaperDetailName').val(data.name);
+                        $('#editPaperDetailModal').modal('show');
+                    });
+                });
+
+
+                $(document).on('click', '.btn-edit-paperbrand', function () {
+                    console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                    var id = $(this).data('id');
+                    $.get('/ERP/GetPaperBrandById/' + id, function (data) {
+                        $('#editPaperBrandId').val(data.id);
+                        $('#editPaperBrandName').val(data.name);
+                        $('#editPaperBrandModal').modal('show');
+                    });
+                });
+
+
+                document.querySelectorAll('.btn-delete').forEach(button => {
+                    button.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        const url = this.getAttribute('href');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(url, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+
+            </script>
+</body>
+
+</html>

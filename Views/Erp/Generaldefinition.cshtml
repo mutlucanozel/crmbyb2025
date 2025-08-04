@@ -1,0 +1,1542 @@
+@model crm.Models.GeneralInfoViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Bilgiler</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Genel Tanımlar </h2>
+        <hr />
+        <div class="row g-4">
+            <div class="col-md-12">
+                <h3 class="centered-text">Ajans</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Adres</th>
+                                <th>Varsayılan</th>
+                                <th>Logo</th>
+
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addAgencyModal">Yeni Ajans Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.Agencies)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@item.Address</td>
+                                <td>
+                                    @if (item.isDefault)
+                                    {
+                                    <span style="color: green; font-weight: bold;">Evet</span>
+                                    }
+                                    else
+                                    {
+                                    <span style="color: red; font-weight: bold;">Hayır</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (!string.IsNullOrEmpty(item.LogoPath))
+                                    {
+                                    <img src="@item.LogoPath" alt="Logo" style="max-height: 50px;" />
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-warning btn-edit-agency" data-id="@item.Id">Düzenle <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <button class="btn btn-danger btn-delete-agency" data-id="@item.Id">Sil <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+            <div class="modal fade" id="addAgencyModal" tabindex="-1" role="dialog"
+                aria-labelledby="addAgencyModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addAgencyModalLabel">Yeni Bıçak Türü Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateAgency" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="AgencyName">Adı</label>
+                                    <input type="text" class="form-control" id="AgencyName" name="Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="AgencyAddress">Adres</label>
+                                    <input type="text" class="form-control" id="AgencyAddress" name="Address" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="AgencyLogo">Logo</label>
+                                    <input type="file" class="form-control" id="AgencyLogo" name="LogoFile"
+                                        accept="image/*">
+                                </div>
+                                <div class="form-group form-check">
+                                    <input type="hidden" name="AgencyisDefault" value="false" />
+                                    <input type="checkbox" class="form-check-input" id="AgencyisDefault"
+                                        name="isDefault" value="true" />
+                                    <label class="form-check-label" for="AgencyisDefault">Varsayılan</label>
+                                </div>
+
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="modal fade" id="addNotificationModal" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Yönetici Notu</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form id="notificationForm">
+                            <div class="modal-body">
+                                <input type="hidden" id="notificationId" value="@Model.AdminNotification?.Id" />
+                                <div class="form-group">
+                                    <label for="Notification">Not</label>
+                                    <textarea class="form-control" id="Notification" rows="3"
+                                        required>@Model.AdminNotification?.Notification ?? ""</textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h3 class="centered-text">Teslim Şekilleri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addDeliveryMethodModal">Yeni
+                                        Teslim Şekli Ekle <i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.DeliveryMethods)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>
+                                    <button class="btn btn-warning btn-edit-delivery" data-id="@item.Id">Düzenle <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-delivery" data-id="@item.Id">Sil <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal fade" id="addDeliveryMethodModal" tabindex="-1" role="dialog"
+                aria-labelledby="addDeliveryMethodModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addDeliveryMethodModalLabel">Yeni Teslim Şekli Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateDeliveryMethod">
+                                <div class="form-group">
+                                    <label for="deliveryMethodName">Adı</label>
+                                    <input type="text" class="form-control" id="deliveryMethodName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editDeliveryMethodModal" tabindex="-1" role="dialog"
+                aria-labelledby="editDeliveryMethodModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editDeliveryMethodModalLabel">Teslim Şekli Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editDeliveryMethodForm">
+                                <input type="hidden" id="editDeliveryMethodId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editDeliveryMethodName">Adı</label>
+                                    <input type="text" class="form-control" id="editDeliveryMethodName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <!-- AdhesiveInfo Table -->
+                <h3 class="centered-text">Depo Tanım</h3>
+
+                <div class="table-responsive">
+
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Sıra</th>
+                                <th>No</th>
+
+                                <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addWareHouseModal">Yeni
+                                        Depo Ekle <i class="fa fa-plus" aria-hidden="true"></i></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.WareHouses)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@item.Row</td>
+                                <td>@item.No</td>
+
+                                <td>
+                                    <button class="btn btn-warning btn-edit-warehouse" data-id="@item.Id"> <i
+                                            class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-warehouse" data-id="@item.Id"> <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+          
+            <!-- Modals -->
+            <!-- Add AdhesiveInfo Modal -->
+            <div class="modal fade" id="addWareHouseModal" role="dialog" aria-labelledby="addWareHouseModalLabel"
+                aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addWareHouseModalLabel">Yeni Depo Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateWareHouse">
+                                <div class="form-group">
+                                    <label for="WareHouseName">Adı</label>
+                                    <input type="text" class="form-control" id="WareHouseName" name="Name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="WareHouseRow">Sıra</label>
+                                    <select class="form-control" id="WareHouseRow" name="Row" required>
+                                        <option></option> <!-- Placeholder -->
+                                        @for (char c = 'A'; c <= 'Z' ; c++) { <option value="@c">@c</option>
+                                            }
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="WareHouseNo">No</label>
+                                    <select class="form-control" id="WareHouseNo" name="No" required>
+                                        <option></option>
+                                        <!-- JS ile 0-50 arasında doldurulacak -->
+                                    </select>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="addMailInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="addMailInfoModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addMailInfoModalLabel">Yeni Mail Bilgisi Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateMailInfo">
+                                <div class="form-group">
+                                    <label for="Mail">Mail</label>
+                                    <input type="email" class="form-control" id="Mail" name="Mail" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add PaperInfo Modal -->
+            <div class="modal fade" id="addPaperInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="addPaperInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addPaperInfoModalLabel">Yeni Kağıt Bilgisi Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreatePaperInfo">
+                                <div class="form-group">
+                                    <label for="paperName">Adı</label>
+                                    <input type="text" class="form-control" id="paperName" name="Name" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add DeliveryMethod Modal -->
+            <div class="modal fade" id="addDeliveryMethodModal" tabindex="-1" role="dialog"
+                aria-labelledby="addDeliveryMethodModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addDeliveryMethodModalLabel">Yeni Teslim Şekli Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateDeliveryMethod">
+                                <div class="form-group">
+                                    <label for="deliveryMethodName">Adı</label>
+                                    <input type="text" class="form-control" id="deliveryMethodName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add OrderMethod Modal -->
+            <div class="modal fade" id="addshippingmethodModal" tabindex="-1" role="dialog"
+                aria-labelledby="addshippingmethodModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addshippingmethodModalLabel"> Sevkiyat Şekli Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateShippingMethod">
+                                <div class="form-group">
+                                    <label for="shippingMethodName">Adı</label>
+                                    <input type="text" class="form-control" id="shippingMethodName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Modals -->
+            <!-- Edit AdhesiveInfo Modal -->
+            <div class="modal fade" id="editWareHouseModal" tabindex="-1" role="dialog"
+                aria-labelledby="editWareHouseModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editWareHouseModalLabel">Depo Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editWareHouseForm">
+                                <input type="hidden" id="editWareHouseId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editWareHouseName">Adı</label>
+                                    <input type="text" class="form-control" id="editWareHouseName" name="Name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editWareHouseRow">Sıra</label>
+                                    <select class="form-control" id="editWareHouseRow" name="Row" required>
+                                        <option></option> <!-- Placeholder -->
+                                        @for (char c = 'A'; c <= 'Z' ; c++) { <option value="@c">@c</option>
+                                            }
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editWareHouseNo">No</label>
+                                    <select class="form-control" id="editWareHouseNo" name="No" required>
+                                        <option></option>
+                                        <!-- JS ile 0-50 arasında doldurulacak -->
+                                    </select>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit PaperInfo Modal -->
+            <div class="modal fade" id="editPaperInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="editPaperInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editPaperInfoModalLabel">Kağıt Bilgisi Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editPaperInfoForm">
+                                <input type="hidden" id="editPaperInfoId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editPaperName">Adı</label>
+                                    <input type="text" class="form-control" id="editPaperName" name="Name" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editMailInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="editMailInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editMailInfoModalLabel">Kağıt Bilgisi Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editMailInfoForm">
+                                <input type="hidden" id="editMailInfoId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editMailInfoModal">Mail</label>
+                                    <input type="email" class="form-control" id="editMailInfoMail" name="Mail" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit DeliveryMethod Modal -->
+            <div class="modal fade" id="editDeliveryMethodModal" tabindex="-1" role="dialog"
+                aria-labelledby="editDeliveryMethodModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editDeliveryMethodModalLabel">Teslim Şekli Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editDeliveryMethodForm">
+                                <input type="hidden" id="editDeliveryMethodId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editDeliveryMethodName">Adı</label>
+                                    <input type="text" class="form-control" id="editDeliveryMethodName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Edit AdditionalProcessing Modal -->
+            <div class="modal fade" id="editKnifeModal" tabindex="-1" role="dialog"
+                aria-labelledby="editKnifeModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editKnifeModalLabel">Bıçak Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editKnifeForm">
+                                <input type="hidden" id="editKnifeId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editKnifeName">Adı</label>
+                                    <input type="text" class="form-control" id="editKnifeName" name="Name" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Edit OrderMethod Modal -->
+            <div class="modal fade" id="editShippingMethoModal" tabindex="-1" role="dialog"
+                aria-labelledby="editShippingMethoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editShippingMethoModalLabel">Sevkiyat Şekli Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editShippingMethodForm">
+                                <input type="hidden" id="editShippingMethodId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editShippingMethodName">Adı</label>
+                                    <input type="text" class="form-control" id="editShippingMethodName" name="Name"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade" id="editAgencyModal" tabindex="-1" role="dialog"
+                aria-labelledby="editAgencyModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editAgencyModalLabel">Ajans Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editAgencyForm" enctype="multipart/form-data">
+                                <input type="hidden" id="editAgencyId" name="Id" />
+
+                                <div class="form-group">
+                                    <label for="editAgencyName">Adı</label>
+                                    <input type="text" class="form-control" id="editAgencyName" name="Name" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="editAgencyAddress">Adres</label>
+                                    <input type="text" class="form-control" id="editAgencyAddress" name="Address">
+                                </div>
+
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" id="editAgencyisDefault"
+                                        name="isDefault">
+                                    <label class="form-check-label" for="editAgencyisDefault">Varsayılan Ajans</label>
+                                </div>
+
+
+                                <!-- Mevcut logo önizlemesi -->
+                                <div class="form-group">
+                                    <label>Mevcut Logo:</label><br />
+                                    <img id="editAgencyLogoPreview" src="" alt="Logo" style="max-height: 100px;" />
+                                </div>
+                                <div class="form-group" id="newLogoPreviewContainer" style="display:none;">
+                                    <label>Yeni Logo Önizleme</label><br />
+                                    <img id="newLogoPreview" src="" alt="Yeni Logo"
+                                        style="max-width: 150px; max-height: 150px; border: 1px solid #ccc; padding: 4px;" />
+                                </div>
+
+                                <!-- Yeni logo seçimi -->
+                                <div class="form-group">
+                                    <label>Yeni Logo Seç</label>
+                                    <input type="file" id="editAgencyLogoInput" name="Logo" accept="image/*"
+                                        class="form-control" />
+                                </div>
+
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+
+
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+            <script>
+
+                $('.btn-delete-delivery').on('click', function () {
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeleteDeliveryMethod/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+                });
+                $('.btn-edit-delivery').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/erp/GetDeliveryMethodById/' + id, function (data) {
+                        $('#editDeliveryMethodId').val(data.id);
+                        $('#editDeliveryMethodName').val(data.name);
+                        $('#editDeliveryMethodModal').modal('show');
+                    });
+                });
+
+                $('#editDeliveryMethodForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/erp/UpdateDeliveryMethod', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+                // İlk sayfa yüklendiğinde A seçilsin (sadece 1 kere)
+                $(document).ready(function () {
+                    $('#WareHouseRow').val($('#WareHouseRow option:eq(1)').val()).trigger('change');
+
+                    $('#WareHouseRow').select2({
+                        placeholder: "Bir sıra seçin (A-Z)",
+                        allowClear: false,
+                        width: '100%',
+                        minimumResultsForSearch: 0
+                    }).on('select2:open', function () {
+                        // Select2 açıldığında input’a otomatik focus
+                        setTimeout(function () {
+                            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+                        }, 0);
+                    });
+                });
+
+
+                $(document).ready(function () {
+                    // 0-50 arası sayıları dinamik olarak ekle
+                    const noSelect = $('#WareHouseNo');
+                    for (let i = 0; i <= 50; i++) {
+                        noSelect.append(new Option(i, i));
+                    }
+
+                    // Varsayılan olarak 0 seç
+                    noSelect.val("0");
+
+                    // Select2 başlat
+                    noSelect.select2({
+                        placeholder: "Bir numara seçin (0-50)",
+                        allowClear: false,
+                        width: '100%',
+                        minimumResultsForSearch: 0
+                    }).on('select2:open', function () {
+                        // Açıldığında input'a focus ver
+                        setTimeout(function () {
+                            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+                        }, 0);
+                    });
+
+                    // Değişikliği tetikle (form için vs.)
+                    noSelect.trigger('change');
+                });
+
+
+
+                $('#editAgencyLogoInput').on('change', function (event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            $('#newLogoPreview').attr('src', e.target.result);
+                            $('#newLogoPreviewContainer').show();
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        // Dosya iptal edilirse önizleme gizlensin
+                        $('#newLogoPreviewContainer').hide();
+                        $('#newLogoPreview').attr('src', '');
+                    }
+                });
+
+                $(document).ready(function () {
+                    // Modal açıldığında mevcut verileri doldur
+                    $('.btn-edit').on('click', function () {
+                        const id = $(this).data('id');
+                        const notification = $(this).data('notification');
+
+                        $('#notificationId').val(id);
+                        $('#notificationText').val(notification);
+                    });
+
+                    // Form gönderildiğinde
+                    $('#notificationForm').on('submit', function (e) {
+                        e.preventDefault();
+
+                        const notificationData = {
+                            Id: $('#notificationId').val(),
+                            Notification: $('#notificationText').val()
+                        };
+
+                        $.ajax({
+                            url: '/Customer/SaveNotification', // Backend endpoint
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(notificationData),
+                            success: function (response) {
+                                Toastify({
+                                    text: "Not başarıyla kaydedildi!",
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "green",
+                                }).showToast();
+                                $('#notificationModal').modal('hide');
+                                location.reload();
+                            },
+                            error: function (xhr) {
+                                Toastify({
+                                    text: "Hata: " + (xhr.responseJSON?.message || "Bir sorun oluştu!"),
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "red",
+                                }).showToast();
+                            }
+                        });
+                    });
+                });
+
+
+                $(document).ready(function () {
+                    // AdditionalProcessing verilerini tabloya ekle
+                    $.get('/Customer/GetAdditionalProcessings', function (response) {
+                        console.log(response);  // Gelen veriyi kontrol edin
+                        appendToTable(response); // Gelen veriyi tabloya ekleme işlemi
+                    });
+
+                    // AdditionalProcessing delete operation - Dinamik elemanlar için `document` üzerinden
+
+
+                    $(document).on('click', '.btn-edit-knife', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/ERP/GetKnifesById/' + id, function (data) {
+                            $('#editKnifeId').val(data.id);
+                            $('#editKnifeName').val(data.name);
+                            $('#editKnifeModal').modal('show');
+                        });
+                    });
+                    $(document).on('click', '.btn-edit-shippingmethod', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/ERP/GetsShippingMethodById/' + id, function (data) {
+                            $('#editShippingMethodId').val(data.id);
+                            $('#editShippingMethodName').val(data.name);
+                            $('#editShippingMethoModal').modal('show');
+                        });
+                    });
+
+                    $(document).on('click', '.btn-edit-agency', function () {
+                        console.log("Edit button clicked!");
+                        var id = $(this).data('id');
+                        $.get('/ERP/GetAgencyById/' + id, function (data) {
+                            console.log(data); // gelen veriyi gör
+                            $('#editAgencyId').val(data.id);
+                            $('#editAgencyName').val(data.name);
+                            $('#editAgencyAddress').val(data.address); // düzeltildi
+
+                            $('#editAgencyisDefault').prop('checked', data.isDefault === true);
+
+                            $('#editAgencyLogoPreview').attr('src', data.logoPath);
+
+                            // Yeni logo seçimi temizleniyor
+                            $('#newLogoPreview').attr('src', '');
+                            $('#newLogoPreviewContainer').hide();
+                            $('#editAgencyLogoInput').val('');
+
+                            $('#editAgencyModal').modal('show');
+
+
+                        });
+                    });
+
+                    $(document).on('click', '.btn-edit-moldcliche', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/ERP/GetMoldClichesById/' + id, function (data) {
+                            $('#editMoldClicheId').val(data.id);
+                            $('#editMoldClicheName').val(data.name);
+                            $('#editMoldClicheModal').modal('show');
+                        });
+                    });
+
+                    $(document).on('click', '.btn-delete-warehouse', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/deletewarehouse/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    $(document).on('click', '.btn-delete-agency', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/deleteagency/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+
+
+                    $(document).on('click', '.btn-delete-shippingmethod', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/DeleteShippingMethod/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+
+
+                    // AdditionalProcessing form submit
+                    $('#editAdditionalProcessingForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Customer/UpdateAdditionalProcessing', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+                });
+
+                // Verileri tabloya ekleyen fonksiyon
+                function appendToTable(data) {
+                    var tableBody = $('#additionalProcessingTable tbody'); // Tablo gövdesini seçin
+                    tableBody.empty(); // Eski verileri temizleyin
+                    data.forEach(function (item) {
+                        var row = `<tr>
+            <td>${item.id}</td>
+            <td>${item.name}</td>
+            <td>
+                <button class="btn btn-warning btn-edit-additional-processing" data-id="${item.id}">Düzenle <i class="fa fa-pencil" aria-hidden="true"></i></button>
+                <button class="btn btn-danger btn-delete-additional-processing" data-id="${item.id}">Sil <i class="fa fa-trash" aria-hidden="true"></i></button>
+            </td>
+        </tr>`;
+                        tableBody.append(row);
+                    });
+                }
+
+
+                $(document).ready(function () {
+                    $('.btn-delete-knife').on('click', function () {
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/deleteknife/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    // PaperInfo silme işlemi
+                    $('.btn-delete-paper').on('click', function () {
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeletePaperInfo/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+                    // DeliveryMethod silme işlemi
+                   
+
+                    $('.btn-delete-mail').on('click', function () {
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeleteMailInfo/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    var swalMessage = '@TempData["SwalMessage"]';
+                    if (swalMessage) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: swalMessage,
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                });
+                $(document).ready(function () {
+
+                    function populateEditNoDropdown() {
+                        const select = $('#editWareHouseNo');
+
+                        // Varsa Select2 destroy et
+                        if (select.hasClass('select2-hidden-accessible')) {
+                            select.select2('destroy');
+                        }
+
+                        select.empty().append(new Option('', '')); // placeholder
+
+                        for (let i = 0; i <= 50; i++) {
+                            select.append(new Option(i, i));
+                        }
+
+                        // Select2 başlat
+                        select.select2({
+                            placeholder: "Bir numara seçin (0-50)",
+                            allowClear: false,
+                            width: '100%',
+                            minimumResultsForSearch: 0
+                        }).on('select2:open', function () {
+                            setTimeout(() => {
+                                document.querySelector('.select2-container--open .select2-search__field')?.focus();
+                            }, 0);
+                        });
+                    }
+
+                    function initEditRowSelect2() {
+                        const rowSelect = $('#editWareHouseRow');
+
+                        if (rowSelect.hasClass('select2-hidden-accessible')) {
+                            rowSelect.select2('destroy');
+                        }
+
+                        rowSelect.select2({
+                            placeholder: "Bir sıra seçin (A-Z)",
+                            allowClear: false,
+                            width: '100%',
+                            minimumResultsForSearch: 0
+                        }).on('select2:open', function () {
+                            setTimeout(() => {
+                                document.querySelector('.select2-container--open .select2-search__field')?.focus();
+                            }, 0);
+                        });
+                    }
+
+                    // ✏️ Düzenle tıklanınca çalışacak
+                    $(document).on('click', '.btn-edit-warehouse', function () {
+                        var id = $(this).data('id');
+
+                        populateEditNoDropdown();
+                        initEditRowSelect2();
+
+                        $.get('/erp/GetWareHouseById/' + id, function (data) {
+                            $('#editWareHouseId').val(data.id);
+                            $('#editWareHouseName').val(data.name);
+
+                            // Mevcut değerleri atayıp Select2 ile güncelle
+                            $('#editWareHouseRow').val(data.row).trigger('change');
+                            $('#editWareHouseNo').val(data.no).trigger('change');
+
+                            $('#editWareHouseModal').modal('show');
+                        });
+                    });
+                });
+
+
+
+                $('#editAdhesiveInfoForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Customer/UpdateAdhesiveInfo', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+                $('#editMailInfoForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Customer/UpdateMailInfo', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+
+                // PaperInfo Düzenleme
+                $('.btn-edit-paper').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/Customer/GetPaperInfoById/' + id, function (data) {
+                        $('#editPaperInfoId').val(data.id);
+                        $('#editPaperName').val(data.name);
+                        $('#editPaperInfoModal').modal('show');
+                    });
+                });
+
+                $('#editWareHouseForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/erp/UpdateWareHouse', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+                // DeliveryMethod Düzenleme
+                $('.btn-edit-delivery').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/Customer/GetDeliveryMethodById/' + id, function (data) {
+                        $('#editDeliveryMethodId').val(data.id);
+                        $('#editDeliveryMethodName').val(data.name);
+                        $('#editDeliveryMethodModal').modal('show');
+                    });
+                });
+
+                $('#editDeliveryMethodForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Customer/UpdateDeliveryMethod', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+                $('.btn-edit-mail').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/Customer/GetMailInfoById/' + id, function (data) {
+                        $('#editMailInfoId').val(data.id);
+                        $('#editMailInfoMail').val(data.mail);
+                        $('#editMailInfoModal').modal('show');
+                    });
+                });
+                $('#editShippingMethodForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Erp/UpdateShippingMethod', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+
+                $('#editAgencyForm').on('submit', function (event) {
+                    event.preventDefault();
+
+                    var form = document.getElementById('editAgencyForm');
+                    var formData = new FormData(form);
+                    formData.set('isDefault', $('#editAgencyisDefault').is(':checked'));
+
+                    $.ajax({
+                        url: '/erp/UpdateAgency',
+                        type: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        }
+                    });
+                });
+
+
+                $('#editKnifeForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/erp/updateKnife', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+
+                $('#editOrderMethodForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+
+                    $.post('/Customer/UpdateOrderMethod', formData, function (response) {
+                        if (response.success) {
+                            Toastify({
+                                text: "Başarıyla güncellendi!",
+                                duration: 3000,
+                                gravity: "top", // Toast'ın ekranda görünme pozisyonu
+                                position: "center", // Toast'ın ekrandaki konumu
+                                backgroundColor: "#4CAF50", // Başarılı durum için yeşil renk
+                                className: "success-toast", // İsteğe bağlı: toast için özel sınıf
+                            }).showToast();
+
+                            setTimeout(() => {
+                                location.reload();
+                            }, 1500); // Sayfanın 1,5 saniye sonra yeniden yüklenmesi
+                        } else {
+                            Toastify({
+                                text: "Güncelleme başarısız! " + response.message,
+                                duration: 5000,
+                                gravity: "top",
+                                position: "center",
+                                backgroundColor: "#FF0000", // Başarısız durum için kırmızı renk
+                                className: "error-toast",
+                            }).showToast();
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.btn-delete').forEach(button => {
+                    button.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        const url = this.getAttribute('href');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(url, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+
+            </script>
+</body>
+
+</html>

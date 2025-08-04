@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muhasebe Raporları</title>
+    <link rel="stylesheet" type="text/css" href="~/css/listcustomer.css" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/css/listuser.css" />
+    <link rel="stylesheet" type="text/css" href="~/css/accountingreport.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- 📌 Sonra AutoTable Eklentisini Yükle -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Muhasebe Raporları</h2>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+            <input type="text" class="form-control search-input-custom" id="searchInput"
+                placeholder="Müşteri Sorumlusu, Müşteri ya da herhangi bir değer ile filtrele..."
+                style="margin: 0; flex-grow: 1; height: 90px;">
+            <label id="downloadExcel" class="upload-label search-input-custom"
+                style="margin: 0; flex-grow: 1; height: 90px; cursor: pointer;">
+                <span class="upload-icon" style="height: 20px;">📁</span>
+                Excel İndir
+            </label>
+            <label id="downloadPdf" class="upload-label search-input-custom"
+                style="margin: 0; flex-grow: 1; height: 90px; cursor: pointer;">
+                <span class="upload-icon" style="height: 20px;">📄</span>
+                PDF İndir
+            </label>
+
+
+
+            <input type="file" id="uploadExcel" accept=".xlsx, .xls" hidden>
+        </div>
+        <hr>
+
+
+
+        <div class="alert alert-primary d-inline-block text-center" role="alert">
+            <button id="toggleTableBtn" class="btn btn-outline-primary">Tabloyu Gizle</button>
+            <button id="toggleChartBtn" class="btn btn-outline-primary">Grafiği Göster</button>
+            <hr>
+            <select id="chartType" class="custom-select">
+                <option value="bar">Çubuk Grafik</option>
+                <option value="line">Çizgi Grafik</option>
+                <option value="pie">Pasta Grafik</option>
+                <option value="doughnut">Halka Grafik</option>
+            </select>
+            <p id="fileLastModified" style="font-weight: bold; color: #007bff; margin-top: 10px;">
+                Tablonun Son Güncelleme Tarihi: Yükleniyor...
+            </p>
+
+        </div>
+        <div class="container" style="display: none;">
+
+            <canvas id="chartCanvas" style="max-width: 100%; height: 400px;"></canvas>
+
+        </div>
+
+
+        <div class="table-responsive">
+            <div class="d-flex justify-content-center mt-3">
+
+                <div class="alert alert-primary d-inline-block text-center" role="alert">
+                    <h5 id="rowCount"></h5>
+                </div>
+            </div>
+            <table class="user-table table table-bordered text-center" style="width: 100%; table-layout: auto;"
+                id="userTable">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="align-middle">Müşteri Sorumlusu</th>
+                        <th rowspan="2" class="align-middle">Müşteri / Tedarik Giriş (Toplam)</th>
+                        <th rowspan="2" class="align-middle">Vaad Edilen Ödeme Türü ve Vadesi</th>
+                        <th colspan="9" class="align-middle">Vade</th>
+                        <th data-column="12" rowspan="2" class="align-middle">Genel Toplam</th>
+                        <th data-column="13" rowspan="2" class="align-middle">Gecİkmİş Toplam</th>
+                    </tr>
+                    <tr>
+                        <th data-column="3">0-15</th>
+                        <th data-column="4">16-30</th>
+                        <th data-column="5">31-45</th>
+                        <th data-column="6">46-60</th>
+                        <th data-column="7">61-75</th>
+                        <th data-column="8">76-90</th>
+                        <th data-column="9">91-105</th>
+                        <th data-column="10">106-120</th>
+                        <th data-column="11">120+</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    <!-- Veriler buraya yüklenecek -->
+                </tbody>
+            </table>
+        </div>
+
+        <hr>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+
+
+
+    <script>
+        document.getElementById("toggleChartBtn").addEventListener("click", function () {
+            const canvasContainer = document.getElementById("chartCanvas").parentElement;
+            const chartTypeSelect = document.getElementById("chartType");
+
+            const isHidden = getComputedStyle(canvasContainer).display === "none";
+
+            if (isHidden) {
+                canvasContainer.style.display = "block";
+                chartTypeSelect.style.visibility = "visible";  // Seçim kutusunu görünür yap
+                chartTypeSelect.style.position = "static";  // Normal konuma getir
+                this.textContent = "Grafiği Gizle";
+                createChart();
+            } else {
+                canvasContainer.style.display = "none";
+                chartTypeSelect.style.visibility = "hidden";  // Seçim kutusunu tamamen gizle
+                chartTypeSelect.style.position = "absolute";  // Ekrandan tamamen kaldır
+                this.textContent = "Grafiği Göster";
+            }
+        });
+        document.getElementById('toggleChartBtn').addEventListener('click', function () {
+            createChart();
+        });
+
+        document.getElementById('chartType').addEventListener('change', function () {
+            createChart();
+        });
+
+        function createChart() {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            const selectedChartType = document.getElementById('chartType').value;
+
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+
+            const dataMap = {};
+            const rows = document.querySelectorAll('#userTable tbody tr');
+
+            rows.forEach(row => {
+                const columns = row.querySelectorAll('td');
+                if (columns.length >= 14) {
+                    const musteriSorumlusu = columns[0].textContent.trim();
+                    const genelToplam = parseFloat(columns[12].textContent.replace(/\./g, '').replace(',', '.')) || 0;
+                    const gecikmisToplam = parseFloat(columns[13].textContent.replace(/\./g, '').replace(',', '.')) || 0;
+
+                    if (!dataMap[musteriSorumlusu]) {
+                        dataMap[musteriSorumlusu] = { genelToplam: 0, gecikmisToplam: 0 };
+                    }
+                    dataMap[musteriSorumlusu].genelToplam += genelToplam;
+                    dataMap[musteriSorumlusu].gecikmisToplam += gecikmisToplam;
+                }
+            });
+
+            let sortedData = Object.entries(dataMap).sort((a, b) => b[1].genelToplam - a[1].genelToplam);
+            const labels = sortedData.map(item => item[0]);
+            const genelToplamData = sortedData.map(item => item[1].genelToplam);
+            const gecikmisToplamData = sortedData.map(item => item[1].gecikmisToplam);
+
+            // Rastgele renk paleti oluştur
+            function generateColors(length) {
+                const colors = [];
+                for (let i = 0; i < length; i++) {
+                    const color = `hsl(${(i * 360 / length) % 360}, 70%, 50%)`; // HSL skalasında farklı tonlar
+                    colors.push(color);
+                }
+                return colors;
+            }
+
+            const backgroundColors = generateColors(labels.length);
+            const borderColors = backgroundColors.map(color => color.replace('50%', '40%')); // Biraz daha koyu sınırlar
+
+            window.myChart = new Chart(ctx, {
+                type: selectedChartType,
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Genel Toplam',
+                            data: genelToplamData,
+                            backgroundColor: backgroundColors,
+                            borderColor: borderColors,
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Gecikmiş Toplam',
+                            data: gecikmisToplamData,
+                            backgroundColor: backgroundColors.map(color => color.replace('50%', '60%')), // Biraz açık renk
+                            borderColor: borderColors,
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: selectedChartType === 'pie' || selectedChartType === 'doughnut' ? {} : {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+
+        document.getElementById("toggleTableBtn").addEventListener("click", function () {
+            const tableDiv = document.querySelector(".table-responsive"); // Tabloyu içeren div
+            if (tableDiv.style.display === "none") {
+                tableDiv.style.display = "block";
+                this.textContent = "Tabloyu Gizle"; // Butonun metnini değiştir
+            } else {
+                tableDiv.style.display = "none";
+                this.textContent = "Tabloyu Göster"; // Butonun metnini değiştir
+            }
+        });
+        let fileLastModifiedDate = ""; // Global değişken oluştur
+
+        async function fetchFileLastModified(filePath, elementId) {
+            try {
+                let headResponse = await fetch(filePath, { method: "HEAD" });
+                if (!headResponse.ok) throw new Error("Dosya bilgisi alınamadı!");
+
+                let lastModified = headResponse.headers.get("Last-Modified");
+
+                if (lastModified) {
+                    let dateObj = new Date(lastModified);
+                    fileLastModifiedDate = dateObj.toISOString().split("T")[0]; // YYYY-MM-DD formatında al
+
+                    let formattedDate = dateObj.toLocaleString("tr-TR");
+                    document.getElementById(elementId).textContent = ` Son Güncelleme : ${formattedDate}`;
+                } else {
+                    document.getElementById(elementId).textContent = "⚠️ Dosyanın değiştirilme tarihi alınamadı!";
+                }
+            } catch (error) {
+                console.error("Hata:", error);
+                document.getElementById(elementId).textContent = "⚠️ Dosya tarihi yüklenirken hata oluştu!";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async function () {
+            showToast("🔄 Sayfa yüklendi, işlemler başlıyor...", "info");
+
+            // === 1. Dosya tarihi alınmaya çalışılıyor ===
+            try {
+                const headResp = await fetch("/profile_pictures/tahsilat.xlsx", { method: "HEAD" });
+                if (!headResp.ok) throw new Error("Tarih bilgisi alınamadı! HTTP " + headResp.status);
+
+                const lastModified = headResp.headers.get("Last-Modified");
+                if (lastModified) {
+                    const date = new Date(lastModified).toLocaleString("tr-TR");
+                    document.getElementById("fileLastModified").textContent = ` Son Güncelleme : ${date}`;
+                    showToast("📅 Dosya tarihi alındı", "success");
+                } else {
+                    showToast("⚠️ Dosya tarihi yok", "error");
+                }
+            } catch (err) {
+                showToast("❌ Dosya tarihi alınamadı: " + err.message, "error");
+            }
+
+            // === 2. Excel dosyasını fetch et ===
+            const defaultFilePath = "/profile_pictures/tahsilat.xlsx";
+            const cacheBuster = new Date().getTime();
+
+            try {
+                showToast("📁 Excel verisi çekiliyor...", "info");
+                const response = await fetch(`${defaultFilePath}?v=${cacheBuster}`, { cache: "no-store" });
+
+                if (!response.ok) {
+                    const errMsg = `❌ Dosya yüklenemedi! HTTP ${response.status}`;
+                    showToast(errMsg, "error");
+                    throw new Error(errMsg);
+                }
+
+                const arrayBuffer = await response.arrayBuffer();
+                showToast("✅ Excel verisi alındı", "success");
+
+                // === 3. Excel'den JSON oluştur ===
+                const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: "array" });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+                if (!jsonData || jsonData.length < 3) {
+                    showToast("⚠️ Excel verisi boş veya hatalı", "error");
+                    return;
+                }
+
+                // === 4. Tabloya yaz ===
+                const tableBody = document.getElementById("userTableBody");
+                tableBody.innerHTML = "";
+
+                let currentMusteriSorumlusu = "";
+                let rowCount = 0;
+                let rowHTML = "";
+
+                jsonData.slice(2, -1).forEach((row) => {
+                    if (row.every(cell => !cell || cell.toString().trim() === "")) return;
+
+                    if (row[0]) currentMusteriSorumlusu = row[0].toString().trim();
+
+                    const formattedRow = row.map((cell, index) => {
+                        if (!cell || cell.toString().trim().toLowerCase() === "undefined") return "";
+                        if (index > 0 && !isNaN(cell)) {
+                            return new Intl.NumberFormat("tr-TR", {
+                                useGrouping: true,
+                                maximumFractionDigits: 0
+                            }).format(Math.floor(parseFloat(cell)));
+                        }
+                        return cell.toString().trim();
+                    });
+
+                    rowHTML += `
+                <tr>
+                    <td>${currentMusteriSorumlusu}</td>
+                    <td>${formattedRow[1] ? formattedRow[1] + "₺" : ""}</td>
+                    <td>${formattedRow[2] ? formattedRow[2] + "₺" : ""}</td>
+                    <td>${formattedRow[3] ? formattedRow[3] + "₺" : ""}</td>
+                    <td>${formattedRow[4] ? formattedRow[4] + "₺" : ""}</td>
+                    <td>${formattedRow[5] ? formattedRow[5] + "₺" : ""}</td>
+                    <td>${formattedRow[6] ? formattedRow[6] + "₺" : ""}</td>
+                    <td>${formattedRow[7] ? formattedRow[7] + "₺" : ""}</td>
+                    <td>${formattedRow[8] ? formattedRow[8] + "₺" : ""}</td>
+                    <td>${formattedRow[9] ? formattedRow[9] + "₺" : ""}</td>
+                    <td>${formattedRow[10] ? formattedRow[10] + "₺" : ""}</td>
+                    <td>${formattedRow[11] ? formattedRow[11] + "₺" : ""}</td>
+                    <td>${formattedRow[12] ? formattedRow[12] + "₺" : ""}</td>
+                    <td class="gecikmis-toplam"></td>
+                </tr>`;
+                    rowCount++;
+                });
+
+                tableBody.innerHTML = rowHTML;
+                document.getElementById("rowCount").textContent = `${rowCount} satır listeleniyor`;
+                showToast(`✅ ${rowCount} satır tabloya yazıldı`, "success");
+
+            } catch (error) {
+                console.error("❌ Yakalanan hata:", error);
+                showToast(`❌ Hata: ${error.message}`, "error");
+                document.getElementById("rowCount").textContent = `Hata: ${error.message}`;
+            }
+        });
+
+
+
+        function showToast(message, type) {
+            let bgColor = type === "success" ? "green" : "red";
+
+            Toastify({
+                text: message,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: bgColor,
+                stopOnFocus: true,
+            }).showToast();
+        }
+
+        $(document).ready(function () {
+            console.log("📌 Sayfa yüklendi, tablo verisi dinleniyor...");
+
+            const tableBody = document.querySelector("#userTable tbody");
+
+            if (tableBody) {
+                // İlk yüklemede gecikmiş toplam hesaplamasını çalıştır
+                calculateDelayedSums();
+                addColumnSums();
+
+                // Tablodaki değişiklikleri dinleyen observer
+                const observer = new MutationObserver(function () {
+                    console.log("🔄 Tablo verisi değişti, toplamlar güncelleniyor...");
+                    calculateDelayedSums();
+                    addColumnSums();
+                });
+
+                // Tablo güncellendiğinde gözlemle
+                observer.observe(tableBody, { childList: true, subtree: true });
+            } else {
+                console.error("❌ #userTable tbody bulunamadı!");
+            }
+        });
+
+        function calculateDelayedSums() {
+            let totalDelayedSum = 0;
+
+            // Loop through all the table rows
+            const rows = document.querySelectorAll('#userTable tbody tr');
+            rows.forEach(row => {
+                let delayedSum = 0;
+
+                // Loop through each cell in the row
+                row.querySelectorAll('td').forEach((cell) => {
+                    const bgColor = window.getComputedStyle(cell).backgroundColor;
+                    if (bgColor === 'rgb(255, 0, 0)') { // Check if the background color is red
+                        const value = parseFloat(cell.textContent.replace(/\./g, '').replace(',', '.'));
+                        if (!isNaN(value)) {
+                            delayedSum += value; // Add to delayed sum
+                        }
+                    }
+                });
+
+                // Update the row's delayed sum (column 13 - Gecikmiş Toplam)
+                const delayedSumCell = row.querySelector('.gecikmis-toplam');
+                if (delayedSumCell) {
+                    delayedSumCell.textContent = delayedSum.toLocaleString('tr-TR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                }
+
+                // Add this row's delayed sum to the total
+                totalDelayedSum += delayedSum;
+            });
+
+            // Display the total delayed sum at the bottom of the table
+            const totalDelayedCell = document.getElementById('totalDelayedSum');
+            if (totalDelayedCell) {
+                totalDelayedCell.textContent = totalDelayedSum.toLocaleString('tr-TR', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+        }
+
+
+        document.getElementById('downloadPdf').addEventListener('click', async function () {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a3' // 🔹 Büyük sayfa formatı
+            });
+
+            try {
+                // 📌 Font Yükleme
+                const fontUrl = '/fonts/DejaVuSans.ttf';
+                const fontResponse = await fetch(fontUrl);
+                if (!fontResponse.ok) throw new Error(`Font yüklenemedi! HTTP Hata Kodu: ${fontResponse.status}`);
+
+                const fontData = await fontResponse.arrayBuffer();
+                const uint8Array = new Uint8Array(fontData);
+                let binaryString = "";
+                for (let i = 0; i < uint8Array.length; i++) {
+                    binaryString += String.fromCharCode(uint8Array[i]);
+                }
+                const fontBase64 = btoa(binaryString);
+
+                doc.addFileToVFS("DejaVuSans.ttf", fontBase64);
+                doc.addFont("DejaVuSans.ttf", "DejaVu", "normal");
+                doc.setFont("DejaVu");
+
+                console.log("✅ Font başarıyla yüklendi!");
+
+                // 📌 Tabloyu Getir
+                const table = document.getElementById('userTable');
+                if (!table) throw new Error("❌ Tablo bulunamadı!");
+
+                const headers = [];
+                const data = [];
+
+                // 📌 Başlık Satırları
+                const mainHeaderRow = [
+                    { content: "MÜŞTERİ SORUMLUSU", colSpan: 1 },
+                    { content: "MÜŞTERİ / TEDARİK GİRİŞ (TOPLAM)", colSpan: 1 },
+                    { content: "VAAD EDİLEN ÖDEME TÜRÜ VE VADESİ", colSpan: 1 },
+                    { content: "VADE", colSpan: 9 },
+                    { content: "GENEL TOPLAM", colSpan: 1 },
+                    { content: "GECİKMİŞ TOPLAM", colSpan: 1 }
+                ];
+
+                const subHeaderRow = [
+                    { content: "", colSpan: 3 },
+                    { content: "0-15" },
+                    { content: "16-30" },
+                    { content: "31-45" },
+                    { content: "46-60" },
+                    { content: "61-75" },
+                    { content: "76-90" },
+                    { content: "91-105" },
+                    { content: "106-120" },
+                    { content: "120+" },
+                    { content: "Toplam" },
+                    { content: "Gecikmiş Toplam" }
+                ];
+
+                headers.push(mainHeaderRow);
+                headers.push(subHeaderRow);
+
+                // 📌 Verileri Okuma ve Formatlama
+                let totalDelayedSum = 0;
+                let columnSums = Array(14).fill(0);
+
+                table.querySelectorAll('tbody tr').forEach(row => {
+                    if (row.offsetParent !== null) { // Yalnızca görünen satırları al
+                        const dataRow = [];
+                        let rowDelayedSum = 0;
+                        row.querySelectorAll('td').forEach((cell, index) => {
+                            let content = cell.innerText.trim();
+                            let styles = { halign: 'center', fontSize: 6 }; // 🔹 Küçük font kullan
+
+                            // 📌 Gecikmiş ödemeleri kırmızı yap
+                            if (window.getComputedStyle(cell).backgroundColor === "rgb(255, 0, 0)") {
+                                styles = { ...styles, fillColor: [255, 0, 0], textColor: [255, 255, 255] };
+                                const cellValue = parseFloat(content.replace(/\./g, '').replace(',', '.'));
+                                if (!isNaN(cellValue)) {
+                                    rowDelayedSum += cellValue;
+                                }
+                            }
+
+                            // 📌 Sayıları tam sayı yap
+                            const cellValue = parseFloat(content.replace(/\./g, '').replace(',', '.'));
+                            if (!isNaN(cellValue)) {
+                                columnSums[index] += cellValue;
+                                content = Math.round(cellValue).toLocaleString('tr-TR');
+                            }
+
+                            dataRow.push({ content, styles });
+                        });
+
+                        // 📌 Gecikmiş Toplam
+                        dataRow.push({
+                            content: Math.round(rowDelayedSum).toLocaleString('tr-TR'),
+                            styles: { halign: 'center', fontSize: 6 }
+                        });
+
+                        data.push(dataRow);
+                        totalDelayedSum += rowDelayedSum;
+                    }
+                });
+
+                // 📌 TOPLAM SATIRI
+                const totalRow = [
+                    { content: "TOPLAM", colSpan: 3, styles: { fontStyle: "bold", halign: "center", fillColor: [41, 50, 65], textColor: [255, 255, 255] } },
+                    ...columnSums.slice(3, 12).map(sum => ({
+                        content: Math.round(sum).toLocaleString('tr-TR'),
+                        styles: { fontStyle: "bold", halign: "center", fillColor: [41, 50, 65], textColor: [255, 255, 255] }
+                    })),
+                    {
+                        content: Math.round(columnSums[12]).toLocaleString('tr-TR'),
+                        styles: { fontStyle: "bold", halign: "center", fillColor: [41, 50, 65], textColor: [255, 255, 255] }
+                    },
+                    {
+                        content: Math.round(columnSums[13]).toLocaleString('tr-TR'),
+                        styles: { fontStyle: "bold", halign: "center", fillColor: [41, 50, 65], textColor: [255, 255, 255] }
+                    }
+                ];
+
+                data.unshift(totalRow); // 📌 Mavi arka planlı toplam satırı ekle
+
+                console.log("✅ Tablo başarıyla okundu ve düzenlendi!");
+
+                // 📌 PDF Tablosunu Oluştur
+                doc.autoTable({
+                    head: headers,
+                    body: data,
+                    startY: 10,
+                    tableWidth: 'auto',
+                    styles: {
+                        font: "DejaVu",
+                        fontSize: 6, // 🔹 PDF içinde küçük olacak ama...
+                        cellPadding: 1,
+                        overflow: 'linebreak',
+                        halign: 'center',
+                        lineWidth: 0.1,
+                    },
+                    headStyles: {
+                        fillColor: [0, 51, 102],
+                        textColor: [255, 255, 255],
+                        fontStyle: 'bold',
+                        halign: 'center',
+                        fontSize: 7,
+                        cellPadding: 2,
+                    },
+                    alternateRowStyles: {
+                        fillColor: [245, 245, 245],
+                    },
+                    rowPageBreak: 'avoid',
+                    theme: 'grid',
+                    margin: { top: 5, left: 5, right: 5 }
+                });
+
+                console.log("✅ PDF başarıyla oluşturuldu!");
+
+                doc.save(`muhasebe_raporu.pdf`);
+                console.log("✅ PDF başarıyla indirildi!");
+
+            } catch (error) {
+                console.error("❌ Hata oluştu:", error);
+                alert(`PDF oluşturulurken bir hata oluştu: ${error.message}`);
+            }
+        });
+
+
+        // Tarihi YYYY-MM-DD formatında alalım
+        function getFormattedDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0'); // 01-12 formatında
+            const day = String(today.getDate()).padStart(2, '0'); // 01-31 formatında
+            return `${year}-${month}-${day}`;
+        }
+        function addColumnSums() {
+            const table = $('#userTable');
+            const tbody = table.find('tbody');
+            const rows = tbody.find('tr:visible'); // Sadece görünür satırları al
+            const columnCount = table.find('thead tr:last-child th').length;
+            const excludedColumnIndex = 1; // "Müşteri/Tedarik Giriş (Toplam)" sütununun indeksi (0'dan başlar)
+
+            // Sütun toplamlarını tutan bir dizi oluştur
+            const columnSums = Array(columnCount).fill(0);
+
+            // Tablodaki her satırın hücrelerini dolaş ve sayısal sütunları topla (belirtilen sütun hariç)
+            rows.each(function () {
+                $(this).find('td').each(function (index) {
+                    if (index !== excludedColumnIndex) { // Hariç tutulan sütun kontrolü
+                        const value = parseFloat($(this).text().replace(/\./g, '').replace(',', '.'));
+                        if (!isNaN(value)) {
+                            columnSums[index] += value;
+                        }
+                    }
+                });
+            });
+            // Toplam satırı oluştur ve tabloya ekle
+            const totalRow = $('<tr>').addClass('table-primary total-row');
+            columnSums.forEach((sum, index) => {
+                const formattedSum = sum ? Math.floor(sum).toLocaleString('tr-TR', { maximumFractionDigits: 0 }) : '';
+                totalRow.append(`<th>${formattedSum ? formattedSum + "₺" : ""}</th>`);
+
+            });
+
+
+            // Var olan toplam satırı kaldır ve yenisini ekle
+            table.find('thead tr.total-row').remove();
+            table.find('thead').append(totalRow);
+        }
+
+        document.getElementById('downloadExcel').addEventListener('click', function () {
+            const table = document.getElementById('userTable');
+
+            // Başlıkları alma (thead)
+            const headers = [];
+            const headerRows = table.querySelectorAll('thead tr');
+            headerRows.forEach((row, rowIndex) => {
+                const headerRow = [];
+                row.querySelectorAll('th').forEach(cell => {
+                    const colSpan = cell.colSpan || 1;
+                    const rowSpan = cell.rowSpan || 1;
+
+                    // Hücreyi ekle
+                    headerRow.push(cell.innerText.trim());
+
+                    // `colspan` varsa, uygun boş hücreler ekle
+                    for (let i = 1; i < colSpan; i++) {
+                        headerRow.push('');
+                    }
+                });
+
+                // Başlık satırını ekle
+                headers.push(headerRow);
+            });
+
+            // Başlıkları yeniden hizalama
+            if (headers.length > 1) {
+                const secondRow = headers[1]; // İkinci satır (16-30, 31-45, ...)
+                const offset = 3; // 2 hücre sağa kaydırma
+                for (let i = secondRow.length - 1; i >= 0; i--) {
+                    if (secondRow[i]) {
+                        secondRow[i + offset] = secondRow[i];
+                        secondRow[i] = ''; // Orijinal hücreyi boş bırak
+                    }
+                }
+            }
+
+            // Görünür tablo gövdesini (tbody) alma
+            const visibleRows = Array.from(table.querySelectorAll('tbody tr')).filter(row => row.style.display !== 'none');
+
+            if (visibleRows.length === 0) {
+                Swal.fire('Uyarı', 'Tabloda indirilmek üzere hiçbir veri bulunamadı.', 'warning');
+                return;
+            }
+
+            // Gövde verilerini JSON formatına dönüştür
+            const visibleData = visibleRows.map(row => {
+                return Array.from(row.cells).map(cell => {
+                    let cellText = cell.innerText.trim();
+                    if (cellText.match(/^-?\d+(\.\d+|,\d+)?$/)) {
+                        cellText = cellText.replace(/\./g, '').replace(',', '.');
+                        return parseFloat(cellText); // Sayıya çevir
+                    }
+                    return cellText; // Metin olarak bırak
+                });
+            });
+
+            // Tüm verileri birleştir
+            const jsonData = [...headers, ...visibleData];
+
+            // JSON'dan Excel'e dönüştür
+            const worksheet = XLSX.utils.aoa_to_sheet(jsonData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Muhasebe Raporları");
+
+            // Excel dosyasını oluştur ve indir
+            const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${fileLastModifiedDate}_muhasebe_raporu.xlsx`;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+
+
+
+        $(document).ready(function () {
+            console.log("Script is running!");
+
+            // Function to process table rows dynamically
+            function processTableRows() {
+                const tableBody = $('#userTable tbody');
+                const rows = tableBody.find('tr');
+
+
+
+                rows.each(function (index) {
+                    const row = $(this);
+
+                    // Extract the value from the "Vaad edilen ödeme türü ve vadesi" column (3rd column, index 2)
+                    const paymentPromiseText = row.find('td').eq(2).text().trim();
+
+
+                    // Extract the day value dynamically (e.g., "GÜN90" -> 90)
+                    const paymentPromiseDays = parseInt(paymentPromiseText.match(/GÜN(\d+)/)?.[1]);
+
+                    // If the extracted day value is invalid, skip this row
+                    if (isNaN(paymentPromiseDays)) {
+
+                        return;
+                    }
+
+                    // Determine which columns to highlight based on the extracted day value
+                    const vadeColumns = {
+                        "0-15": 15,
+                        "16-30": 30,
+                        "31-45": 45,
+                        "46-60": 60,
+                        "61-75": 75,
+                        "76-90": 90,
+                        "91-105": 105,
+                        "106-120": 120,
+                        "120+": Infinity
+                    };
+
+                    // Check and highlight relevant columns
+                    row.find('td').each(function (colIndex) {
+                        const columnKeys = Object.keys(vadeColumns);
+
+                        // Skip columns that are within the acceptable range
+                        if (colIndex >= 3 && colIndex <= 11) {
+                            const columnName = columnKeys[colIndex - 3]; // Match column name with index
+                            const maxDays = vadeColumns[columnName]; // Get the max range for the column
+
+                            if (paymentPromiseDays >= maxDays) {
+                                return; // Skip normal columns
+                            }
+
+                            const cellValue = parseFloat($(this).text().replace(/\./g, '').replace(',', '.'));
+                            if (!isNaN(cellValue) && cellValue > paymentPromiseDays) {
+                                $(this).css('background-color', 'red');
+                                $(this).css('color', 'white');
+
+                            }
+                        }
+                    });
+                });
+            }
+
+            // Observe DOM changes to detect when rows are added to the table
+            const tableBody = document.querySelector('#userTable tbody');
+            const observer = new MutationObserver(function (mutationsList, observer) {
+                mutationsList.forEach(function (mutation) {
+                    if (mutation.type === "childList") {
+
+                        processTableRows();
+                        // Disconnect the observer if you don't need further monitoring
+                        observer.disconnect();
+                    }
+                });
+            });
+
+            // Start observing the table body for changes
+            if (tableBody) {
+
+                observer.observe(tableBody, { childList: true, subtree: true });
+            } else {
+
+            }
+
+            // If the table is loaded via AJAX, listen for the completion of AJAX requests
+            $(document).ajaxStop(function () {
+
+                processTableRows();
+            });
+        });
+
+
+        $(document).ready(function () {
+            let ascending = true; // İlk sıralama artan olacak
+
+            // Sütun sıralama işlevi
+            $('th').on('click', function () {
+                const columnIndex = $(this).data('column'); // Hangi sütunun tıklandığını al
+                if (columnIndex === undefined) return; // Eğer sütun sıralanabilir değilse işlem yapma
+
+                const rows = $('#userTable tbody tr').get(); // Tüm satırları al
+
+
+                // Satırları sırala
+                const sortedRows = rows.sort(function (a, b) {
+                    const cellA = $(a).children('td').eq(columnIndex).text().replace(/\./g, '').replace(',', '.');
+                    const cellB = $(b).children('td').eq(columnIndex).text().replace(/\./g, '').replace(',', '.');
+
+                    const numA = parseFloat(cellA) || 0; // Sayıya çevir, geçersizse 0
+                    const numB = parseFloat(cellB) || 0; // Sayıya çevir, geçersizse 0
+
+                    if (ascending) {
+                        return numA - numB; // Artan sıralama
+                    } else {
+                        return numB - numA; // Azalan sıralama
+                    }
+                });
+
+                // Sıralanmış satırları tabloya yeniden ekle
+                $.each(sortedRows, function (index, row) {
+                    $('#userTable tbody').append(row);
+                });
+
+                ascending = !ascending; // Sıralama yönünü değiştir
+
+                // Sıralama yönünü belirtmek için tüm aktif sınıfları kaldır
+                $('th').removeClass('active sorted-asc sorted-desc');
+                $(this).addClass('active'); // Tıklanan sütunu aktif yap
+
+                if (ascending) {
+                    $(this).addClass('sorted-asc'); // Artan ok
+                } else {
+                    $(this).addClass('sorted-desc'); // Azalan ok
+                }
+            });
+
+        });
+
+
+
+
+
+        $(document).ready(function () {
+            $('#searchInput').on('keyup', function () {
+                // Filtreleme işlemi
+                const searchValue = $(this).val().toLocaleLowerCase('tr-TR').trim();
+                const searchTerms = searchValue.split(' ').filter(term => term !== '');
+
+                let visibleRowCount = 0;
+
+                $('#userTable tbody tr').each(function () {
+                    const row = $(this);
+                    const rowText = row.text().toLocaleLowerCase('tr-TR');
+
+                    const match = searchTerms.every(term => rowText.includes(term));
+
+                    if (match) {
+                        row.show();
+                        visibleRowCount++;
+                    } else {
+                        row.hide();
+                    }
+                });
+
+                // Toplamları güncelle
+                addColumnSums();
+
+                // Satır sayısını güncelle
+                document.getElementById('rowCount').textContent = `${visibleRowCount} satır listeleniyor`;
+            });
+        });
+
+    </script>
+</body>
+
+</html>

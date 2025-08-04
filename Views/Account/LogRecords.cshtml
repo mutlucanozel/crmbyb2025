@@ -1,0 +1,173 @@
+@{
+    int totalPages = (int)Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+    int currentPage = ViewBag.Page;
+    int pageSize = ViewBag.PageSize;
+}
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Kayıtları</title>
+    <link rel="stylesheet" type="text/css" href="~/css/listcustomer.css" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/css/listuser.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        .search-input-custom {
+            background-color: #E4E9F7 !important;
+            border: 1px solid #2C3D4F;
+            color: #495057;
+            border-radius: .25rem;
+            padding: .375rem .75rem;
+            font-size: 1.2rem;
+        }
+        body {
+            background-color: #2D3A59;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Log Kayıtları</h2>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+            <input type="text" class="form-control search-input-custom" id="searchInput"
+                placeholder="Tablo Adı, ID, Alan, Eski Değer, Yeni Değer, İşlem Türü, Değiştiren veya Değişiklik Zamanı ile ara..."
+                style="margin: 0; flex-grow: 1; height: 90px;">
+            <button class="btn btn-danger  btn-lg" onclick="exportTableAsImagePDF()">Pdf İndir <i class="fas fa-file-pdf"></i></button>
+            <button class="btn btn-success btn-lg" onclick="exportTableToExcel()">Excel İndir <i class="fas fa-file-excel"></i></button>
+        </div>
+        <hr>
+
+        <!-- Sayfalama -->
+        <nav aria-label="Sayfalama">
+            <ul class="pagination justify-content-center mt-4">
+                @for (int i = 1; i <= totalPages; i++)
+                {
+                    <li class="page-item @(i == currentPage ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("LogRecords", new { page = i })">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+
+        <div class="table-responsive">
+            <table class="user-table table table-bordered" id="userTable">
+                <thead>
+                    <tr>
+                        <th>Değişiklik Zamanı</th>
+                        <th>Müşteri Adı</th>
+                        <th>Müşteri ID</th>
+                        <th>Alan</th>
+                        <th>Eski Değer</th>
+                        <th>Yeni Değer</th>
+                        <th>İşlem Türü</th>
+                        <th>Kayıt Yapan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var log in Model)
+                    {
+                        <tr>
+                            <td>
+                                @Html.Raw($"{log.ChangedAt.ToString("yyyy MMM dd HH:mm:ss", new System.Globalization.CultureInfo("tr-TR"))}")
+                            </td>
+                            <td>
+                                @if (LogHelper.GetTranslatedColumnName(log.TableName) == "Müşteriler")
+                                {
+                                    <span>@log.CustomerName</span>
+                                }
+                                else
+                                {
+                                    @LogHelper.GetTranslatedColumnName(log.TableName)
+                                }
+                            </td>
+                            <td>@log.RecordId</td>
+                            <td>@LogHelper.GetTranslatedColumnName(log.ColumnName)</td>
+                            <td>@log.OldValue</td>
+                            <td>@log.NewValue</td>
+                            @{
+                                var buttonClass = log.OperationType switch
+                                {
+                                    "Oluşturuldu" => "btn-success",
+                                    "Güncellendi" => "btn-warning",
+                                    "Silindi" => "btn-danger",
+                                    "Transfer Edildi" => "btn-info",
+                                    _ => "btn-secondary"
+                                };
+                            }
+                            <td>
+                                <button class="btn @buttonClass btn-sm">@log.OperationType</button>
+                            </td>
+                            <td>@log.ChangedBy</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+
+        <hr>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#searchInput').on('keyup', function () {
+                const searchValue = $(this).val().toLocaleLowerCase('tr-TR').trim();
+                const searchTerms = searchValue.split(' ').filter(term => term !== '');
+
+                $('#userTable tbody tr').each(function () {
+                    const row = $(this);
+                    const rowText = row.text().toLocaleLowerCase('tr-TR');
+                    const match = searchTerms.every(term => rowText.includes(term));
+                    row.toggle(match);
+                });
+            });
+        });
+
+        function exportTableToExcel() {
+            const table = document.getElementById("userTable");
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Log Kayıtları" });
+            XLSX.writeFile(wb, "Log_Kayitlari.xlsx");
+        }
+
+        function exportTableAsImagePDF() {
+            const element = document.getElementById("userTable");
+            Swal.fire({
+                title: 'Yükleniyor...',
+                html: 'PDF hazırlanıyor, lütfen bekleyin.',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            html2pdf()
+                .from(element)
+                .set({
+                    margin: 0,
+                    filename: 'Log_Kayitlari.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 1, useCORS: true, scrollX: 0, scrollY: 0 },
+                    jsPDF: { unit: 'mm', format: 'a3', orientation: 'landscape' }
+                })
+                .save()
+                .then(() => { Swal.close(); })
+                .catch(error => {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'PDF hazırlanırken bir hata oluştu. Lütfen tekrar deneyin.'
+                    });
+                });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1080 @@
+@model IEnumerable<crm.Models.Offer>
+
+    @{
+    Func<decimal?, string> formatNumber = (decimal? number) =>
+        {
+        if (number.HasValue)
+        {
+        return number.Value.ToString("0.#####", new System.Globalization.CultureInfo("tr-TR"));
+        }
+        return "Fiyat henüz belirlenmedi";
+        };
+        }
+        <!DOCTYPE html>
+        <html lang="en">
+
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Teklif Listesi</title>
+            <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<!-- jQuery -->
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+            <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+            <link rel="stylesheet" type="text/css" href="~/css/listoffer.css" />
+            <style>
+                /* Dropdown butonları için özel CSS */
+                .filter-button {
+                    transition: background-color 0.3s;
+                    background-color: #f8f9fa;
+                    /* Varsayılan arka plan rengi */
+                    color: #495057;
+                    /* Varsayılan yazı rengi */
+                }
+                .btn-all {
+        background-color: #2C3D4F; /* Arka plan rengi */
+        color: white; /* Beyaz yazı rengi */
+        border: none; /* Çerçeve yok */
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-all:hover {
+        background-color: #2C3D4F;
+        color: white;
+         /* Hover efekti için koyulaştırılmış renk */
+    }
+    /* Dropdown içindeki aktif item için stil */
+.dropdown-item.active {
+    background-color: pink !important; /* Kırmızı arka plan rengi */
+    color: white !important;
+}
+
+
+    .btn-all.active {
+        background-color: purple; /* Aktif durumda rengi aynı tut */
+        opacity: 0.8; /* Aktif durumda hafif saydamlık */
+    }
+                .table td {
+    vertical-align: middle; /* Vertically center text */
+    text-align: center;     /* Horizontally center text */
+}
+
+                .price-brown {
+    color: #FFA500; /* Gold color */
+}
+/* Dropdown içindeki aktif item için stil */
+.dropdown-item.active {
+    background-color: #dc3545 !important; /* Kırmızı arka plan rengi */
+    color: white !important; /* Beyaz yazı rengi */
+}
+
+    .customer-button {
+        background-color: #2C3D4F; /* İstediğiniz renk */
+        color: white; /* Beyaz yazı rengi */
+        border: none;
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        width: 100%; /* Buton hücrenin tamamını kaplasın */
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .customer-button:hover {
+        background-color: #1F2A35; /* Hover rengi */
+    }
+
+
+                .filter-button.active {
+                    background-color: #dc3545;
+                    /* Aktif buton için kırmızı arka plan */
+                    color: white;
+                    /* Aktif buton yazı rengi */
+                }
+                .filter-loser{
+                    background-color: #2C3D4F; /* Arka plan rengi */
+        color: white; /* Beyaz yazı rengi */
+        border: none; /* Çerçeve yok */
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+                }
+                .filter-loser:hover{
+                    background-color: #2C3D4F; /* Arka plan rengi */
+        color: white; /* Beyaz yazı rengi */
+        border: none; /* Çerçeve yok */
+        padding: 10px 20px;
+        font-size: 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+                }
+                .filter-loser.selected {
+    background-color: red; /* Seçildiğinde arka plan rengi */
+    color: white; /* Beyaz yazı rengi */
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+                .btn-orange {
+    background-color: #FFA500; /* Orange color */
+    color: white; /* White text color */
+}
+/* Progress Bar Stili */
+#progress-bar-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1050;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+#progress-bar {
+    background-color: #007bff;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+
+.btn-orange.active {
+    background-color: #FF8C00; /* Darker orange for active state */
+}
+
+.btn-gold {
+    background-color: #FFD700; /* Gold color */
+    color: black; /* Black text color */
+}
+
+thead th {
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+    position: relative;
+}
+thead th.active {
+    background-color: #007bff;
+    color: white;
+}
+thead th .sort-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+}
+.container {
+    margin: 0 auto;
+    /* Ortalamak için */
+    padding: 5px 20px;
+    /* İçeriği biraz boşluk bırakmak için */
+    max-width: 1600px;
+    /* Konteyner genişliğini ayarlayabilirsiniz */
+}
+
+.custom-filter-btn {
+    font-size: 18px;
+    /* Daha büyük yazı boyutu */
+    font-weight: bold;
+    /* Kalın yazı */
+    color: #856404;
+    /* btn-warning içinde kullanılan metin rengi */
+    border: 2px solid #ffc107;
+    /* btn-warning renginde dış çerçeve */
+    background-color: #ffc107;
+    /* btn-warning arka plan rengi */
+    padding: 10px 20px;
+    /* Buton boyutunu büyütmek için boşluk ekleme */
+}
+.btn-gold.active {
+    background-color: #FFC107; /* Slightly darker gold for active state */
+}/* Kahverengi Buton - Normal Durum */
+.btn-brown {
+    background-color: #8B4513; /* SaddleBrown */
+    color: white;
+    transition: background-color 0.3s ease; /* Yumuşak geçiş efekti */
+}
+
+
+/* Kahverengi Buton - Aktif Durumu */
+.btn-brown:hover {
+    background-color: #A0522D; /* Sienna */
+    opacity: 0.9; /* Hafif saydamlık */
+    color: white;
+}
+
+
+
+            </style>
+        </head>
+
+        <body>
+            <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+      
+            <link rel="stylesheet"
+                href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+            <div class="container">
+                <h2 class="display-4 text-center">Teklif Listesi</h2>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+                    <input type="text" class="form-control search-input-custom" id="searchInput"
+                        placeholder="Herhangi bir parametre ile ara..." style="margin: 0; flex-grow: 1; height: 60px;">
+                </div>
+                <hr>
+               
+                <div class="d-flex flex-wrap mb-3" style="gap: 15px;">
+                    <!-- Tümü Butonu -->
+                  
+                    
+                    <!-- Status Group -->
+                    <div class="container">
+                        <div class="row">
+                            <div class="btn-group" role="group" aria-label="Status Group">
+                                <button class="btn btn-all" id="allButton">Hepsi</button>
+                                <button class="btn btn-success filter-button" data-filter="Won" data-group="status">Kazandık</button>
+                                <div class="btn-group">
+                            <div class="btn-group" role="group" aria-label="Loser Group">
+                                
+                                    <button type="button" class="btn dropdown-toggle filter-loser" id="dropdownMenuButton" 
+                                            data-bs-toggle="dropdown" aria-expanded="false">
+                                        Kaybettik
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                        <li><button class="dropdown-item filter-button" data-filter="HighPrice">Fiyat Yüksek</button></li>
+                                        <li><button class="dropdown-item filter-button" data-filter="DeadlineIssue">Termin Uymadı</button></li>
+                                        <li><button class="dropdown-item filter-button" data-filter="LowQuality">Kalite Yetersiz</button></li>
+                                        <li><button class="dropdown-item filter-button" data-filter="Cancel">Proje İptal</button></li>
+                                        <li><button class="dropdown-item filter-button" data-filter="Continuewithexisting">Mevcutla Devam</button></li>
+                                        <li><button class="dropdown-item filter-button" data-filter="AllReason">Tüm Sebepler</button></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    
+                        <div class="row">
+                        
+                            <button class="btn btn-warning filter-button" data-filter="Delivered" data-group="status">Gönderilen</button>
+                            <button class="btn btn-primary filter-button" data-filter="NotDelivered" data-group="status">Gönderilmeyen</button>
+                        </div>
+                    
+                        <div class="row">
+                            <div class="btn-group" role="group" aria-label="Price Filter">
+                                <button class="btn btn-orange filter-button" data-filter="HasPrice" data-group="price">Fiyatı VAR</button>
+                                <button class="btn btn-brown filter-button" data-filter="NoPrice" data-group="price">Fiyatı YOK</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <hr>
+                <div class="mb-3">
+                    <h5 id="filterResult" class="text-center"></h5>
+                </div>
+<!-- Progress Bar --> @if (ViewBag.TotalPages > 1)
+{
+    <nav aria-label="Sayfalama">
+        <ul class="pagination justify-content-center mt-4">
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("ListOffer", new { page = i })">@i</a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+
+                <div class="table-responsive">
+                    <table id="offerTable" class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Müşteri Adı</th>
+                                <th>Teklif Adı</th>
+                                <th>Miktar</th>
+                                <th>Fiyat</th>
+                                <th>Durum</th>
+                                <th>Müşteri Sorumlusu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model != null && Model.Any())
+                            {
+                            @foreach (var offer in Model)
+                            {
+                            var statusFilter = offer.OfferStatus.ToString();
+                            var priceFilter = offer.Price.HasValue && offer.Price.Value > 0 ? "HasPrice" : "NoPrice";
+                            <tr data-filter="@statusFilter" data-price-filter="@priceFilter"
+                                onclick="window.location.href='@Url.Action("OfferDetails", "Customer" , new {
+                                id=offer.Id })'" style="cursor: pointer;">
+                                <td>@offer.Id</td>
+                                <td>
+                                    <button class="customer-button"
+                                            onclick="event.stopPropagation(); window.location.href='@Url.Action("CustomerDetail", "Customer", new { id = offer.Customer?.Id })'">
+                                        @offer.Customer?.Name 
+                                    </button>
+                                </td>
+                                
+                                <td>@(offer.ProductName)</td>
+                        
+                                <td>@offer.OrderQuantity.ToString("#,##0").Replace(",", ".") @offer.OrderMethod.Name</td>
+                                <td>
+                                    @if (offer.Price == null || offer.Price == 0)
+                                    {
+                                    <span class="btn btn-brown btn-lg">Fiyat henüz belirlenmedi</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="price-brown">@formatNumber(offer.Price) @offer.Currency</span>
+
+                                    }
+                                </td>
+                                <td>
+                                    <button 
+                                        class="@(offer.OfferStatus switch {
+                                            OfferStatus.NotDelivered => "btn btn-primary btn-lg",
+                                            OfferStatus.Delivered => "btn btn-warning btn-lg",
+                                            OfferStatus.Won => "btn btn-success btn-lg",
+                                            OfferStatus.HighPrice => "btn btn-danger btn-lg",
+                                            OfferStatus.DeadlineIssue => "btn btn-danger btn-lg",
+                                            OfferStatus.LowQuality => "btn btn-danger btn-lg",
+                                            OfferStatus.Cancel => "btn btn-danger btn-lg",
+                                            OfferStatus.Continuewithexisting => "btn btn-danger btn-lg",
+                                            _ => "btn btn-secondary btn-lg"
+                                        })"
+                                        data-offer-id="@offer.Id"
+                                        onclick="toggleOfferStatus(this, event)">
+                                        @offer.OfferStatus.GetDisplayName()
+                                    </button>
+                                </td>
+                                
+                                <td>@offer.Customer.CreatedBy</td>
+                              
+                                
+                            </tr>
+                            }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+            <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+            
+            <script>
+             
+
+document.addEventListener("DOMContentLoaded", function () {
+    const table = document.getElementById("offerTable");
+
+        const headers = table.querySelectorAll("thead th");
+        const tbody = table.querySelector("tbody");
+        let currentSortColumn = null;
+        let currentSortOrder = "asc";
+
+        headers.forEach((header, index) => {
+            header.addEventListener("click", function () {
+                // Tüm sütunlardan "active" sınıfını kaldır.
+                headers.forEach(h => {
+                    h.classList.remove("active");
+                    const icon = h.querySelector(".sort-icon");
+                    if (icon) icon.remove();
+                });
+
+                // Şimdiki sütunu vurgula.
+                header.classList.add("active");
+
+                // Sıralama yönünü belirle.
+                if (currentSortColumn === index) {
+                    currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+                } else {
+                    currentSortColumn = index;
+                    currentSortOrder = "asc";
+                }
+
+                // Sıralama ikonu ekle.
+                const sortIcon = document.createElement("span");
+                sortIcon.classList.add("sort-icon");
+                sortIcon.innerHTML = currentSortOrder === "asc" ? "▲" : "▼";
+                header.appendChild(sortIcon);
+
+                // Satırları sırala.
+                const rows = Array.from(tbody.querySelectorAll("tr"));
+                rows.sort((rowA, rowB) => {
+    const cellA = rowA.children[index].innerText.trim();
+    const cellB = rowB.children[index].innerText.trim();
+
+    // Miktar sütunundaki sayısal değerleri temizleyip karşılaştırma
+    const numericA = parseInt(cellA.replace(/[^\d]/g, ""), 10);
+    const numericB = parseInt(cellB.replace(/[^\d]/g, ""), 10);
+
+    if (!isNaN(numericA) && !isNaN(numericB)) {
+        return currentSortOrder === "asc"
+            ? numericA - numericB
+            : numericB - numericA;
+    }
+
+    // Eğer sayı değilse, alfabetik sıralama
+    return currentSortOrder === "asc"
+        ? cellA.localeCompare(cellB, 'tr')
+        : cellB.localeCompare(cellA, 'tr');
+});
+
+
+                // Sıralanmış satırları yeniden ekle.
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+                   $('.dropdown-menu').on('click', function (e) {
+    e.stopPropagation(); // Kapanmayı engeller
+});
+
+
+    
+$(document).ready(function () {
+    // Dropdown butonuna tıklayınca menüyü göster/gizle
+    
+    // Dropdown'un gösterilme durumunu güncelle
+    $('#dropdownMenuButton').on('click', function (e) {
+        e.stopPropagation(); // Olayın yayılmasını durdur
+        const menu = $(this).next('.dropdown-menu');
+        
+        // Proje İptal açık menüleri kapat
+        $('.dropdown-menu').not(menu).removeClass('show');
+        
+        // Tıklanan menüyü toggle yap
+        menu.toggleClass('show');
+    });
+
+
+    $(document).on('click', function (e) {
+        $('.dropdown-menu').removeClass('show');
+    });
+    
+    
+});
+
+
+function updateButtonStyles() {
+    const dropdownActive = $('.dropdown-menu .filter-button.active').length > 0;
+    
+}function toggleOfferStatus(button) {
+    event.stopPropagation();
+    const offerId = $(button).data("offer-id"); // Teklif ID'sini alıyoruz
+
+    // Fiyat bilgisini kontrol et
+    const row = $(`#offerTable tbody tr`).filter(function () {
+        return $(this).find('td:first').text().trim() === offerId.toString();
+    });
+
+    const priceElement = row.find('td:nth-child(5)').text().trim();
+    const hasPrice = priceElement && !priceElement.includes("Fiyat henüz belirlenmedi");
+
+    Swal.fire({
+        title: 'Durum Seçin',
+        html: `
+            <ul id="offer-status-list" class="offer-status-list">
+                <li data-value="NotDelivered">Müşteriye iletilmedi ❕</li>
+                <li data-value="Delivered" class="${!hasPrice ? 'disabled-option' : ''}" 
+                    ${!hasPrice ? 'title="Fiyat bilgisi olmadığı için seçilemez"' : ''}>Müşteriye iletildi ⏳</li>
+                <li data-value="Won" class="${!hasPrice ? 'disabled-option' : ''}" 
+                    ${!hasPrice ? 'title="Fiyat bilgisi olmadığı için seçilemez"' : ''}>
+                    İşi aldık ✅
+                </li>
+                <li data-value="Missed">İşi kaçırdık ❌</li>
+            </ul>
+        `,
+        showCancelButton: true,
+        cancelButtonText: 'İptal',
+        showConfirmButton: false, // OK butonunu gizler
+        customClass: {
+            cancelButton: 'custom2-cancel-button w-100'
+        },
+        didOpen: () => {
+            // Devre dışı bırakılmış öğeleri tıklanamaz hale getir
+            $('#offer-status-list .disabled-option').css({
+                color: '#ccc',
+                pointerEvents: 'none',
+                cursor: 'not-allowed'
+            });
+        }
+    });
+
+    $('#offer-status-list li:not(.disabled-option)').on('click', function () {
+        const selectedStatus = $(this).data('value');
+        Swal.close(); // Modalı kapat
+        if (selectedStatus === 'Won') {
+            showPriceInput(offerId); // Fiyat giriş alanını göster
+        } else if (selectedStatus === 'Missed') {
+            showMissedReason(offerId, button);
+        } else {
+            updateOfferStatus(offerId, selectedStatus);
+        }
+    });
+}
+function showPriceInput(offerId) {
+    const row = $(`#offerTable tbody tr`).filter(function () {
+        return $(this).find('td:first').text().trim() === offerId.toString();
+    });
+
+    const priceElement = row.find('td:nth-child(5)').text().trim();
+    let currentPrice = priceElement.split(' ')[0]?.replace(',', '.'); // Fiyat
+    let currentCurrency = priceElement.split(' ')[1]?.trim(); // Kur bilgisi
+
+    if (!currentPrice || isNaN(currentPrice)) {
+        currentPrice = "0.00"; // Varsayılan fiyat
+    }
+
+    if (!currentCurrency) {
+        currentCurrency = "TRY"; // Varsayılan kur
+    }
+    Swal.fire({
+    title: '<h2 style="font-family: Poppins, sans-serif; font-size: 28px; font-weight: 600; color: #333;">Fiyat Bilgisi Onayla</h2>',
+    html: `
+        <div class="input-group" style="justify-content: center; align-items: center; margin-bottom: 20px;">
+           <input type="text" id="priceInput" 
+class="form-control" 
+style="height: 70px; width: 90px; font-size: 24px; font-family: Poppins, sans-serif; font-weight: 500; text-align: center; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);"
+placeholder="0,00" 
+value="${currentPrice.replace('.', ',')}" />
+
+       <div style="width: 60px; display: inline-block;">
+<select id="currencySelect" 
+    class="form-control" 
+    style="height: 70px; width: 100%; font-size: 22px; font-family: Poppins, sans-serif; font-weight: 500; text-align: center; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
+<option value="TRY" ${currentCurrency === "TRY" ? "selected" : ""}>₺</option>
+<option value="USD" ${currentCurrency === "USD" ? "selected" : ""}>$</option>
+<option value="EUR" ${currentCurrency === "EUR" ? "selected" : ""}>€</option>
+</select>
+</div>
+
+        </div>
+        <p style="font-family: Poppins, sans-serif; font-size: 16px; color: #555; margin-top: 10px;">
+            ⚠️ Fiyat bilgisi ve kur bilgisini güncellemeden önce yöneticinizden onay aldığınızdan emin olunuz.
+        </p>
+    `,
+    showCancelButton: true,
+    confirmButtonText: '<span style="font-family: Poppins, sans-serif; font-size: 18px; font-weight: 600;">Kaydet</span>',
+    cancelButtonText: '<span style="font-family: Poppins, sans-serif; font-size: 18px; font-weight: 600;">İptal</span>',
+    preConfirm: () => {
+        const price = document.getElementById('priceInput').value.replace(',', '.');
+        const currency = document.getElementById('currencySelect').value;
+
+        if (!price || isNaN(price) || parseFloat(price) <= 0) {
+            Swal.showValidationMessage('Geçerli bir fiyat girin.');
+            return false;
+        }
+
+        const parsedPrice = parseFloat(price);
+        const minAllowedPrice = parseFloat(currentPrice) * 0.5; // %250 altında
+const maxAllowedPrice = parseFloat(currentPrice) * 5; // %250 üzerinde
+
+
+        if (parsedPrice < minAllowedPrice || parsedPrice > maxAllowedPrice) {
+            Swal.showValidationMessage(`Fiyat, ${minAllowedPrice.toFixed(5)} ve ${maxAllowedPrice.toFixed(5)} arasında olmalıdır. Doğru girdiğinizden emin olun ! `);
+            return false;
+        }
+
+        return { price: parsedPrice, currency };
+    }
+}).then((result) => {
+    if (result.isConfirmed) {
+        const { price, currency } = result.value;
+        updateOfferStatus(offerId, 'Won', price, currency); // Durumu 'Won' yaparak gönder
+        updateOfferWithPrice(offerId, price, currency, 'Won'); // Durumu 'Won' olarak gönder
+    }
+});
+}
+
+function updateOfferWithPrice(offerId, price, currency) {
+    $.ajax({
+        url: '@Url.Action("UpdatePrice", "Customer")',
+        type: 'POST',
+        data: { id: offerId, price, currency },
+        success: function (response) {
+            if (response.success) {
+                Toastify({
+                    text: "Fiyat başarıyla güncellendi.",
+                    duration: 5000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#4CAF50"
+                }).showToast();
+
+                // Durum ve fiyatı tabloya yansıt
+                updateRowPriceAndStatus(offerId, price, currency, 'Won');
+            } else {
+                Toastify({
+                    text: response.message || 'Fiyat güncellenemedi.',
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "orangered"
+                }).showToast();
+            }
+        },
+        error: function () {
+            Toastify({
+                text: 'Fiyat güncellenirken bir hata oluştu.',
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#FF0000"
+            }).showToast();
+        }
+    });
+}
+
+function updateRowPriceAndStatus(offerId, price, currency, status) {
+    const row = $(`#offerTable tbody tr`).filter(function () {
+        return $(this).find('td:first').text().trim() === offerId.toString();
+    });
+
+    row.find('td:nth-child(5)').html(`<span class="price-brown">${parseFloat(price.toFixed(5))} ${currency}</span>`);
+
+    row.find('td:nth-child(6)').html(`<button class="btn btn-success btn-lg">${getOfferStatusDisplayName(status)}</button>`);
+}
+
+
+function showMissedReason(offerId, button) {
+    Swal.fire({
+        title: 'Neden Seçin',
+        html: `
+            <ul id="missed-reason-list" class="missed-reason-list">
+                <li data-value="HighPrice">Fiyat yüksek 💰</li>
+                <li data-value="DeadlineIssue">Termin uymadı 📅</li>
+                <li data-value="LowQuality">Kalite yetersiz ⚠️</li>
+                <li data-value="Cancel">Proje İptal ❌</li>
+                                <li data-value="Continuewithexisting">Mevcutla devam ⛔️</li>
+            </ul>
+        `,
+        showCancelButton: true,
+        cancelButtonText: '<i class="fa fa-arrow-left" aria-hidden="true"></i> Geri ',
+        showConfirmButton: false, // OK butonunu gizler
+        customClass: {
+           cancelButton: 'custom2-back-button w-100'
+        },
+        didOpen: () => {
+            const selectElement = document.getElementById('missed-reason-select');
+            if (selectElement) {
+                selectElement.size = 4; // Genişletilmiş görünüm sağla
+                selectElement.focus(); // Odaklanma sağla
+
+                // Kullanıcı seçim yaptığında işlemi tetiklemek için 'change' olayı eklenir
+                selectElement.addEventListener('change', (event) => {
+                    const selectedReason = event.target.value;
+                    if (selectedReason) {
+                        Swal.close(); // Modalı kapat
+                        updateOfferStatus(offerId, selectedReason); // Seçilen nedeni gönder
+                    }
+                });
+            }
+        },
+        willClose: () => {
+            const selectElement = document.getElementById('missed-reason-select');
+            if (selectElement) {
+                selectElement.size = 1; // Modal kapanırken boyutu sıfırla
+            }
+        }
+    }).then((reasonResult) => {
+        if (reasonResult.dismiss === Swal.DismissReason.cancel) {
+            toggleOfferStatus(button); // Geri butonuna basıldığında durum ekranına dön
+        }
+    });
+     // Liste elemanlarına tıklama olayını ekleyin
+     $('#missed-reason-list li').on('click', function () {
+        const selectedReason = $(this).data('value');
+        Swal.close(); // Modalı kapat
+        updateOfferStatus(offerId, selectedReason); // Neden bilgisini gönder
+    }).on('touchstart', function (e) {
+        e.stopPropagation(); // Mobilde dokunma olayının yayılmasını engelle
+    });
+}
+
+function updateOfferStatus(offerId, offerStatus) {
+    $.ajax({
+        url: '@Url.Action("UpdateOfferPresentedStatus", "Customer")',
+        type: 'POST',
+        dataType: 'json',
+        data: { id: offerId, offerStatus: offerStatus },
+        success: function (response) {
+            if (response.success) {
+                Toastify({
+                    text: response.message || "Durum başarıyla güncellendi!",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#4CAF50"
+                }).showToast();
+
+                // Satırdaki durumu güncelleme
+                updateRowStatus(offerId, offerStatus);
+
+                localStorage.setItem('operationSuccess', 'true');
+            } else {
+                showErrorToast(response.message || "Durum güncellenemedi!");
+            }
+        },
+        error: function () {
+            showErrorToast("Durum güncellenirken bir hata oluştu!");
+        }
+    });
+}
+// Satırı güncelleme fonksiyonu
+function updateRowStatus(offerId, offerStatus) {
+    // Satırı offerId ile buluyoruz
+    const row = $(`#offerTable tbody tr`).filter(function () {
+        return $(this).find('td:first').text().trim() === offerId.toString();
+    });
+
+    const statusButton = row.find(`button[data-offer-id="${offerId}"]`);
+
+    // Yeni durumu güncelle
+    statusButton.text(getOfferStatusDisplayName(offerStatus));
+    statusButton
+        .attr('class', getStatusButtonClass(offerStatus))
+        .data('offer-status', offerStatus);
+}
+
+// Durum için uygun buton sınıfını döndürür
+function getStatusButtonClass(offerStatus) {
+    switch (offerStatus) {
+        case 'NotDelivered': return 'btn btn-primary btn-lg';
+        case 'Delivered': return 'btn btn-warning btn-lg';
+        case 'Won': return 'btn btn-success btn-lg';
+        case 'HighPrice':
+        case 'DeadlineIssue':
+        case 'LowQuality':
+        case 'Cancel': return 'btn btn-danger btn-lg';
+        case 'Continuewithexisting': return 'btn btn-danger btn-lg';
+        default: return 'btn btn-secondary btn-lg';
+    }
+}
+
+// Durumun metinsel karşılığını döndürür
+function getOfferStatusDisplayName(offerStatus) {
+    switch (offerStatus) {
+        case 'NotDelivered': return 'Teklif müşteriye iletilmedi ❕';
+        case 'Delivered': return 'Teklif müşteriye iletildi ⏳';
+        case 'Won': return 'İşi aldık ✅';
+        case 'HighPrice': return 'Fiyat yüksek 💰';
+        case 'DeadlineIssue': return 'Termin uymadı 📅';
+        case 'LowQuality': return 'Kalite yetersiz ⚠️';
+        case 'Cancel': return 'Proje İptal ❌';
+        case 'Continuewithexisting': return 'Mevcutla Devam ⛔️';
+        default: return 'Bilinmiyor';
+    }
+}
+
+function showErrorToast(message) {
+    Toastify({
+        text: message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#FF0000"
+    }).showToast();
+}
+
+$(document).ready(function () {
+    
+    // Filtre butonlarına tıklama olayları
+    $('.filter-button').on('click', function () {
+        const group = $(this).data('group');
+        const filter = $(this).data('filter');
+
+        // "Tüm Teklifler" butonunu pasif yap
+        $('#allButton').removeClass('active');
+
+        // Eğer "Tüm Sebepler" butonu seçildiyse
+        if (filter === 'AllReason') {
+            filterTableWithAllReasons();
+            $(this).addClass('active'); // "Tüm Sebepler" aktif yap
+        } else {
+            // Aynı gruptaki Proje İptal aktif butonu kapat
+            const isActive = $(this).hasClass('active');
+            $(`.filter-button[data-group="${group}"]`).removeClass('active');
+
+            // Tıklanan butonu kapatmayın, eğer önceden aktif değilse
+            if (!isActive) {
+                $(this).addClass('active');
+            }
+
+            filterTable(); // Tabloyu güncelle
+        }
+
+        disableIncompatibleFilters(); // Uyumsuz filtreleri kontrol et
+        updateLoserButtonState(); // "Kaybettik" butonunun durumunu güncelle
+    });
+
+    // Tüm Teklifler butonuna tıklanırsa filtreleri sıfırla
+    $('#allButton').on('click', function () {
+        resetFilters();
+        $(this).addClass('active'); // Tüm Teklifler butonunu aktif yap
+        filterTable(); // Tabloyu güncelle
+    });
+    function disableIncompatibleFilters() {
+    const isNoPriceSelected = $('.filter-button[data-filter="NoPrice"]').hasClass('active');
+    const isDelivered = $('.filter-button[data-filter="Delivered"]').hasClass('active');
+    const isWon = $('.filter-button[data-filter="Won"]').hasClass('active');
+    const isNotDelivered = $('.filter-button[data-filter="NotDelivered"]').hasClass('active');
+    const isAllReasonSelected = $('.filter-button[data-filter="AllReason"]').hasClass('active');
+    const isALL = $('.filter-button[data-filter="isALL"]').hasClass('active');
+    // Eğer "Tüm Sebepler" seçildiyse tüm filtreleri etkinleştir
+    if (isALL) {
+        disableAndUnselect(['NoPrice', 'HasPrice', 'HighPrice', 'DeadlineIssue', 'LowQuality', 'Cancel','Continuewithexisting', 'AllReason']);
+        disableDropdownButton('#dropdownMenuButton');
+        filterTable();
+    }
+    if (isAllReasonSelected) {
+        enableAllFilters();
+        return; // Proje İptal kontrolleri atla
+    }
+
+    // Eğer Delivered veya Won seçildiyse bazı butonları devre dışı bırak
+    if (isDelivered || isWon) {
+        disableAndUnselect(['NoPrice', 'HasPrice', 'HighPrice', 'DeadlineIssue', 'LowQuality', 'Cancel','Continuewithexisting', 'AllReason']);
+        disableDropdownButton('#dropdownMenuButton');
+        filterTable();
+        return; // Proje İptal kontrolleri atla
+    }
+
+    // Eğer NotDelivered seçildiyse ilgili butonları devre dışı bırak
+    if (isNotDelivered) {
+        disableAndUnselect(['HighPrice', 'DeadlineIssue', 'LowQuality', 'Cancel','Continuewithexisting', 'AllReason']);
+        enableFilters(['NoPrice', 'HasPrice']);
+        disableDropdownButton('#dropdownMenuButton');
+        filterTable();
+        return; // Proje İptal kontrolleri atla
+    }
+
+    // Eğer AllReason seçildiyse tüm filtreleri etkinleştir
+    if (isAllReasonSelected) {
+        enableAllFilters();
+        return; // Proje İptal kontrolleri atla
+    }
+    if (isNoPriceSelected) {
+        disableAndUnselect(['Won', 'Delivered']);
+    } else {
+        // Fiyat yok seçili değilse butonları tekrar etkinleştir
+        enableFilters(['Won', 'Delivered']);
+    }
+    // Aksi halde tüm filtreleri etkinleştir
+    enableFilters(['NoPrice', 'HasPrice', 'HighPrice', 'DeadlineIssue', 'LowQuality', 'Cancel','Continuewithexisting', 'AllReason']);
+    enableDropdownButton('#dropdownMenuButton');
+
+    // Eğer NoPrice seçildiyse Won ve Delivered'ı devre dışı bırak
+  
+    // Tabloyu güncelle
+    filterTable();
+}
+$(document).ready(function () {
+    // Dropdown içindeki öğelere tıklama olayını yakala
+    
+    function updateLoserButtonState() {
+        const isAnyDropdownSelected = $('.dropdown-menu .filter-button.active').length > 0;
+        $('#dropdownMenuButton').toggleClass('selected', isAnyDropdownSelected);
+    }
+
+
+
+});
+
+// Tüm filtreleri etkinleştiren fonksiyon
+function enableAllFilters() {
+    $('.filter-button').prop('disabled', false).removeClass('active');
+    enableDropdownButton('#dropdownMenuButton'); // Dropdown'u etkinleştir
+    $(this).toggleClass('active');
+}
+
+function disableAndUnselect(filters) {
+    filters.forEach(filter => {
+        const button = $(`.filter-button[data-filter="${filter}"]`);
+        button.removeClass('active').prop('disabled', true);
+    });
+    updateButtonStyles();
+}
+
+
+// Belirli filtreleri etkinleştirme fonksiyonu
+function enableFilters(filters) {
+    filters.forEach(filter => {
+        const button = $(`.filter-button[data-filter="${filter}"]`);
+        button.prop('disabled', false);
+    });
+}
+
+// Dropdown butonunu devre dışı bırakır
+function disableDropdownButton(selector) {
+    $(selector).addClass('disabled').prop('disabled', true);
+}
+
+// Dropdown butonunu etkinleştirir
+function enableDropdownButton(selector) {
+    $(selector).removeClass('disabled').prop('disabled', false);
+}
+
+
+// Belirtilen filtreleri etkinleştirme fonksiyonu
+function enableFilters(filters) {
+    filters.forEach(filter => {
+        const button = $(`.filter-button[data-filter="${filter}"]`);
+        button.prop('disabled', false);
+    });
+}
+
+function resetFilters() {
+    $('.filter-button').removeClass('active');
+    $('.filter-button').prop('disabled', false);
+    $('#dropdownMenuButton').removeClass('active disabled');
+    filterTable(); // Tabloyu güncelle
+}
+
+    // Tüm sebepleri filtreleme fonksiyonu
+    function filterTableWithAllReasons() {
+        const reasonFilters = ['HighPrice', 'DeadlineIssue', 'LowQuality', 'Cancel','Continuewithexisting'];
+        var visibleCount = 0;
+
+        $('#offerTable tbody tr').each(function () {
+            var row = $(this);
+            var rowFilters = [row.data('filter'), row.data('price-filter')];
+
+            var matchesAnyReason = reasonFilters.some(filter => rowFilters.includes(filter));
+
+            if (matchesAnyReason) {
+                row.show();
+                visibleCount++;
+            } else {
+                row.hide();
+            }
+        });
+
+        updateFilterResult(visibleCount, reasonFilters);
+        updateButtonStyles()
+    }
+    function filterTable(searchTerms = []) {
+    const statusFilters = $('.filter-button[data-group="status"].active').map(function () {
+        return $(this).data('filter');
+    }).get();
+
+    const priceFilters = $('.filter-button[data-group="price"].active').map(function () {
+        return $(this).data('filter');
+    }).get();
+
+    const reasonFilters = $('.dropdown-menu .filter-button.active').map(function () {
+        return $(this).data('filter');
+    }).get();
+
+    let visibleCount = 0;
+
+    $('#offerTable tbody tr').each(function () {
+        const row = $(this);
+        const rowStatus = row.data('filter'); // Satırdaki durum filtresi
+        const rowPrice = row.data('price-filter'); // Satırdaki fiyat filtresi
+
+        // Durum ve fiyat filtreleriyle birlikte reason dropdown filtreleriyle eşleşme kontrolü
+        const statusMatches = statusFilters.length === 0 || statusFilters.includes(rowStatus);
+        const priceMatches = priceFilters.length === 0 || priceFilters.includes(rowPrice);
+        const reasonMatches = reasonFilters.length === 0 || reasonFilters.includes(rowStatus);
+
+        const matchesSearch = searchTerms.every(term =>
+            row.text().toLocaleLowerCase('tr-TR').includes(term)
+        );
+
+        // Tüm filtrelerin eşleşmesini kontrol et
+        if (statusMatches && priceMatches && reasonMatches && matchesSearch) {
+            row.show();
+            visibleCount++;
+        } else {
+            row.hide();
+        }
+    });
+
+    updateFilterResult(visibleCount, [...statusFilters, ...priceFilters, ...reasonFilters]);
+}
+
+// Filtre sonuç mesajını güncelle
+function updateFilterResult(visibleCount, filters) {
+    // Filtre açıklamalarını haritala
+    var filterDescriptions = filters.map(filter => {
+        switch (filter) {
+            case 'NotDelivered': return 'Müşteriye iletilmeyen';
+            case 'Delivered': return 'Müşteriye iletilen';
+            case 'Won': return 'İşi aldığımız';
+            case 'HasPrice': return 'Fiyatı olan';
+            case 'NoPrice': return 'Fiyatı olmayan';
+            case 'HighPrice': return 'Yüksek fiyat sebebiyle kaybedilen';
+            case 'DeadlineIssue': return 'Termin uymadığı için kaybedilen';
+            case 'LowQuality': return 'Kalite yetersiz bulunduğu için kaybedilen';
+            case 'Cancel': return 'Proje iptal edildiğinden dolayı kaybedilen';
+            case 'Continuewithexisting': return 'Mevcutla devam edildiğinden dolayı kaybedilen';
+            default: return '';
+        }
+    });
+
+    // Dört kaybedilme sebebi seçildiyse özel mesaj
+    const lossReasons = ['HighPrice', 'DeadlineIssue', 'LowQuality', 'Cancel','Continuewithexisting'];
+    const isAllLossReasonsSelected = lossReasons.every(reason => filters.includes(reason));
+
+    var descriptionText = isAllLossReasonsSelected
+        ? 'Tüm sebeplerden dolayı kaybedilen'
+        : filterDescriptions.length > 1
+            ? `${filterDescriptions.slice(0, -1).join(', ')} ve ${filterDescriptions.slice(-1)}`
+            : filterDescriptions[0] || 'Tüm teklifler';
+
+    // Sonuç metnini oluştur
+    var resultText = ` Bu sayfadaki ${descriptionText} <span style="color: red; font-weight: bold;">${visibleCount}</span> teklif  listeleniyor.`;
+
+    // Metni HTML içine ekle
+    $('#filterResult').html(resultText);
+}
+
+    function updateButtonStyles() {
+    const dropdownActive = $('.dropdown-menu .filter-button.active').length > 0;
+    $(this).toggleClass('active');
+}
+
+$('#searchInput').on('keyup', function () {
+    const searchValue = $(this).val().toLocaleLowerCase('tr-TR').trim();
+    const searchTerms = searchValue.split(' ').filter(term => term !== '');
+    filterTable(searchTerms);
+});
+
+
+    // Sayfa yüklendiğinde tabloyu sırala
+    var rows = $('.user-table tbody tr');
+    rows.sort((a, b) => parseInt($(b).find('td').eq(0).text()) - parseInt($(a).find('td').eq(0).text()));
+    $('.user-table tbody').empty().append(rows);
+
+ 
+
+    // Sayfa yüklendiğinde buton durumlarını güncelle
+    updateButtonStyles();
+});
+
+            </script>
+        </body>
+
+        </html>

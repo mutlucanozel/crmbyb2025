@@ -1,0 +1,431 @@
+@model crm.Models.GeneralInfoViewModel
+@{
+var swalMessage = TempData["SwalMessage"] as string;
+var swalIcon = !string.IsNullOrEmpty(swalMessage) && swalMessage.Contains("başarı") ? "success" : "error";
+var userNames = ViewBag.UserNames as Dictionary<int, string>;
+    }
+
+    @if (!string.IsNullOrEmpty(swalMessage))
+    {
+    <script>
+        Swal.fire({
+            icon: '@swalIcon',
+            title: '@swalMessage',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    </script>
+    }
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Genel Bilgiler</title>
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+            rel="stylesheet">
+
+        <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+        <div class="container">
+            <h2 class="display-4 text-center">İrsaliye Listesi </h2>
+            <hr />
+            <div class="row g-4">
+                <div class="d-flex justify-content-center align-items-center mb-4" style="gap: 16px;">
+                    <form method="get" class="d-flex align-items-center" style="gap: 8px;">
+                        <label for="pageSize"
+                        class="mb-0 px-3 py-2 border border-4 rounded text-nowrap"
+                        style="background-color: transparent; border-color: #333;">
+                     Gösterim Sayısı:
+                 </label>
+                 
+                        
+
+                        <select name="pageSize" onchange="this.form.submit()" class="form-control">
+                            @foreach (var size in new[] { 10, 25, 50, 100, 500 })
+                            {
+                                if (Model.PageSize == size)
+                                {
+                                    <option value="@size" selected>@size</option>
+                                }
+                                else
+                                {
+                                    <option value="@size">@size</option>
+                                }
+                            }
+                        </select>
+                    </form>
+                
+                    <nav aria-label="Sayfalama">
+                        <ul class="pagination mb-0">
+                            @{
+                                var totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+                            }
+                
+                            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                                <a class="page-link" href="?page=@(Model.PageNumber - 1)&pageSize=@Model.PageSize">&laquo;</a>
+                            </li>
+                
+                            @for (int i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                    <a class="page-link" href="?page=@i&pageSize=@Model.PageSize">@i</a>
+                                </li>
+                            }
+                
+                            <li class="page-item @(Model.PageNumber >= totalPages ? "disabled" : "")">
+                                <a class="page-link" href="?page=@(Model.PageNumber + 1)&pageSize=@Model.PageSize">&raquo;</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+                
+                <div class="col-md-12">
+
+
+                    <div class="table-responsive">
+
+
+                        <table class="user-table table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Kayıt Tarihi</th>
+                                    <th>Tedarikçi</th>
+                                    <th>Açıklama</th>
+                                    <th>Depo</th>
+                                    <th>Bobin Sayısı</th>
+                                    <th>Kayıt Yapan</th>
+                                    <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                            data-target="#addWaybillModal">İrsaliye Ekle <i class="fa fa-plus"
+                                                aria-hidden="true"></i></button></th>
+                                </tr>
+                            </thead>
+                            <tbody> @foreach (var item in Model.Waybills)
+                                {
+                                    <tr>
+                                        <td>@item.Id</td>
+                                        <td>@item.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                        <td>@item.SupplierName</td>
+                                        <td>@item.Description</td>
+                                        <td>@item.WareHouseName</td>
+                                        <td></td>
+                                        <td>@item.CreatedByName</td>
+                                        <td>
+                                    <!-- item.Id yerine item.WaybillId olacak -->
+                                            <button class="btn btn-info btn-go-waybill-items" data-id="@item.Id">
+                                                <i class="fas fa-sign-in-alt" aria-hidden="true"></i>
+                                            </button>
+
+                                            <!-- Düzenle Butonu -->
+                                            <button class="btn btn-warning btn-edit-waybill" data-id="@item.Id">
+                                                 <i class="fa fa-pencil" aria-hidden="true"></i>
+                                            </button>
+                            
+                                            <!-- Sil Butonu -->
+                                            <button class="btn btn-danger btn-delete-waybill" data-id="@item.Id">
+                                                 <i class="fa fa-trash" aria-hidden="true"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                              
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+
+                <div class="modal fade" id="addWaybillModal" role="dialog" aria-labelledby="addWaybillModalLabel"
+                    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 claass="modal-title" id="addWaybillModalLabel"> İrsaliye Ekle</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form asp-action="CreateWaybill">
+                                    <div class="form-group">
+                                        <label for="waybillCreatedAt">Kayıt Tarihi</label>
+                                        <input type="date" class="form-control" id="waybillCreatedAt" name="createdAt"
+                                            required>
+                                    </div>
+                                    <!-- Supplier Dropdown -->
+                                    <div class="form-group">
+                                        <label for="waybillSupplierId">Tedarikçi</label>
+                                        <select class="form-control" id="waybillSupplierId" name="SupplierId" required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var supplier in Model.Suppliers)
+                                            {
+                                            <option value="@supplier.Id">@supplier.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <!-- WareHouse Dropdown -->
+                                    <div class="form-group">
+                                        <label for="waybillWareHouseId">Depo</label>
+                                        <select class="form-control" id="waybillWareHouseId" name="WareHouseId"
+                                            required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var warehouse in Model.WareHouses)
+                                            {
+                                            <option value="@warehouse.Id">@warehouse.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="waybillWareHouseDescription">Açıklama</label>
+                                        <input type="text" class="form-control" id="waybillWareHouseDescription"
+                                            name="Description" placeholder="Opsiyonel">
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-dismiss="modal">İptal</button>
+                                        <button type="submit" class="btn btn-primary">Kaydet</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="modal fade" id="editWaybillModal" tabindex="-1" role="dialog"
+                    aria-labelledby="editWaybillModalLabel" aria-hidden="true" data-backdrop="static"
+                    data-keyboard="false">
+                    <div class="modal-dialog" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editWaybillModalLabel">İrsaliye Düzenle</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editWaybillForm">
+                                    <input type="hidden" id="editWaybillId" name="Id" />
+                                    <div class="form-group">
+                                        <label for="editwaybillCreatedAt">Kayıt Tarihi</label>
+                                        <input type="date" class="form-control" id="editwaybillCreatedAt"
+                                            name="createdAt" required>
+                                    </div>
+                                    <!-- Supplier Dropdown -->
+                                    <div class="form-group">
+                                        <label for="editwaybillSupplierId">Tedarikçi</label>
+                                        <select class="form-control" id="editwaybillSupplierId" name="SupplierId"
+                                            required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var supplier in Model.Suppliers)
+                                            {
+                                            <option value="@supplier.Id">@supplier.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <!-- WareHouse Dropdown -->
+                                    <div class="form-group">
+                                        <label for="editwaybillWareHouseId">Depo</label>
+                                        <select class="form-control" id="editwaybillWareHouseId" name="WareHouseId"
+                                            required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var warehouse in Model.WareHouses)
+                                            {
+                                            <option value="@warehouse.Id">@warehouse.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+
+                                    <div class="form-group">
+                                        <label for="editwaybilDescription">Açıklama</label>
+                                        <input type="text" class="form-control" id="editwaybilDescription"
+                                            name="Description" placeholder="Opsiyonel">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-dismiss="modal">İptal</button>
+                                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+                    rel="stylesheet" />
+                <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+                <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+                <script>
+                    $(document).on('click', '.btn-go-waybill-items', function () {
+                        const id = $(this).data('id');
+                        window.location.href = '/Erp/WaybillItemByWaybillId/' + id;
+                    });
+
+                    $(document).ready(function () {
+                        $('#waybillSupplierId').select2({
+                            placeholder: "Tedarikçi seçiniz",
+                            allowClear: false,
+                            width: '100%'
+                        });
+
+                        $('#waybillWareHouseId').select2({
+                            placeholder: "Depo seçiniz",
+                            allowClear: false,
+                            width: '100%'
+                        });
+                    });
+
+                    // Tıklanınca otomatik açılması ve focus olması
+                    $('#waybillSupplierId').on('select2:open', function () {
+                        document.querySelector('.select2-search__field').focus();
+                    });
+
+                    $('#waybillWareHouseId').on('select2:open', function () {
+                        document.querySelector('.select2-search__field').focus();
+                    });
+
+
+                    $(document).on('click', '.btn-delete-waybill', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/DeleteWaybill/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+
+                    });
+
+
+
+                    $('#editWaybillForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Erp/UpdateWaybill', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+
+
+                    $(document).on('click', '.btn-edit-waybill', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/ERP/GetWaybillById/' + id, function (data) {
+                            $('#editWaybillId').val(data.id);// ISO format: yyyy-MM-dd
+                            const createdDate = new Date(data.createdAt);
+                            const dateOnly = createdDate.toISOString().split("T")[0]; // "2025-04-09"
+                            $('#editwaybillCreatedAt').val(dateOnly);
+
+                            $('#editwaybillSupplierId').val(data.supplierId);
+                            $('#editwaybillWareHouseId').val(data.wareHouseId);
+                            $('#editwaybilDescription').val(data.description);
+
+                            $('#editWaybillModal').modal('show');
+                        });
+                    });
+
+
+
+
+
+                    document.querySelectorAll('.btn-delete').forEach(button => {
+                        button.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            const url = this.getAttribute('href');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post(url, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                    });
+
+                </script>
+    </body>
+
+    </html>

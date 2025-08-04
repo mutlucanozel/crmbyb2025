@@ -1,0 +1,744 @@
+@model crm.Models.GeneralInfoViewModel
+@using System.Globalization
+
+@{
+var swalMessage = TempData["SwalMessage"] as string;
+var swalIcon = !string.IsNullOrEmpty(swalMessage) && swalMessage.Contains("başarı") ? "success" : "error";
+var userNames = ViewBag.UserNames as Dictionary<int, string>;
+    }
+
+    @if (!string.IsNullOrEmpty(swalMessage))
+    {
+    <script>
+        Swal.fire({
+            icon: '@swalIcon',
+            title: '@swalMessage',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    </script>
+    }
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Genel Bilgiler</title>
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+            rel="stylesheet">
+
+        <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    </head>
+
+    <body>
+        <a id="hiddenPdfDownloadLink" style="display:none;" target="_blank"></a>
+
+        <div class="container">
+            <h2 class="display-4 text-center">Bobin Giriş </h2>
+            <hr />
+            <div class="text-right">  <button id="btnDownloadAllLabelRolls" class="btn btn-danger">
+                 PDF  İndir <i class="fa fa-download"></i>
+            </button></div>
+          
+
+
+
+            <div class="row g-4">
+
+
+                <div class="col-md-12">
+
+
+                    <div class="table-responsive">
+
+
+                        <table class="user-table table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Stok Adı</th>
+                                    <th>Detay</th>
+                                    <th>Bobin Durumu</th>
+                                    <th>BK KODU</th>
+                                    <th>Genişlik</th>
+                                    <th>Uzunluk</th>
+                                    <th>Açıklama</th>
+                                    <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                            data-target="#addWaybillItemModal">Yeni Kayıt <i class="fa fa-plus"
+                                                aria-hidden="true"></i></button></th>
+                                </tr>
+                            </thead>
+                            <tbody> @foreach (var item in Model.WaybillItems)
+                                {
+                                <tr>
+                                    <td>@item.Id</td>
+                                    <td>@item.StockCard?.Name</td>
+                                    <td>@item.PaperDetail.Name</td>
+                                    <td>
+                                        @if (item.CurrentRollSituation == 0)
+                                        {
+                                        <span
+                                            style="color: #017BFE; padding: 4px 8px; border-radius: 5px; font-size: 13px;">
+                                            Tedarik Girişi Yapıldı
+                                        </span>
+                                        }
+                                    </td>
+
+                                    <td>@item.LabelRollCode</td>
+
+                                    <td>@item.Number1.ToString("N0", new CultureInfo("tr-TR"))</td>
+                                    <td>@item.Number2.ToString("N0", new CultureInfo("tr-TR"))</td>
+
+                                    <td>@item.Description</td>
+                                    <td>
+
+                                        <!-- Düzenle Butonu -->
+                                        <button class="btn btn-warning btn-edit-waybillItem" data-id="@item.Id">
+                                            <i class="fa fa-pencil" aria-hidden="true"></i>
+                                        </button>
+
+                                        <!-- Sil Butonu -->
+                                        <button class="btn btn-danger btn-delete-waybillItem" data-id="@item.Id">
+                                            <i class="fa fa-trash" aria-hidden="true"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                }
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Edit Modal - Tedarik Güncelle -->
+                <div class="modal fade" id="editWaybillItemModal" role="dialog"
+                    aria-labelledby="editWaybillItemModalLabel" aria-hidden="true" data-backdrop="static"
+                    data-keyboard="false">
+                    <div class="modal-dialog modal-xl" role="document">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="editWaybillItemModalLabel">Tedarik Güncelle</h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form id="editWaybillItemForm">
+                                    <input type="hidden" id="editWaybillItemId" name="Id" />
+
+                                    <div class="form-group">
+                                        <label for="editwaybillStockCard">Stok Kart</label>
+                                        <select class="form-control select2" id="editwaybillStockCard"
+                                            name="StockCardId" required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var stock in Model.StockCards)
+                                            {
+                                            <option value="@stock.Id">@stock.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="editwaybillDetail">Detay</label>
+                                        <select class="form-control select2" id="editwaybillDetail" name="PaperDetailId"
+                                            required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var detail in Model.PaperDetails.OrderBy(d => d.Name))
+                                            {
+                                            <option value="@detail.Id">@detail.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="editwaybillWidth">Genişlik</label>
+                                            <input type="text" class="form-control numeric-input" id="editwaybillWidth"
+                                                name="Number1" required />
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="editwaybillHeight">Uzunluk</label>
+                                            <input type="text" class="form-control numeric-input" id="editwaybillHeight"
+                                                name="Number2" required />
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="editwaybillDescription">Açıklama</label>
+                                        <textarea class="form-control" id="editwaybillDescription" name="Description"
+                                            rows="2" style="resize: vertical;" placeholder="Opsiyonel"></textarea>
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-dismiss="modal">İptal</button>
+                                        <button type="submit" class="btn btn-primary">Güncelle</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="modal fade" id="addWaybillItemModal" role="dialog" aria-labelledby="addWaybillItemModal"
+                    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                    <div class="modal-dialog modal-xl" role="document"> <!-- modal-lg veya modal-xl -->
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 claass="modal-title" id="addWaybillItemModalLabel"> Tedarik Giriş </h5>
+                                <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                            <div class="modal-body">
+                                <form asp-action="CreateWaybillItem">
+
+                                    <input type="hidden" name="WaybillId" value="@ViewBag.WaybillId" />
+                                    <div class="form-group">
+                                        <label for="waybillPaperBrand" style="color: red;">Kağıt Markası</label>
+
+                                        <select class="form-control select2" id="waybillPaperBrand" required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var brand in Model.PaperBrands)
+                                            {
+                                            <option value="@brand.Id">@brand.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="waybillPaperType" style="color:  blue;">Kağıt Cinsi</label>
+                                        <select class="form-control select2" id="waybillPaperType" required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var ınfo in Model.PaperInfos)
+                                            {
+                                            <option value="@ınfo.Id">@ınfo.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="waybillAdhesiveType" style="color:  #FFC007;">Yapıştırma</label>
+                                        <select class="form-control select2" id="waybillAdhesiveType" required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var adhesive in Model.AdhesiveInfos)
+                                            {
+                                            <option value="@adhesive.Id">@adhesive.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="waybillStockCard">Stok Kart</label>
+                                        <select class="form-control select2" id="waybillStockCard" name="StockCardId"
+                                            required>
+                                            <option value="">Seçiniz</option>
+                                            @foreach (var stock in Model.StockCards)
+                                            {
+                                            <option value="@stock.Id">@stock.Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="waybillDetail" style="color:  green;">Detay</label>
+                                        <select class="form-control select2" id="waybillDetail" name="PaperDetailId"
+                                            required>
+                                            @{
+                                            var sortedDetails = Model.PaperDetails.OrderBy(d => d.Name).ToList();
+                                            var firstDetail = sortedDetails.FirstOrDefault();
+                                            }
+
+                                            @foreach (var details in sortedDetails)
+                                            {
+                                            var isSelected = details.Id == firstDetail?.Id;
+
+                                            <option value="@details.Id" selected="@(isSelected ? " selected" : null)">
+                                                @details.Name
+                                            </option>
+                                            }
+                                        </select>
+
+
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="waybillWidth">Genişlik</label>
+                                            <input type="text" class="form-control numeric-input" id="waybillWidth"
+                                                name="Number1" required />
+                                        </div>
+                                        <div class="form-group col-md-6">
+                                            <label for="waybillHeight">Uzunluk</label>
+                                            <input type="text" class="form-control numeric-input" id="waybillHeight"
+                                                name="Number2" required />
+
+                                        </div>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group col-md-6">
+                                            <label for="waybillQuantity">Miktar</label>
+                                            <select class="form-control select2" id="waybillQuantity" name="Quantity"
+                                                required>
+                                                @for (int i = 1; i <= 100; i++) { if (i==1) { <option value="@i"
+                                                    selected>@i</option>
+                                                    }
+                                                    else
+                                                    {
+                                                    <option value="@i">@i</option>
+                                                    }
+                                                    }
+                                            </select>
+                                        </div>
+
+
+
+                                        <div class="form-group col-md-6">
+                                            <label for="waybillDescription">Açıklama</label>
+                                            <textarea class="form-control" id="waybillDescription" name="Description"
+                                                rows="2" style="resize: vertical;" placeholder="Opsiyonel"></textarea>
+                                        </div>
+
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                            data-dismiss="modal">İptal</button>
+                                        <button type="button" class="btn btn-primary"
+                                            id="btnSaveWaybillItem">Kaydet</button>
+
+                                    </div>
+                                </form>
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+
+
+
+                <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+                    rel="stylesheet" />
+                <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+                <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+                <script src="https://cdn.jsdelivr.net/npm/autonumeric@4.5.4/dist/autoNumeric.min.js"></script>
+                <script>
+                    $('#btnDownloadAllLabelRolls').on('click', function () {
+                        const ids = [];
+                        $('.btn-edit-waybillItem').each(function () {
+                            ids.push($(this).data('id'));
+                        });
+
+                        const query = ids.map(id => `ids=${id}`).join('&');
+                        const downloadUrl = `/Erp/DownloadAllLabelRollsAsPdf?${query}`;
+
+                        // Açık şekilde yeni sekmede indir
+                        const link = document.getElementById('hiddenPdfDownloadLink');
+                        link.href = downloadUrl;
+                        link.click();
+                    });
+
+
+                    $('#editWaybillItemForm').on('submit', function (e) {
+                        e.preventDefault();
+
+                        // Unformat değerler
+                        const width = AutoNumeric.getNumber('#editwaybillWidth');
+                        const height = AutoNumeric.getNumber('#editwaybillHeight');
+
+                        $('#editwaybillWidth').val(width);
+                        $('#editwaybillHeight').val(height);
+
+                        const formData = $(this).serialize();
+
+                        $.post('/Erp/UpdateWaybillItem', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => location.reload());
+                            }
+                        });
+                    });
+                    $(document).on('click', '.btn-edit-waybillItem', function () {
+                        const id = $(this).data('id');
+
+                        $.get('/Erp/GetWaybillItemById/' + id, function (data) {
+                            $('#editWaybillItemId').val(data.id);
+                            $('#editwaybillStockCard').val(data.stockCardId).trigger('change');
+                            $('#editwaybillDetail').val(data.paperDetailId).trigger('change');
+                   // AutoNumeric ile set et
+if (AutoNumeric.getAutoNumericElement('#editwaybillWidth')) {
+    AutoNumeric.getAutoNumericElement('#editwaybillWidth').set(data.number1);
+} else {
+    $('#editwaybillWidth').val(data.number1);
+}
+
+if (AutoNumeric.getAutoNumericElement('#editwaybillHeight')) {
+    AutoNumeric.getAutoNumericElement('#editwaybillHeight').set(data.number2);
+} else {
+    $('#editwaybillHeight').val(data.number2);
+}
+
+                            $('#editwaybillDescription').val(data.description);
+
+                            $('#editWaybillItemModal').modal('show');
+                        });
+                    }); $(document).on('click', '.btn-delete-waybillItem', function () {
+                        const id = $(this).data('id');
+
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'İptal'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Erp/DeleteWaybillItem', { id }, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => location.reload());
+                                    } else {
+                                        Swal.fire('Hata', response.message, 'error');
+                                    }
+                                });
+                            }
+                        });
+                    });
+
+
+                    $('#btnSaveWaybillItem').on('click', function () {
+    const form = $('#addWaybillItemModal form');
+    if (!form[0].checkValidity()) {
+        form[0].reportValidity(); // Eksik alanları kullanıcıya göster
+        return; // Gönderimi durdur
+    }
+
+    const quantity = parseInt($('#waybillQuantity').val());
+
+    if (!quantity || quantity <= 0) {
+        Toastify({
+            text: "Geçerli bir miktar giriniz.",
+            duration: 3000,
+            gravity: "top",
+            position: "center",
+            backgroundColor: "#ff6b6b"
+        }).showToast();
+        return;
+    }
+
+    // AutoNumeric değerleri düzle
+    const widthRaw = AutoNumeric.getNumber('#waybillWidth');
+    const heightRaw = AutoNumeric.getNumber('#waybillHeight');
+    $('#waybillWidth').val(widthRaw);
+    $('#waybillHeight').val(heightRaw);
+    const formData = form.serialize() + "&quantity=" + quantity;
+
+$.post('/Erp/CreateWaybillItem', formData, function (response) {
+    if (response.success) {
+        Swal.fire({
+            icon: 'success',
+            title: response.message,
+            showConfirmButton: false,
+            timer: 1500
+        }).then(() => location.reload());
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Hata!',
+            text: response.message
+        });
+    }
+}).fail(function () {
+    Swal.fire({
+        icon: 'error',
+        title: 'Hata oluştu!',
+        text: 'İstek gönderilirken bir hata oluştu.'
+    });
+});
+
+});
+
+AutoNumeric.multiple('.numeric-input', {
+    digitGroupSeparator: '.',    // Binlik ayracı: nokta
+    decimalCharacter: ',',       // Ondalık ayracı: virgül
+    decimalPlaces: 0,            // 👉 Ondalık KISIM YOK
+    minimumValue: '0',           // Negatif değer istemiyorsan
+    modifyValueOnWheel: false    // Mouse wheel değeri değiştirmesin
+});
+
+                    const allStockCards = @Html.Raw(Json.Serialize(Model.StockCards));
+                    const allPaperInfos = @Html.Raw(Json.Serialize(Model.PaperInfos));
+                    const allAdhesiveInfos = @Html.Raw(Json.Serialize(Model.AdhesiveInfos));
+
+                    let filteredByBrand = [];
+                    let filteredByType = [];
+                    let finalFiltered = [];
+
+                    // ✅ Sayfa açıldığında ilk marka otomatik seçilsin
+                    $(document).ready(function () {
+                        const firstBrandOption = $('#waybillPaperBrand option:eq(1)').val();
+                        if (firstBrandOption) {
+                            $('#waybillPaperBrand').val(firstBrandOption).trigger('change');
+                        }
+                    });
+
+                    // 🟥 1. Marka seçilince → sadece o markaya ait stock card’lardan kağıt cinslerini çıkar
+                    $('#waybillPaperBrand').on('change', function () {
+                        const selectedBrandId = parseInt($(this).val());
+
+                        // temizle
+                        $('#waybillPaperType').empty().append('<option value="">Seçiniz</option>');
+                        $('#waybillAdhesiveType').empty().append('<option value="">Seçiniz</option>');
+                        $('#waybillStockCard').empty().append('<option value="">Seçiniz</option>');
+
+                        filteredByBrand = allStockCards.filter(x => x.paperBrandId === selectedBrandId);
+                        if (filteredByBrand.length === 0) return;
+
+                        const uniquePaperTypeIds = Array.from(
+                            new Set(filteredByBrand.map(x => parseInt(x.paperTypeId)).filter(id => Number.isInteger(id)))
+                        );
+
+                        uniquePaperTypeIds.forEach(id => {
+                            const info = allPaperInfos.find(x => x.id === id);
+                            if (info) {
+                                $('#waybillPaperType').append(`<option value="${info.id}">${info.name}</option>`);
+                            }
+                        });
+
+                        // ✅ ilk kağıt cinsini otomatik seç
+                        if (uniquePaperTypeIds.length > 0) {
+                            $('#waybillPaperType').val(uniquePaperTypeIds[0]).trigger('change');
+                        }
+                    });
+
+                    // 🔵 2. Kağıt Cinsi seçilince → sadece o marka + cins kombinasyonuna ait yapıştırmalar gelir
+                    $('#waybillPaperType').on('change', function () {
+                        const selectedTypeId = parseInt($(this).val());
+
+                        $('#waybillAdhesiveType').empty().append('<option value="">Seçiniz</option>');
+                        $('#waybillStockCard').empty().append('<option value="">Seçiniz</option>');
+
+                        filteredByType = filteredByBrand.filter(x => x.paperTypeId === selectedTypeId);
+                        if (filteredByType.length === 0) return;
+
+                        const uniqueAdhesiveTypeIds = Array.from(
+                            new Set(filteredByType.map(x => parseInt(x.adhesiveTypeId)).filter(id => Number.isInteger(id)))
+                        );
+
+                        uniqueAdhesiveTypeIds.forEach(id => {
+                            const info = allAdhesiveInfos.find(x => x.id === id);
+                            if (info) {
+                                $('#waybillAdhesiveType').append(`<option value="${info.id}">${info.name}</option>`);
+                            }
+                        });
+
+                        // ✅ ilk yapıştırmayı otomatik seç
+                        if (uniqueAdhesiveTypeIds.length > 0) {
+                            $('#waybillAdhesiveType').val(uniqueAdhesiveTypeIds[0]).trigger('change');
+                        }
+                    });
+
+                    // 🟡 3. Yapıştırma seçilince → sadece o marka + cins + yapıştırma eşleşen stockcard listelenir
+                    $('#waybillAdhesiveType').on('change', function () {
+                        const selectedAdhesiveId = parseInt($(this).val());
+
+                        const finalFiltered = filteredByType.filter(x => x.adhesiveTypeId === selectedAdhesiveId);
+                        updateStockCardList(finalFiltered);
+
+                        if (finalFiltered.length > 0) {
+                            $('#waybillStockCard').val(finalFiltered[0].id ?? "").trigger('change');
+                        }
+                    });
+
+                    // ✅ Stok Kartları doldur
+                    function updateStockCardList(stockCardList) {
+                        $('#waybillStockCard').empty().append('<option value="">Seçiniz</option>');
+                        stockCardList.forEach(item => {
+                            if (item?.id && item?.name) {
+                                $('#waybillStockCard').append(`<option value="${item.id}">${item.name}</option>`);
+                            }
+                        });
+                    }
+
+                    $(document).ready(function () {
+                        $('.select2').select2({
+                            width: '100%',
+                            placeholder: "Seçiniz",
+                            allowClear: false
+                        });
+                    });
+                    $('.select2').on('select2:open', function () {
+                        setTimeout(() => {
+                            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+                        }, 0);
+                    });
+                    $(document).ready(function () {
+                        $('#waybillSupplierId').select2({
+                            placeholder: "Tedarikçi seçiniz",
+                            allowClear: false,
+                            width: '100%'
+                        });
+
+                        $('#waybillWareHouseId').select2({
+                            placeholder: "Depo seçiniz",
+                            allowClear: false,
+                            width: '100%'
+                        });
+                    });
+
+                    // Tıklanınca otomatik açılması ve focus olması
+                    $('#waybillSupplierId').on('select2:open', function () {
+                        document.querySelector('.select2-search__field').focus();
+                    });
+
+                    $('#waybillWareHouseId').on('select2:open', function () {
+                        document.querySelector('.select2-search__field').focus();
+                    });
+
+
+                    $(document).on('click', '.btn-delete-waybill', function () {
+                        console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/erp/DeleteWaybill/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+
+                    });
+
+
+
+                    $('#editWaybillForm').on('submit', function (event) {
+                        event.preventDefault();
+                        var formData = $(this).serialize();
+                        $.post('/Erp/UpdateWaybill', formData, function (response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Başarıyla güncellendi!',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Güncelleme başarısız!',
+                                    text: response.message
+                                });
+                            }
+                        });
+                    });
+
+
+
+                    $(document).on('click', '.btn-edit-waybill', function () {
+                        console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                        var id = $(this).data('id');
+                        $.get('/ERP/GetWaybillById/' + id, function (data) {
+                            $('#editWaybillId').val(data.id);// ISO format: yyyy-MM-dd
+                            const createdDate = new Date(data.createdAt);
+                            const dateOnly = createdDate.toISOString().split("T")[0]; // "2025-04-09"
+                            $('#editwaybillCreatedAt').val(dateOnly);
+
+                            $('#editwaybillSupplierId').val(data.supplierId);
+                            $('#editwaybillWareHouseId').val(data.wareHouseId);
+                            $('#editwaybilDescription').val(data.description);
+
+                            $('#editWaybillModal').modal('show');
+                        });
+                    });
+
+
+
+
+
+                    document.querySelectorAll('.btn-delete').forEach(button => {
+                        button.addEventListener('click', function (event) {
+                            event.preventDefault();
+                            const url = this.getAttribute('href');
+                            Swal.fire({
+                                title: 'Silmek istediğinize emin misiniz?',
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonText: 'Evet, sil!',
+                                cancelButtonText: 'Hayır, iptal et'
+                            }).then((result) => {
+                                if (result.isConfirmed) {
+                                    $.post(url, function (response) {
+                                        if (response.success) {
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Başarıyla silindi!',
+                                                showConfirmButton: false,
+                                                timer: 1500
+                                            }).then(() => {
+                                                location.reload();
+                                            });
+                                        } else {
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Silme işlemi başarısız!',
+                                                text: response.message
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        });
+                    });
+
+                </script>
+    </body>
+
+    </html>

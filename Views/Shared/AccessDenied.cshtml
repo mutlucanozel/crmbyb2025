@@ -1,0 +1,70 @@
+@{
+    ViewData["Title"] = "Yetkisiz Erişim";
+}
+
+<div class="container">
+    <div class="content">
+        <img src="~/img/accessdenied.jpeg" alt="Profil Resmi" />
+        <p>Bu sayfa için yetkiniz bulunmamaktadır.</p>
+        <a href="/">Ana Sayfaya Dön</a>
+    </div>
+</div>
+
+<style>
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f2f2f2;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 80vh;
+    }
+
+    .content {
+        text-align: center;
+        padding: 40px;
+        background-color: #fff;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        border-radius: 15px;
+    }
+
+    .content h1 {
+        font-size: 2.2em;
+        color: #1C90CF;
+        margin-bottom: 20px;
+    }
+
+    .content p {
+        font-size: 0.8em;
+        color: #555;
+        margin-bottom: 30px;
+    }
+
+    .content a {
+        display: inline-block;
+        padding: 15px 30px;
+        background-color: #3498db;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 10px;
+        font-size: 0.9em;
+        transition: background-color 0.3s;
+    }
+
+    .content a:hover {
+        background-color: #2980b9;
+    }
+
+    .content img {
+        max-width: 100%;
+        max-height: 500px;
+        width: auto;
+        height: auto;
+        border-radius: 10px;
+    }
+</style>

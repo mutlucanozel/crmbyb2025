@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giriş Kayıtları</title>
+    <link rel="stylesheet" type="text/css" href="~/css/listcustomer.css" />
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/css/listuser.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <style>
+        .search-input-custom {
+            background-color: #E4E9F7 !important;
+            border: 1px solid #2C3D4F;
+            color: #495057;
+            border-radius: .25rem;
+            padding: .375rem .75rem;
+            font-size: 1.2rem;
+        }
+
+        body {
+            background-color: #2D3A59;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Giriş Kayıtları</h2>
+        <hr>
+        <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+            <input type="text" class="form-control search-input-custom" id="searchInput"
+                placeholder="İsim, Soyisim, Rol, E-Posta veya Adres ile ara..."
+                style="margin: 0; flex-grow: 1; height: 90px;">
+        </div>
+        <hr>
+        <form method="get" class="mb-3">
+            <div class="form-row align-items-center">
+                <div class="col-sm-12 col-md-4 mb-2">
+                    <input type="date" class="form-control" name="startDate" value="@ViewBag.StartDate" />
+                </div>
+                <div class="col-sm-12 col-md-4 mb-2">
+                    <input type="date" class="form-control" name="endDate" value="@ViewBag.EndDate" />
+                </div>
+                <div class="col-sm-12 col-md-4 mb-2">
+                    <button type="submit" class="btn btn-primary btn-block">Filtrele</button>
+                </div>
+            </div>
+        </form>
+        
+        @{
+            int totalPages = (int)Math.Ceiling((double)ViewBag.TotalCount / ViewBag.PageSize);
+            int currentPage = ViewBag.Page;
+        }
+        
+        @if (totalPages > 1)
+        {
+            <nav aria-label="Sayfalama">
+                <ul class="pagination justify-content-center mt-4">
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == currentPage ? "active" : "")">
+                            <a class="page-link"
+                               href="@Url.Action("ListLoginHistory", new { page = i, startDate = ViewBag.StartDate, endDate = ViewBag.EndDate })">
+                                @i
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        }
+                
+        <div class="table-responsive">
+            <table class="user-table table table-bordered" id="userTable">
+                <thead>
+                    <tr>
+                        <th>Giriş Tarihi</th>
+                        <th>İsim</th>
+                        <th>Soyisim</th>
+                        <th>E-Posta</th>
+                        <th>Roller</th>
+                        <th>Giriş Konumu</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    @foreach (var user in ((IEnumerable<dynamic>)Model).OrderByDescending(u => u.LoginTime))
+                    {
+                        var colorValue = 0x000080 + Math.Abs(user.Email.GetHashCode() % 0x0E4C92);
+                        var color = "#" + colorValue.ToString("X6");
+
+                        <tr>
+                            <td>
+                                @user.LoginTime?.ToString("yyyy MMM dd HH:mm:ss", new System.Globalization.CultureInfo("tr-TR"))
+                                
+                            </td>
+                            <td style="color:@color;">@user.FirstName</td>
+                            <td style="color:@color;">@user.LastName</td>
+                            <td>@user.Email</td>
+                            <td>
+                                @foreach (var role in user.Roles.Split(','))
+                                {
+                                    <div>@role</div>
+                                }
+                            </td>
+                          
+                            <td>@user.Location</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <hr>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            $('#searchInput').on('keyup', function () {
+                const searchValue = $(this).val().toLocaleLowerCase('tr-TR').trim();
+                const searchTerms = searchValue.split(' ').filter(term => term !== '');
+
+                $('#userTable tbody tr').each(function () {
+                    const row = $(this);
+                    const rowText = row.text().toLocaleLowerCase('tr-TR');
+                    
+                    // Tüm arama terimlerinin satırda bulunup bulunmadığını kontrol et
+                    const match = searchTerms.every(term => rowText.includes(term));
+                    
+                    // Eşleşme varsa satırı göster, aksi takdirde gizle
+                    if (match) {
+                        row.show();
+                    } else {
+                        row.hide();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,550 @@
+@using System.Globalization
+
+@{
+    var createdByEmail = ViewData["CreatedByEmail"] as string; // ViewData içindeki e-posta bilgisini değişkene al
+    bool isAdmin = User.IsInRole("Yönetici"); // Yönetici kontrolü
+    bool isGenelMüdür = User.IsInRole("GENEL MÜDÜR");
+    bool hasPermission = isAdmin || isGenelMüdür; // Yönetici veya Genel Müdür
+}
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teklif Detayları</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="~/css/detailsoffer.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+
+<body>
+    <div class="container pdf-container">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="pdf-header">
+                    <h2>TEKLİF DETAYLARI </h2>
+                    
+                </div><div class="pdf-section">
+
+                    <form id="updatePriceForm" class="mt-3">
+                        <input type="hidden" id="offerId" name="Id" value="@Model.Id" />
+
+                
+                        <div class="col-md-12">
+                            <div class="form-group row align-items-center">
+                                <div class="col-md-12" style="padding-left: 0;">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="Price" name="Price" 
+                                        style="height: 80px; font-size: 24px; text-align: center; line-height: 80px;"
+                                        value="@(Model.Price > 0 ? (Model.Price == (int)Model.Price ? Model.Price.ToString("0").Replace('.', ',') : Model.Price.ToString("0.#####").Replace('.', ',')) : "" )"
+                                        placeholder="@(Model.Price > 0 ? "" : "Henüz Belirlenmedi")" required  @(hasPermission ? "" : "disabled") />
+                                 
+                                        <div class="input-group-append">
+                                            <select class="form-control" id="Currency" style=" height: 80px;" name="Currency"  @(hasPermission ? "" : "disabled")> >
+                                                @if (Model.Currency == "EUR")
+                                                {
+                                                    <option value="EUR" selected>EUR</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="EUR">EUR</option>
+                                                }
+                                                @if (Model.Currency == "TRY")
+                                                {
+                                                    <option value="TRY" selected>TRY</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="TRY">TRY</option>
+                                                }
+                                                @if (Model.Currency == "USD")
+                                                {
+                                                    <option value="USD" selected>USD</option>
+                                                }
+                                                else
+                                                {
+                                                    <option value="USD">USD</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                     
+<div class="col-md-12" style="padding-left: 0;">
+    <button type="submit" class="btn btn-dark w-100" 
+            @(hasPermission ? "" : "disabled")> 
+        Fiyatı Kaydet <i class="fa-solid fa-handshake"></i>
+    </button>
+</div>
+                    </form>
+               
+                </div>
+       
+                
+                @if (Model.Customer != null)
+                {
+                    <div class="pdf-section">
+                        <h5>Müşteri Bilgisi (@Model.CustomerId)</h5>
+                        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <p><strong>Ad:</strong> @Model.Customer.Name</p>
+                            <a href="@Url.Action("CustomerDetail","Customer", new { id = Model.CustomerId })" class="btn btn-outline-dark" style="display: inline-block;">
+                                Müşteri Sayfası <i class="fa-solid fa-shop"></i>
+                            </a>
+                        </div>
+                        
+                     
+                        <p><strong>İl:</strong> @(string.IsNullOrEmpty(Model.Customer.City) ? "Belirtilmemiş" : Model.Customer.City)</p>
+                        <p><strong>Müşteri Sorumlusu: </strong> @Model.Customer.CreatedBy</p>
+                        <p>
+                            <strong>Müşteri Sorumlusu Mail: </strong> 
+                            <span id="createdByEmail">@ViewData["CreatedByEmail"]</span>
+                        </p>
+                        
+                        
+                    
+                        
+                    </div>
+                    
+                }
+                else
+                {
+                <div class="pdf-section">
+                    <h5>Müşteri Bilgisi</h5>
+                    <p><strong>Müşteri Bilgisi Mevcut Değil</strong></p>
+                </div>
+                }
+            </div>
+    
+            <div class="col-md-6">
+                <div class="pdf-section">
+                    <h5>Teklif Bilgileri (@Model.Id)</h5>
+
+                    <p><strong>Teklif Adı:</strong> @Model.ProductName</p>
+                    <p><strong>EnXBoy:</strong> <td>@(Convert.ToInt32(Model.Width).ToString("D3") + "X" + Convert.ToInt32(Model.Height).ToString("D3")+ "(Akış)")</td>
+                    </p>
+                    <p><strong>Kağıt Bilgisi:</strong> @Model.PaperInfo?.Name</p>
+                    <p><strong>Tutkal Bilgisi:</strong> @Model.AdhesiveInfo?.Name</p>
+
+                    
+                    
+                    <p><strong>Baskı Bilgisi:</strong> 
+                        @if (Model.IsPrinted)
+                        {
+                            @:Baskılı
+                        }
+                        else
+                        {
+                            @:Baskılı Değil
+                        }
+                    </p>
+                    
+                    @if (Model.NumberOfColors > 0)
+                    {
+                        <p><strong>Renk Sayısı:</strong> @Model.NumberOfColors</p>
+                    }
+                    
+                    <p><strong>Ek İşlem:</strong> <span id="additionalProcessingName"></span></p>
+                    <p>
+                        <strong>Miktar:</strong> 
+                        @(Model.OrderQuantity > 0 ? Model.OrderQuantity.ToString("#,##0").Replace(",", ".") : "Henüz girilmemiş") 
+                        @Model.OrderMethod.Name
+                    </p>
+                    <p>
+                 
+                        <strong>Açıklama:</strong><span style="@(string.IsNullOrWhiteSpace(Model.Description) ? "" : "color: red;")"> @Model.Description</span>
+                    </p>
+                    
+
+                </div>
+    
+                <div class="pdf-section">
+                    <h5>Ödeme ve Teslimat</h5>
+                    <p><strong>Ödeme Şekli:</strong> @Model.PaymentMethod</p>
+                    <p><strong>Vade:</strong> @(Model.PaymentTerm > 0 ? $"{Model.PaymentTerm} Gün" : "Belirtilmedi")</p>
+
+                    <p><strong>Teslim Şekli:</strong> @Model.DeliveryMethod?.Name</p>
+                </div>
+    
+                @if (!string.IsNullOrEmpty(Model.OfferPicture))
+                {
+                <div class="pdf-section">
+                    <h5>Teklif Görseli</h5>
+                    <img src="@Model.OfferPicture" alt="Offer Image" class="offer-image" />
+                </div>
+                }
+            </div>
+        </div>
+    
+        <div class="row g-4 mt-4">
+            <div class="col-md-12">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header text-white" style="background-color: #1A1C2E;">
+                        <h3 class="card-title m-0">
+                            <i class="fa-solid fa-database"></i> LOG Kayıtları
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="logTable">
+                                <thead>
+                                    <tr>
+                                        <th>Tarih</th>
+                                        <th>Alan</th>
+                                        <th>Eski Değer</th>
+                                        <th>Yeni Değer</th>
+                                        <th>İşlem Türü</th>
+                                        <th>Değiştiren</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logTableBody">
+                                    <!-- Log kayıtları buraya dinamik olarak eklenecek -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-12 text-center">
+                <button type="button" class="back-button btn btn-outline-primary" onclick="window.location.href='@Url.Action("ListOffer", "Customer")'">
+                    <i class="fa fa-arrow-left" aria-hidden="true"></i> Teklİf Lİstesİne Gİt
+                    
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function getButtonClass(operationType) {
+            switch (operationType) {
+                case "Oluşturuldu":
+                    return "btn-success";
+                case "Güncellendi":
+                    return "btn-warning";
+                case "Silindi":
+                    return "btn-danger";
+                case "Transfer Edildi":
+                    return "btn-info";
+                default:
+                    return "btn-secondary";
+            }
+        }
+          document.addEventListener("DOMContentLoaded", function () {
+                // Form alanlarını seç
+                const widthInput = document.getElementById("width");
+                const heightInput = document.getElementById("height");
+                const paperInfoSelect = document.getElementById("paperInfo");
+                const adhesiveInfoSelect = document.getElementById("adhesiveInfo");
+                const productNameInput = document.getElementById("productName");
+                const isPrintedSelect = document.getElementById("isPrinted");
+
+                // Ürün adını otomatik oluşturma işlevi
+                function updateProductName() {
+                    // En ve boy değerlerini 3 basamaklı formata dönüştür
+                    const widthValue = widthInput.value ? widthInput.value.padStart(3, '0') : "";
+                    const heightValue = heightInput.value ? heightInput.value.padStart(3, '0') : "";
+
+                    // Kağıt ve tutkal bilgisi için seçilen değerleri al (Select2'dan seçilen değeri al)
+                    const paperInfoValue = $(paperInfoSelect).find("option:selected").text() || "";
+                    const adhesiveInfoValue = $(adhesiveInfoSelect).find("option:selected").text() || "";
+
+                    // Baskı durumu kontrolü (Seçilen baskı durumu)
+                    const isPrintedValue = $(isPrintedSelect).find("option:selected").text();
+
+                    // Ürün adını oluştur
+                    const productName = `${widthValue}X${heightValue} ${isPrintedValue} ${paperInfoValue} ${adhesiveInfoValue}`;
+
+                    // Ürün adı alanına otomatik olarak yaz
+                    productNameInput.value = productName;
+                }
+
+                // Değişiklik olduğunda updateProductName fonksiyonunu çağır
+                widthInput.addEventListener("input", updateProductName);
+                heightInput.addEventListener("input", updateProductName);
+                $(paperInfoSelect).on("change", updateProductName);
+                $(adhesiveInfoSelect).on("change", updateProductName);
+                $(isPrintedSelect).on("change", updateProductName);
+
+                // Sayfa yüklendiğinde varsayılan değerlerle ürün adını güncelle
+                updateProductName();
+            });
+        $(document).ready(function() {
+    // Controller'dan gelen AdditionalProcessing ID'leri
+    var additionalProcessingIds = '@Model.AdditionalProcessing'; // Örneğin: "15, 16, 19"
+
+    if (additionalProcessingIds) {
+        // AJAX isteği ile ID'leri backend'e gönderiyoruz
+        $.ajax({
+            url: '@Url.Action("GetAdditionalProcessingsByIds", "Customer")', // Backend'de yazdığımız metot
+            type: 'GET',
+            data: { ids: additionalProcessingIds }, // ID'leri gönderiyoruz
+            success: function(response) {
+                if (response && response.length > 0) {
+                    // Dönen isimleri birleştirip HTML'e yazıyoruz
+                    $('#additionalProcessingName').text(response.join(", "));
+                } else {
+                    $('#additionalProcessingName').text('Ek işlem bilgisi yok');
+                }
+            },
+            error: function() {
+                alert('Ek işlem bilgisi getirilemedi.');
+            }
+        });
+    } else {
+        // Eğer additionalProcessingIds boşsa
+        $('#additionalProcessingName').text('Ek işlem bilgisi yok');
+    }
+});
+
+// loadChangeLogs işlevini global bir kapsamda tanımlıyoruz
+function loadChangeLogs() {
+    console.log("loadChangeLogs işlevi çağrıldı."); // İşlev çağrısını kontrol edin
+    const offerId = $('#offerId').val();
+
+    $.ajax({
+        url: '@Url.Action("GetChangeLogsByOfferId", "Customer")',
+        type: 'GET',
+        data: { offerId: offerId },
+        success: function (logs) {
+            console.log("Gelen log verileri:", logs); // Gelen logları kontrol edin
+            const tableBody = $('#logTableBody');
+            tableBody.empty(); // Önce tabloyu temizle
+
+            if (logs && logs.length > 0) {
+                logs.reverse().forEach(log => {
+                    const row = `<tr>
+                        <td>${log.date}</td>
+                        <td>${log.field}</td>
+                        <td>${log.oldValue}</td>
+                        <td>${log.newValue}</td>
+                       <td><button class="btn ${getButtonClass(log.operationType)}">${log.operationType}</button></td>
+                        <td>${log.changedBy}</td>
+                    </tr>`;
+                    tableBody.append(row);
+                });
+            } else {
+                const emptyRow = `<tr><td colspan="6" class="text-center">Log kaydı bulunamadı.</td></tr>`;
+                tableBody.append(emptyRow);
+            }
+        },
+        error: function () {
+            alert('Log kayıtları yüklenemedi.');
+        }
+    });
+}$('#updatePriceForm').on('submit', function (e) {
+    e.preventDefault();
+
+    let rawValue = $('#Price').val().replace(',', '.');
+    $('#Price').val(rawValue); // Değeri geri koy
+
+    let offerId = $('#offerId').val(); // Offer ID'yi alın
+    if (!offerId) {
+        console.error("OfferId bulunamadı! İşlem durduruldu.");
+        return; // OfferId eksikse işlemi durdur
+    }
+
+    let formData = $(this).serialize(); // Form verilerini serialize et
+    formData += `&Id=${offerId}`; // Id'yi formData'ya ekle
+
+    // Fiyat güncelleme işlemi
+    $.ajax({
+        url: '@Url.Action("UpdatePrice", "Customer")',
+        type: 'POST',
+        data: formData,
+        success: function (response) {
+            console.log("UpdatePrice yanıtı: ", response);
+
+            if (response.success) {
+                // Fiyat başarıyla güncellendi bildirimi
+                Toastify({
+                    text: "Fiyat başarıyla güncellendi 🥳",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "#4CAF50" }
+                }).showToast();
+
+                // E-posta bildirimi gönder
+                sendEmail(offerId);
+            } else {
+                Toastify({
+                    text: response.message || 'Fiyat güncellenirken bir hata oluştu.',
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "#FF0000" }
+                }).showToast();
+            }
+        },
+        error: function () {
+            Toastify({
+                text: 'Fiyat güncellenirken hata oluştu.',
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: "#FF0000" }
+            }).showToast();
+        }
+    });
+
+    function sendEmail(offerId) {
+        sendEmailNotification(offerId).then(function (result) {
+            if (result.success) {
+                Toastify({
+                    text: "Mail başarıyla gönderildi 📨",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "#4CAF50" }
+                }).showToast();
+
+                // Tabloyu güncelle
+                loadChangeLogs(); // Tabloyu yeniden yükleyen işlevi çağır
+            } else {
+                Toastify({
+                    text: "E-posta gönderilemedi. Tekrar denemek için dokunun.",
+                    duration: 8000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "#FF0000" },
+                    onClick: function () {
+                        sendEmail(offerId); // Tekrar dene
+                    }
+                }).showToast();
+            }
+        }).catch(function (error) {
+            console.error("E-posta gönderim hatası: ", error);
+
+            Toastify({
+                text: "E-posta gönderim sırasında bir hata oluştu. Tekrar denemek için dokunun.",
+                duration: 5000,
+                gravity: "top",
+                position: "right",
+                style: { background: "#FF0000" },
+                onClick: function () {
+                    sendEmail(offerId); // Tekrar dene
+                }
+            }).showToast();
+        });
+    }
+});
+
+
+$(document).ready(function () {
+    const offerId = $('#offerId').val();
+
+    // Sayfa yüklendiğinde logları yükle
+    loadChangeLogs();
+
+   
+});
+
+// Mail gönderme fonksiyonu
+function sendEmailNotification(offerId) {
+    console.log("Gönderilen OfferId: ", offerId); // Konsolda kontrol
+
+    return new Promise(function (resolve, reject) {
+        $.ajax({
+            url: '@Url.Action("SendPriceNotification", "Customer")',
+            type: 'POST',
+            data: { Id: offerId }, // Doğru ID'yi gönder
+            success: function (response) {
+                console.log("Backend yanıtı: ", response);
+                resolve(response); // Yanıtı geri döndür
+            },
+            error: function (xhr) {
+                let errorMessage = xhr.responseJSON ? xhr.responseJSON.message : 'Bilinmeyen hata';
+                console.error("Hata: ", errorMessage);
+                reject({ success: false, message: errorMessage });
+            }
+        });
+    });
+}
+
+
+        document.getElementById('Price').addEventListener('input', function (e) {
+    let value = e.target.value;
+
+    // Sadece rakam ve virgüle izin ver
+    value = value.replace(/[^0-9,.]/g, '');
+
+    // Eğer karakter sayısı 7'yi geçerse, fazlasını sil
+    if (value.length > 7) {
+        value = value.substring(0, 7);
+    }
+
+    // Noktayı virgüle çevir
+    value = value.replace('.', ',');
+
+    // Değeri input alanına geri yaz
+    e.target.value = value;
+});
+
+
+
+document.getElementById('Currency').addEventListener('change', function () {
+    let price = parseFloat(document.getElementById('Price').value);
+    let currency = this.value;
+
+    
+})
+
+
+// Sayfa yenilendiğinde localStorage'daki mesajı kontrol et ve göster
+$(document).ready(function () {
+    const successMessage = localStorage.getItem('priceUpdateSuccess');
+    if (successMessage) {
+        Toastify({
+            text: successMessage,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#4CAF50", // Yeşil renk
+        }).showToast();
+        // Mesaj gösterildikten sonra localStorage'ı temizle
+        localStorage.removeItem('priceUpdateSuccess');
+    }
+});
+function convertPriceToWords(price, currency) {
+    if (isNaN(price) || price === null || price === "") {
+        return "Fiyat bilgisi yok";
+    }
+
+    let priceString = price.toString().replace('.', ','); // Nokta varsa virgüle çevir
+    let parts = priceString.split(','); // Ondalık kısmı virgülden ayır
+
+    let wholePart = parts[0]; // Tam sayı kısmı
+    let fractionalPart = parts.length > 1 ? parts[1].padEnd(5, '0') : "00000"; // Ondalık kısmı 5 basamak olacak şekilde tamamla
+
+    if (currency === "TRY") {
+        return wholePart + " Türk Lirası " + fractionalPart + " kuruş";
+    } else if (currency === "USD") {
+        return wholePart + " Dolar " + fractionalPart + " cent";
+    } else if (currency === "EUR") {
+        return wholePart + " Euro " + fractionalPart + " cent";
+    }
+
+    return wholePart + " " + currency + " " + fractionalPart;
+}
+
+
+        
+
+    </script>
+</body>
+
+</html>

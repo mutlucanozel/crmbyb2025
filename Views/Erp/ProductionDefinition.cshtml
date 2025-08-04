@@ -1,0 +1,265 @@
+@model crm.Models.GeneralInfoViewModel
+@{
+var swalMessage = TempData["SwalMessage"] as string;
+var swalIcon = !string.IsNullOrEmpty(swalMessage) && swalMessage.Contains("başarı") ? "success" : "error";
+}
+
+@if (!string.IsNullOrEmpty(swalMessage))
+{
+<script>
+    Swal.fire({
+        icon: '@swalIcon',
+        title: '@swalMessage',
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Bilgiler</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Üretim Tanım </h2>
+        <hr />
+        <div class="row g-4">
+
+
+
+            <div class="col-md-6">
+                <!-- OrderMethod Table -->
+                <h3 class="centered-text">Üretim Operasyon</h3>
+
+                <div class="table-responsive">
+
+
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Tanım</th>
+                                <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addProductionOperation">Stok Kart Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.ProductOperations)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Definition</td>
+                                <td>
+                                    <button class="btn btn-warning btn-edit-productionoperation" data-id="@item.Id">Düzenle
+                                        <i class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-productionoperation" data-id="@item.Id">Sil <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+
+            <div class="modal fade" id="addProductionOperation" tabindex="-1" role="dialog"
+                aria-labelledby="addProductionOperationLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 claass="modal-title" id="addProductionOperationLabel"> Üretim Operasyon Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateProductionOperation">
+                                <div class="form-group">
+                                    <label for="ProductionOperationDefinition">Tanım</label>
+                                    <input type="text" class="form-control" id="ProductionOperationDefinition" name="Definition" required>
+                                </div>
+                              
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           
+
+            <div class="modal fade" id="editProductionOperationModal" tabindex="-1" role="dialog"
+                aria-labelledby="editProductionOperationModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editProductionOperationModalLabel">Kağıt Detay Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editProductionOperation">
+                                <input type="hidden" id="editProductionOperationId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editProductionOperationDefinition">Tanım</label>
+                                    <input type="text" class="form-control" id="editProductionOperationDefinition" name="Definition"
+                                        required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+           
+
+
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+            <script>
+
+
+                $(document).on('click', '.btn-delete-productionoperation', function () {
+                    console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeleteProductionOperation/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+
+                });
+
+                
+
+                $('#editProductionOperation').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Erp/UpdateProductionOperation', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+                
+
+
+                $(document).on('click', '.btn-edit-productionoperation', function () {
+                    console.log("Edit button clicked!");  // Bu satır, tıklamanın tetiklenip tetiklenmediğini kontrol etmek için
+                    var id = $(this).data('id');
+                    $.get('/ERP/GetProductionOperationById/' + id, function (data) {
+                        $('#editProductionOperationId').val(data.id);
+                        $('#editProductionOperationDefinition').val(data.definition);
+                        $('#editProductionOperationModal').modal('show');
+                    });
+                });
+
+
+              
+
+
+                document.querySelectorAll('.btn-delete').forEach(button => {
+                    button.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        const url = this.getAttribute('href');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(url, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+
+            </script>
+</body>
+
+</html>

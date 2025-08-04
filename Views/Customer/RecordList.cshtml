@@ -1,0 +1,884 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Müşteri Listesi</title>
+    <link rel="stylesheet" type="text/css" href="~/css/listcustomer.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+</head>
+<style>
+      .filter-button {
+        border-width: 2px !important; /* Kalınlaştır */
+        border-color: #6c757d !important; /* Normal outline rengi */
+    }
+    .active-btn {
+        color: #fff !important;
+        font-weight: bold;
+    }
+    /* Farklı renklere özel borderlar */
+    .btn-outline-secondary {
+        border-color: #6c757d !important;
+    }
+    .btn-outline-primary {
+        border-color: #007bff !important;
+    }
+    .btn-outline-success {
+        border-color: #28a745 !important;
+    }
+    .btn-outline-info {
+        border-color: #17a2b8 !important;
+    }
+    .btn-outline-danger {
+        border-color: #dc3545 !important;
+    }
+    .btn-outline-dark {
+        border-color: #343a40 !important;
+    }
+
+    /* İstersen hover efektini de belirginleştiririz */
+    .filter-button:hover {
+        box-shadow: 0 0 10px rgba(0,0,0,0.2); /* Hafif gölge efekti */
+    }
+</style>
+@using System.Security.Claims
+@{
+var firstName = System.Net.WebUtility.HtmlDecode(User.FindFirst("FirstName")?.Value ?? string.Empty);
+var lastName = System.Net.WebUtility.HtmlDecode(User.FindFirst("LastName")?.Value ?? string.Empty);
+
+ViewBag.UserName = $"{firstName} {lastName}";
+}
+
+<div class="container">
+    <h4 class="display-4 text-center">Kayıt Listesi</h4>
+    <hr>
+    <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+        <input type="text" class="form-control search-input-custom" id="searchInput"
+            placeholder="Herhangi bir parametre ile ara..." style="margin: 0; flex-grow: 1; height: 60px;">
+
+    </div>
+    <div class="d-flex flex-wrap gap-2 justify-content-center mb-3" style="row-gap: 10px; column-gap: 10px;">
+
+
+        <button class="btn btn-outline-dark filter-button" data-status="all">Tümünü Göster</button>
+        <button class="btn btn-secondary filter-button" data-status="Görev">Görev</button>
+        <button class="btn btn-primary filter-button" data-status="Ziyaret">Ziyaret</button>
+        <button class="btn btn-success filter-button" data-status="Telefon">Telefon</button>
+        <button class="btn btn-info filter-button" data-status="Email">Email</button>
+        <button class="btn btn-danger filter-button" data-status="Numune">Numune</button>
+        
+        <button class="btn btn-outline-dark  btn-lg"
+        onclick="exportTableToExcel('user-table', 'MusteriListesi.xlsx')">
+        Tabloyu Excel'e Aktar <i class="fa-solid fa-download"></i>
+    </button>
+    </div>
+    
+    <div class="button-container">
+
+
+
+
+        <!-- <button class="btn btn-outline-dark mb-3 btn-lg" id="deleteSelected">
+            Seçilen Müşterileri Sil <i class="fa fa-trash"></i>
+        </button> -->
+    </div>
+    <hr>
+
+    <div class="table-header" style="text-align: center;">
+        <h5 id="customerCount"
+            style="font-size: 1.2em; font-weight: bold; color: #4F75FF; border: 2px solid #4379F2; display: inline-block; padding: 10px 20px; border-radius: 8px; background-color: #f0f8ff;">
+            Listelenen Kayıtların Sayısı: 0
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table id="user-table" class="user-table table table-bordered">
+            <thead>
+                <tr>
+                    <th>Kayıt Id</th>
+                    <th>Müşteri Adı</th>
+                    <th>Müşteri Id</th>
+                    <th>Müşteri Sorumlusu</th>
+                    <th>Durum</th>
+                    <th>Planlanan Tarih</th>
+                    <th>Gerçekleşen Tarih</th>
+                    <th>Bilgi</th>
+                    <th>İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null)
+                {
+                foreach (var record in Model)
+                {
+                <tr>
+                    <td>@record.Id</td>
+                    <td>@record.Customer?.Name</td> <!-- Müşteri adı ilişkilendirme -->
+                    <td>@record.Customer.Id</td>
+                    <td>@record.Customer.CreatedBy</td>
+                    <td>
+                        <span class="badge px-3 py-2 fs-5 @(record.Status switch{
+                            " Görev"=> "bg-secondary text-white",
+                            "Ziyaret" => "bg-primary text-white",
+                            "Telefon" => "bg-success text-white",
+                            "Email" => "bg-info text-white",
+                            "Numune" => "bg-danger text-white",
+                            _ => "bg-dark text-white"
+                            })">
+                            @record.Status
+                        </span>
+                    </td>
+
+                    <td>@record.PlannedDate?.ToString("dd.MM.yyyy")</td>
+                    <td>@record.ActualDate?.ToString("dd.MM.yyyy")</td>
+                    <td>@record.Information</td>
+                    <td style="text-align: center; vertical-align: middle;">
+                        <a class="btn btn-dark" href="@Url.Action("CustomerDetail", "Customer" , new {
+                            id=record.Customer.Id })"
+                            style="display: inline-flex; justify-content: center; align-items: center; width: 60px; height: 60px;">
+                            <i class='fas fa-sign-in-alt' style="font-size: 24px; margin: 0;"></i>
+                        </a>
+                    </td>
+                </tr>
+                }
+                }
+                else
+                {
+                <tr>
+                    <td colspan="8">Veri yüklenemedi</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+
+    </div>
+    <hr>
+</div>
+
+
+
+
+
+
+<script>
+    
+    document.querySelectorAll('.filter-button').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const selectedStatus = this.getAttribute('data-status').trim();
+        const rows = document.querySelectorAll('.user-table tbody tr');
+
+        // Satırları filtrele
+        rows.forEach(function (row) {
+            const statusCell = row.querySelector('td:nth-child(5) span');
+            if (statusCell) {
+                const statusText = statusCell.textContent.trim();
+                if (selectedStatus === "all" || statusText === selectedStatus) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            }
+        });
+
+        // Tüm butonların aktif durumunu kaldır
+        document.querySelectorAll('.filter-button').forEach(function (btn) {
+            btn.classList.remove('active-btn', 'btn-secondary', 'btn-primary', 'btn-success', 'btn-info', 'btn-danger', 'btn-dark');
+            btn.classList.add('btn-outline-dark', 'btn-outline-secondary', 'btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-danger');
+        });
+
+        // Şu an tıklanan butonu aktif hale getir
+        this.classList.remove('btn-outline-dark', 'btn-outline-secondary', 'btn-outline-primary', 'btn-outline-success', 'btn-outline-info', 'btn-outline-danger');
+
+        switch (selectedStatus) {
+            case 'Görev':
+                this.classList.add('btn-secondary', 'active-btn');
+                break;
+            case 'Ziyaret':
+                this.classList.add('btn-primary', 'active-btn');
+                break;
+            case 'Telefon':
+                this.classList.add('btn-success', 'active-btn');
+                break;
+            case 'Email':
+                this.classList.add('btn-info', 'active-btn');
+                break;
+            case 'Numune':
+                this.classList.add('btn-danger', 'active-btn');
+                break;
+            case 'all':
+            default:
+                this.classList.add('btn-dark', 'active-btn');
+                break;
+        }
+
+        updateCustomerCount();
+    });
+    });
+    document.addEventListener("DOMContentLoaded", function () {
+        const table = document.getElementById("user-table");
+        const headers = table.querySelectorAll("thead th");
+        const tbody = table.querySelector("tbody");
+        let currentSortColumn = null;
+        let currentSortOrder = "asc";
+
+        headers.forEach((header, index) => {
+            header.addEventListener("click", function () {
+                // Tüm sütunlardan "active" sınıfını kaldır.
+                headers.forEach(h => {
+                    h.classList.remove("active");
+                    const icon = h.querySelector(".sort-icon");
+                    if (icon) icon.remove();
+                });
+
+                // Şimdiki sütunu vurgula.
+                header.classList.add("active");
+
+                // Sıralama yönünü belirle.
+                if (currentSortColumn === index) {
+                    currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+                } else {
+                    currentSortColumn = index;
+                    currentSortOrder = "asc";
+                }
+
+                // Sıralama ikonu ekle.
+                const sortIcon = document.createElement("span");
+                sortIcon.classList.add("sort-icon");
+                sortIcon.innerHTML = currentSortOrder === "asc" ? "▲" : "▼";
+                header.appendChild(sortIcon);
+
+                // Satırları sırala.
+                const rows = Array.from(tbody.querySelectorAll("tr"));
+                rows.sort((rowA, rowB) => {
+                    const cellA = rowA.children[index].innerText.trim();
+                    const cellB = rowB.children[index].innerText.trim();
+
+                    // Sayısal sıralama kontrolü
+                    if (!isNaN(cellA) && !isNaN(cellB)) {
+                        return currentSortOrder === "asc"
+                            ? Number(cellA) - Number(cellB)
+                            : Number(cellB) - Number(cellA);
+                    }
+
+                    // Tarih sıralama kontrolü
+                    const dateRegex = /^\d{2}\.\d{2}\.\d{4}$/; // Örn: "28.12.2024"
+                    if (dateRegex.test(cellA) && dateRegex.test(cellB)) {
+                        const dateA = new Date(cellA.split('.').reverse().join('-'));
+                        const dateB = new Date(cellB.split('.').reverse().join('-'));
+                        return currentSortOrder === "asc" ? dateA - dateB : dateB - dateA;
+                    }
+
+                    // Alfabetik sıralama kontrolü
+                    return currentSortOrder === "asc"
+                        ? cellA.localeCompare(cellB, 'tr')
+                        : cellB.localeCompare(cellA, 'tr');
+                });
+
+                // Sıralanmış satırları yeniden ekle.
+                rows.forEach(row => tbody.appendChild(row));
+            });
+        });
+    });
+    async function exportTableToExcel(tableID, filename = 'MusteriListesi.xlsx') {
+        try {
+            const table = document.getElementById(tableID);
+
+            // Yeni bir workbook oluştur
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet("Müşteri Listesi");
+
+            // Tablonun başlıklarını al
+            const headerRow = table.querySelector("thead tr");
+            const headers = Array.from(headerRow.querySelectorAll("th"))
+                .map(cell => cell.textContent.trim())
+                .filter(header => header !== "İşlemler"); // "İşlemler" sütununu hariç tut
+
+            // Başlıkları Excel'e ekle
+            const excelHeaderRow = worksheet.addRow(headers);
+            excelHeaderRow.eachCell(cell => {
+                cell.font = { bold: true }; // Başlıkları kalın yap
+                cell.alignment = { horizontal: "center", vertical: "middle" };
+            });
+
+            // Tablodaki verileri al
+            const rows = Array.from(table.querySelectorAll("tbody tr")).filter(row => row.style.display !== "none");
+
+            rows.forEach(row => {
+                const rowData = Array.from(row.querySelectorAll("td"))
+                    .map(cell => cell.textContent.trim());
+
+                // "İşlemler" sütununun indeksini belirle ve o sütunu hariç tut
+                const operationColumnIndex = Array.from(headerRow.querySelectorAll("th"))
+                    .findIndex(cell => cell.textContent.trim() === "İşlemler");
+
+                if (operationColumnIndex !== -1) {
+                    rowData.splice(operationColumnIndex, 1);
+                }
+
+                worksheet.addRow(rowData).eachCell(cell => {
+                    cell.alignment = { horizontal: "center", vertical: "middle" };
+                });
+            });
+
+            // Kolon genişliklerini ayarla
+            worksheet.columns = headers.map(() => ({ width: 20 }));
+
+            // Excel dosyasını indir
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Excel'e aktarılırken hata oluştu:", error);
+            alert("Excel'e aktarılırken hata oluştu! Detayları konsoldan kontrol edin.");
+        }
+    }
+
+
+
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        // Kullanıcının girdiği arama değerini al ve Türkçe karakterlere duyarlı olarak küçült
+        var searchValue = this.value.toLocaleLowerCase('tr-TR').trim();
+
+        // Arama değerini boşluklara göre böl ve kelimeleri al
+        var searchTerms = searchValue.split(' ').filter(function (term) {
+            return term.trim() !== ''; // Boş olmayan terimleri al
+        });
+
+        // Arama işlemini başlat
+        filterTable(searchTerms);
+    });
+
+    function filterTable(searchTerms) {
+        // Tablo satırlarını seç
+        var tableRows = document.querySelectorAll('.user-table tbody tr');
+
+        // Her bir satırı kontrol et
+        tableRows.forEach(function (row) {
+            // Satırın text içeriğini Türkçe karakterlere duyarlı olarak küçült
+            var rowText = row.textContent.toLocaleLowerCase('tr-TR').trim();
+
+            // Her bir arama teriminin satır metninde olup olmadığını kontrol et
+            var matchesSearch = searchTerms.every(function (term) {
+                return rowText.includes(term);
+            });
+
+            // Arama kriterlerine uyan satırları göster, uymayanları gizle
+            if (matchesSearch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        updateCustomerCount();
+    }
+    function updateCustomerCount() {
+        const visibleRows = document.querySelectorAll(".user-table tbody tr:not([style*='display: none'])");
+        const totalCustomers = visibleRows.length;
+        document.getElementById("customerCount").innerText = "Listelenen Kayıtların Sayısı: " + totalCustomers;
+    }
+    // Sayfa yüklendiğinde müşteri sayısını ilk olarak güncelle
+    document.addEventListener("DOMContentLoaded", function () {
+        updateCustomerCount();
+    });
+
+    $(document).ready(function () {
+
+        var createdBy = '@Html.Raw(ViewBag.UserName)';
+
+        $('#addCustomerModal').on('show.bs.modal', function () {
+            $('#CreatedBy').val(createdBy);
+
+        });
+
+        document.getElementById('newSector').addEventListener('input', function () {
+            this.value = this.value.toUpperCase();
+        });
+        $(document).on('click', '.delete-customer', function (event) {
+            event.stopPropagation(); // Tıklamanın satırı seçmesini engelle
+
+            var customerId = $(this).data('id');
+
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu müşteriyi silmek istediğinize emin misiniz?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Evet, sil!',
+                cancelButtonText: 'Hayır, iptal et',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteCustomer", "Customer")',
+                        type: 'POST',
+                        data: { id: customerId },
+                        success: function (result) {
+                            if (result.success) {
+                                // Toastify mesajını göstermek için localStorage'a bir flag ekle
+                                localStorage.setItem('customerDeleted', 'true');
+
+                                // Sayfayı hemen yenile
+                                location.reload();
+                            } else {
+                                Toastify({
+                                    text: "Silme işlemi yapılamadı! " + result.message,
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "center",
+                                    backgroundColor: "#FF0000", // Hata durumu (kırmızı)
+                                    stopOnFocus: true,
+                                }).showToast();
+                            }
+                        },
+                        error: function (err) {
+                            Toastify({
+                                text: "Hata! Müşteri silmek için yetkiye sahip olduğunuzdan emin olun!",
+                                duration: 5000, // 5 saniye boyunca görünür
+
+                                gravity: "top",
+                                position: "center",
+                                backgroundColor: "#FF0000", // Hata durumu (kırmızı)
+                                stopOnFocus: true,
+                            }).showToast();
+                        }
+
+                    });
+                    // Checkbox seçim işlemi için tıklama olayını ayrı yönet
+                    // $('.user-table tbody').on('click', 'tr', function (event) {
+                    //     if (!$(event.target).is('.delete-customer, .btn-outline-success, .fa-pencil-alt, .fa-trash, input[type="checkbox"]')) {
+                    //         // Tıklanan yer silme butonu veya düzenleme butonu değilse
+                    //         var checkbox = $(this).find('.selectCustomer');
+                    //         checkbox.prop('checked', !checkbox.prop('checked'));
+                    //     }
+                    // });
+
+                }
+            });
+        });
+
+        $('#addSectorButton').on('click', function () {
+            var newSectorName = $('#newSector').val();
+            if (newSectorName) {
+                $.ajax({
+                    url: '@Url.Action("AddSector", "Customer")',
+                    type: 'POST',
+                    data: { name: newSectorName },
+                    success: function (result) {
+                        if (result.success) {
+                            Toastify({
+                                text: "Sektör başarıyla eklendi.",
+                                duration: 3000,
+                                backgroundColor: "green",
+                                close: true
+                            }).showToast();
+                            $('#sector').append(new Option(newSectorName, newSectorName));
+                            $('#newSector').val('');
+                        } else {
+                            Toastify({
+                                text: result.message,
+                                duration: 3000,
+                                backgroundColor: "red",
+                                close: true
+                            }).showToast();
+                        }
+                    },
+                    error: function (err) {
+                        Toastify({
+                            text: "Sektör eklenirken bir hata oluştu.",
+                            duration: 3000,
+                            backgroundColor: "red",
+                            close: true
+                        }).showToast();
+                    }
+                });
+            } else {
+                Toastify({
+                    text: "Lütfen yeni sektör adını girin.",
+                    duration: 3000,
+                    backgroundColor: "red",
+                    close: true
+                }).showToast();
+            }
+        });
+
+
+        // Sayfa yüklendiğinde, eğer silme işlemi başarılı olduysa Toastify mesajını göster
+        $(document).ready(function () {
+            if (localStorage.getItem('customerDeleted') === 'true') {
+                Toastify({
+                    text: "Müşteri başarıyla silindi 🥳",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "center", // Bildirim hizalaması (left, center, right)
+                    backgroundColor: "#4CAF50", // Başarı durumu (yeşil)
+                    stopOnFocus: true, // Tıklama ile zamanlayıcıyı durdur
+                }).showToast();
+
+                // Mesaj gösterildikten sonra flag'i temizle
+                localStorage.removeItem('customerDeleted');
+            }
+        });
+        $('#deleteSectorButton').on('click', function () {
+            var sectorName = $('#sector').val();
+            if (sectorName) {
+                Swal.fire({
+                    title: 'Emin misiniz?',
+                    text: "Bu sektörü silmek istediğinize emin misiniz?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Evet, sil!',
+                    cancelButtonText: 'Hayır, iptal et'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("DeleteSectorByName", "Customer")',
+                            type: 'POST',
+                            data: { name: sectorName },
+                            success: function (result) {
+                                if (result.success) {
+                                    Swal.fire('Başarılı!', 'Sektör başarıyla silindi.', 'success').then(() => {
+                                        $('#sector option[value="' + sectorName + '"]').remove();
+                                    });
+                                } else {
+                                    Swal.fire('Silme işlemi yapılamadı!', result.message, 'error');
+                                }
+                            },
+                            error: function (err) {
+
+                                Swal.fire('Hata!', 'Sektör silinirken bir hata oluştu.', 'error');
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Hata mesajını göstermek için Toastify kullanımı
+                Toastify({
+                    text: "Hata! Lütfen silmek istediğiniz sektörü seçin.",
+                    duration: 3000, // Bildirim 3 saniye görünecek
+                    close: true, // Kapatma butonu eklendi
+                    gravity: "top", // Ekranın üst kısmında göster
+                    position: "center", // Ortada konumlandır
+                    backgroundColor: "#FF4F4F", // Hata rengi için kırmızı ton
+                    stopOnFocus: true, // Üzerine tıklanınca duraklatma
+                }).showToast();
+            }
+        });
+
+        // Şehirleri yükleme
+        $.get('/Customer/GetCities', function (data) {
+            if (data && data.length > 0) {
+                $('#city').empty();
+                $('#city').append('<option value="">Seçiniz</option>');
+                $.each(data, function (index, value) {
+                    $('#city').append('<option value="' + value + '">' + value + '</option>');
+                });
+            } else {
+                $('#city').append('<option value="">Veri yüklenemedi</option>');
+            }
+        });
+
+        // İlçe bilgilerini seçilen şehre göre yükleme
+        $('#city').change(function () {
+            var city = $(this).val();
+            if (city) {
+                $.get('/Customer/GetDistricts', { city: city }, function (data) {
+                    $('#district').empty();
+                    $('#district').append('<option value="">Seçiniz</option>');
+                    $.each(data, function (index, value) {
+                        $('#district').append('<option value="' + value + '">' + value + '</option>');
+                    });
+                });
+            } else {
+                $('#district').empty();
+                $('#district').append('<option value="">Seçiniz</option>');
+            }
+        });
+        $('#addCustomerForm').on('submit', function (e) {
+            e.preventDefault();
+
+            var formData = $(this).serialize();
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '/Customer/AddCustomer',
+                type: 'POST',
+                data: formData + '&__RequestVerificationToken=' + token,
+                success: function (result) {
+                    if (result.success) {
+                        // Başarı mesajı
+                        Toastify({
+                            text: "Müşteri başarıyla eklendi 🥳",
+                            duration: 3000, // 3 saniye gösterim süresi
+                            gravity: "top", // Bildirim konumu üstte
+                            position: "right", // Sağda göster
+                            backgroundColor: "#4CAF50", // Yeşil arkaplan (başarı)
+                            stopOnFocus: true // Fareyle üzerine gelince durdur
+                        }).showToast();
+
+                        setTimeout(function () {
+                            location.reload();
+                        }, 2000); // Sayfayı 2 saniye sonra yeniler
+
+                    } else if (result.message && result.message.includes("Bu isimle başlayan mevcut firmalar")) {
+                        // Benzer firma var uyarısı
+                        Swal.fire({
+                            title: 'Uyarı',
+                            text: result.message,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, ekle',
+                            cancelButtonText: 'İptal'
+                        }).then((willAdd) => {
+                            if (willAdd.isConfirmed) {
+                                // Kullanıcı onayladıysa, tekrardan eklemek için isteği gönder
+                                $.ajax({
+                                    url: '/Customer/AddCustomer',
+                                    type: 'POST',
+                                    data: formData + '&__RequestVerificationToken=' + token + '&forceAdd=true',
+                                    success: function (secondResult) {
+                                        if (secondResult.success) {
+                                            // Başarı mesajı
+                                            Toastify({
+                                                text: "Müşteri başarıyla eklendi 🥳",
+                                                duration: 3000, // 3 saniye gösterim süresi
+                                                gravity: "top", // Bildirim konumu üstte
+                                                position: "right", // Sağda göster
+                                                backgroundColor: "#4CAF50", // Yeşil arkaplan (başarı)
+                                                stopOnFocus: true // Fareyle üzerine gelince durdur
+                                            }).showToast();
+
+                                            setTimeout(function () {
+                                                location.reload();
+                                            }, 2000); // Sayfayı 2 saniye sonra yeniler
+                                        } else {
+                                            // Hata mesajı
+                                            Toastify({
+                                                text: secondResult.message,
+                                                duration: 5000, // 5 saniye gösterim süresi
+                                                gravity: "top",
+                                                position: "right",
+                                                backgroundColor: "#FF0000", // Kırmızı arkaplan (hata)
+                                                stopOnFocus: true
+                                            }).showToast();
+                                        }
+                                    },
+                                    error: function (err) {
+                                        // AJAX hata mesajı
+                                        Toastify({
+                                            text: "Bir hata oluştu, lütfen tekrar deneyin.",
+                                            duration: 5000, // 5 saniye gösterim süresi
+                                            gravity: "top",
+                                            position: "right",
+                                            backgroundColor: "#FF0000", // Kırmızı arkaplan (hata)
+                                            stopOnFocus: true
+                                        }).showToast();
+                                    }
+                                });
+
+                            }
+                        });
+                    } else {
+                        // Diğer hata mesajları
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hata',
+                            text: result.message || 'Bir hata oluştu, lütfen tekrar deneyin.'
+                        });
+                    }
+                },
+                error: function (err) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Bir hata oluştu, lütfen tekrar deneyin.'
+                    });
+                }
+            });
+        });
+
+        $(document).ready(function () {
+            // Tablo satırlarını al
+            var rows = $('.user-table tbody tr');
+
+            // Satırları sıralamak için bir dizi oluştur
+            rows.sort(function (a, b) {
+                var idA = parseInt($(a).find('td').eq(0).text()); // İlk hücredeki ID
+                var idB = parseInt($(b).find('td').eq(0).text()); // İlk hücredeki ID
+                return idB - idA; // Büyükten küçüğe sıralama
+            });
+
+            // Sıralanmış satırları tekrar tabloya ekle
+            $('.user-table tbody').empty().append(rows);
+        });
+
+
+        function handleFormSuccess(result) {
+            if (result.success) {
+                var newCustomer = result.customer;
+
+                // Müşteri verilerini kontrol ederek boş veya undefined ise varsayılan değerler kullan
+                var newCustomerId = newCustomer.Id || '';
+                var newCustomerSector = newCustomer.Sector || '';
+                var newCustomerName = newCustomer.Name || '';
+                var newCustomerCity = newCustomer.City || '';
+                var newCustomerDistrict = newCustomer.District || '';
+                var newCustomerCreatedBy = newCustomer.CreatedBy || '';
+
+                var detailUrl = '@Url.Action("CustomerDetail", "Customer")' + '?id=' + newCustomerId;
+
+                var newRow = `<tr>
+       
+            <td>${newCustomerId}</td>
+            <td>${newCustomerSector}</td>
+            <td>${newCustomerName}</td>
+            <td>${newCustomerCity}</td>
+            <td>${newCustomerDistrict}</td>
+            <td>${newCustomerCreatedBy}</td>
+            <td>
+                <a class="btn btn-outline-success" href="${detailUrl}">
+                    <i class="fa fa-info-circle"></i>
+                </a>
+                <button class="btn btn-outline-danger delete-customer" data-id="${newCustomerId}">
+                    <i class="fa fa-trash"></i>
+                </button>
+            </td>
+        </tr>`;
+                $('.user-table tbody').append(newRow);
+
+                $('#addCustomerForm')[0].reset();
+                $('#addCustomerModal').modal('hide');
+
+                // Toastify ile başarılı bildirim
+                Toastify({
+                    text: "Müşteri başarıyla eklendi.",
+                    duration: 3000, // Bildirimin ekranda kalma süresi (milisaniye)
+                    // Kapatma butonunun gösterilmesi
+                    gravity: "top", // Bildirimin ekranda nerede gösterileceği: "top" veya "bottom"
+                    position: "center", // Bildirimin ekranda nereye hizalanacağı: "left", "center", veya "right"
+                    backgroundColor: "#4CAF50", // Bildirimin arka plan rengi
+                    stopOnFocus: true, // Tıklayınca durdur
+                }).showToast();
+            } else {
+                var errorMessages = (result.errors || []).join("\n"); // Eğer result.errors undefined ise boş bir dizi kullan
+
+                // Toastify ile hata bildirim
+                Toastify({
+                    text: "Kayıt yapılmadı!\n" + result.message + "\n" + errorMessages,
+                    duration: 5000,
+
+                    gravity: "top",
+                    position: "center",
+                    backgroundColor: "#FF0000",
+                    stopOnFocus: true,
+                }).showToast();
+            }
+        }
+
+        function handleFormError(err) {
+            // Toastify ile hata bildirim
+            Toastify({
+                text: "Hata! Müşteri eklenirken bir hata oluştu.",
+                duration: 5000,
+
+                gravity: "top",
+                position: "center",
+                backgroundColor: "#FF0000",
+                stopOnFocus: true,
+            }).showToast();
+        }
+
+
+        // $('#selectAll').click(function () {
+        //     $('.selectCustomer').prop('checked', this.checked);
+        // });
+
+        // $(document).on('click', '.user-table tbody tr', function (e) {
+        //     if (e.target.type !== 'checkbox' && e.target.type !== 'button' && e.target.tagName.toLowerCase() !== 'a') {
+        //         var checkbox = $(this).find('.selectCustomer');
+        //         checkbox.prop('checked', !checkbox.prop('checked'));
+        //     }
+        // });
+
+        // $('#deleteSelected').click(function () {
+        //     var selectedIds = $('.selectCustomer:checked').map(function () {
+        //         return $(this).data('id');
+        //     }).get();
+
+        //     if (selectedIds.length > 0) {
+        //         Swal.fire({
+        //             title: 'Seçilen müşterileri silmek istediğinize emin misiniz? ?',
+        //             text: " Müşterilere ait teklifler de silinecek !!!!",
+        //             icon: 'warning',
+        //             showCancelButton: true,
+        //             confirmButtonColor: '#3085d6',
+        //             cancelButtonColor: '#d33',
+        //             confirmButtonText: 'Evet, sil!',
+        //             cancelButtonText: 'Hayır, iptal et'
+        //         }).then((result) => {
+        //             if (result.isConfirmed) {
+        //                 $.ajax({
+        //                     url: '@Url.Action("DeleteSelectedCustomers", "Customer")',
+        //                     type: 'POST',
+        //                     data: { ids: selectedIds },
+        //                     traditional: true,
+        //                     success: function (result) {
+        //                         if (result.success) {
+        //                             Toastify({
+        //                                 text: "Seçilen müşteriler başarıyla silindi 🥳",
+        //                                 duration: 5000,
+        //                                 gravity: "top", // Bildirimin konumu: "top" veya "bottom"
+        //                                 position: "center", // Bildirimin hizalaması: "left", "center", veya "right"
+        //                                 backgroundColor: "#4CAF50", // Başarı bildirimi rengi (yeşil)
+        //                                 stopOnFocus: true, // Tıklama ile bildirim zamanlayıcıyı durdur
+        //                             }).showToast();
+
+        //                             setTimeout(function () {
+        //                                 location.reload(); // 2 saniye sonra sayfayı yenile
+        //                             }, 2000);
+        //                         } else {
+        //                             Toastify({
+        //                                 text: "Silme işlemi yapılamadı! Yetkiye sahip olduğunuzdan emin olun! " + result.message,
+        //                                 duration: 5000,
+        //                                 gravity: "top",
+        //                                 position: "center",
+        //                                 backgroundColor: "#FF0000", // Hata bildirimi rengi (kırmızı)
+        //                                 stopOnFocus: true,
+        //                             }).showToast();
+        //                         }
+        //                     },
+        //                     error: function (err) {
+        //                         Toastify({
+        //                             text: "Hata! Silme işlemi yapılamadı! Yetkiye sahip olduğunuzdan emin olun!",
+        //                             duration: 5000,
+        //                             gravity: "top",
+        //                             position: "center",
+        //                             backgroundColor: "#FF0000", // Hata bildirimi rengi (kırmızı)
+        //                             stopOnFocus: true,
+        //                         }).showToast();
+        //                     }
+        //                 });
+        //             }
+
+        //         });
+        //     } else {
+        //         Toastify({
+        //             text: "Lütfen silmek için en az bir müşteri seçin.",
+        //             duration: 3000,
+        //             gravity: "top", // Bildirimin konumu: "top" veya "bottom"
+        //             position: "center", // Bildirimin hizalaması: "left", "center", veya "right"
+        //             backgroundColor: "orange", // Uyarı bildirimi rengi (turuncu)
+        //             stopOnFocus: true, // Tıklama ile bildirim zamanlayıcıyı durdur
+        //         }).showToast();
+        //     }
+
+        // });
+
+    });
+</script>

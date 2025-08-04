@@ -1,0 +1,246 @@
+@{
+    var statusLabels = new Dictionary<int, string> {
+        { 1, "Reçete Kaydı Yapıldı" },
+        { 2, "Grafiker İşlemi Bekliyor" },
+        { 3, "Grafiker İşleminde" },
+        { 4, "Müşteri Onayı Bekliyor" },
+        { 5, "Müşteri Onaylı Reçete" },
+        { 6, "Montaj Bekliyor" },
+        { 7, "Bıçak / Klişe Bekliyor" },
+        { 8, "Üretime Hazır Reçete" },
+        { 9, "İptal Talebi" },
+        { 10, "İptal" }
+    };
+
+    var statusCounts = ViewBag.StatusCounts as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var selectedStatus = ViewBag.SelectedStatus as int? ?? 0;
+}
+
+<head>
+
+    <link rel="stylesheet" type="text/css" href="~/css/listcustomer.css" />
+</head>
+<style>
+    .status-text {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.status-1 { color: #6c757d; }   /* gri-mavi */
+.status-2 { color: #ffc107; }   /* sarı */
+.status-3 { color: #fd7e14; }   /* turuncu */
+.status-4 { color: #17a2b8; }   /* açık mavi */
+.status-5 { color: #1A1A8E; }   /* koyu mavi */
+.status-6 { color: #6f42c1; }   /* mor */
+.status-7 { color: #007bff; }   /* koyu mavi */
+.status-8 { color: #28a745; }   /* koyu yeşil */
+.status-98 { color: #dc3545; }  /* kırmızı */
+.status-99 { color: #343a40; }  /* siyah */
+
+</style>
+<div class="container">
+    <h4 class="display-4 text-center">Reçete Listesi</h4>
+    <hr />
+    <div class="status-container mb-4">
+        @foreach (var status in statusLabels)
+        {
+            var count = statusCounts.ContainsKey(status.Key) ? statusCounts[status.Key] : 0;
+            var activeClass = selectedStatus == status.Key ? "active-status" : "";
+            <div class="status-box-wrapper">
+                <div class="status-box @activeClass"
+                onclick="handleStatusClick(@status.Key, @(selectedStatus == status.Key ? "true" : "false"))">
+           
+                    <div>@status.Value</div>
+                    <div class="status-count">@count</div>
+                </div>
+            </div>
+        }
+    </div>
+    
+
+    <div class="d-flex justify-content-between align-items-center mb-3" style="gap: 10px;">
+        <input type="text" class="form-control search-input-custom" id="searchInput"
+               placeholder="Herhangi bir parametre ile ara..." style="margin: 0; flex-grow: 1; height: 60px;">
+    </div>
+
+    <div class="table-header text-center">
+        <h5 id="customerCount"
+            style="font-size: 1.2em; font-weight: bold; color: #4F75FF; border: 2px solid #4379F2; display: inline-block; padding: 10px 20px; border-radius: 8px; background-color: #f0f8ff;">
+            Listelenen Reçetelerinizin Sayısı: 0
+        </h5>
+    </div>
+
+    <div class="table-responsive">
+        <table id="user-table" class="user-table table table-bordered">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Müşteri</th>
+                    <th>Kayıt Tarihi</th>
+                    <th>Reçete Durumu</th>
+                    <th>Satışçı</th>
+                    <th>Grafiker</th>
+                    <th>Reçete Kodu</th>
+                    <th>Reçete Adı</th>
+                    <th>Kağıt Cinsi</th>
+                    <th>Yapıştırma</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null)
+                {
+                    foreach (var recipe in Model)
+                    {
+                        <tr>
+                            <td>@recipe.Id</td>
+                            <td>
+                                <button class="customer-button"
+                                style="white-space: normal;"
+                                onclick="event.stopPropagation(); window.location.href='@Url.Action("CustomerDetail", "Customer", new { id = recipe.Customer?.Id })'">
+                            @recipe.Customer?.Name 
+                        </button>
+                        
+                            </td>
+                            <td>@recipe.CreatedAt?.ToString("dd MMM yyyy HH:mm:ss")</td>
+                            <td class="status-text @(recipe.CurrentStatus != null ? $"status-{recipe.CurrentStatus}" : "")">
+                                @(statusLabels.ContainsKey(recipe.CurrentStatus ?? 0) ? statusLabels[recipe.CurrentStatus ?? 0] : "")
+                            </td>
+                            
+                            <td>@recipe.CreatedByFullName</td>
+                            <td>@recipe.DesignerFullName</td>
+                            <td> 
+                                <span id="code-@recipe.Id" style="color: #2C3D4F;">@recipe.RecipeCode</span>
+                                <a href="javascript:void(0);" onclick="copyRecipeCode('code-@recipe.Id', this)" 
+                                title="Kopyala"
+                                style="text-decoration: none; color: inherit;">
+                                <i class="fa-regular fa-copy"></i> 
+                            </a>
+                            </td>
+                            
+                            <td>@recipe.RecipeName</td>
+                            <td>@recipe.PaperInfo?.Name</td>
+                            <td>@recipe.AdhesiveInfo?.Name</td>
+                            <td class="text-center">
+                                <a class="btn btn-dark" href="@Url.Action("recipeDetail", "erp", new { id = recipe.Id })"
+                                   style="display: inline-flex; justify-content: center; align-items: center; width: 60px; height: 60px;">
+                                    <i class='fas fa-sign-in-alt' style="font-size: 24px; margin: 0;"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="11">Veri yüklenemedi</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+   .status-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.status-box-wrapper {
+    flex: 0 1 calc(20% - 20px); /* 5 kutu/satır */
+    min-width: 160px;
+}
+
+.status-box {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    font-weight: 300;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100px; /* sabit yükseklik */
+    text-align: center;
+}
+
+.status-box:hover {
+    background-color: #f5f5f5;
+}
+
+.status-count {
+    font-weight: 100;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.active-status {
+    border: 2px solid #007bff;
+    background-color: #e9f2ff;
+}
+
+</style>
+
+<script>
+    function handleStatusClick(statusKey, isSelected) {
+        const url = isSelected === true || isSelected === "true"
+            ? '@Url.Action("RecipeList", "Erp")'
+            : '@Url.Action("RecipeList", "Erp")' + '?status=' + statusKey;
+        window.location.href = url;
+    }
+    function copyRecipeCode(elementId, triggerElement) {
+        var text = document.getElementById(elementId).innerText;
+
+        navigator.clipboard.writeText(text).then(function () {
+            // İkonu geçici olarak "kopyalandı" ikonuna değiştir
+            const icon = triggerElement.querySelector("i");
+            const originalClass = icon.className;
+            icon.className = "fa-solid fa-check text-success";
+
+            // 2 saniye sonra geri al
+            setTimeout(() => {
+                icon.className = originalClass;
+            }, 2000);
+        }, function (err) {
+            console.error('Kopyalama hatası:', err);
+        });
+    }
+    document.getElementById('searchInput').addEventListener('keyup', function () {
+        var searchValue = this.value.toLocaleLowerCase('tr-TR').trim();
+        var searchTerms = searchValue.split(' ').filter(function (term) {
+            return term.trim() !== '';
+        });
+        filterTable(searchTerms);
+    });
+
+    function filterTable(searchTerms) {
+        var tableRows = document.querySelectorAll('.user-table tbody tr');
+        tableRows.forEach(function (row) {
+            var rowText = row.textContent.toLocaleLowerCase('tr-TR').trim();
+            var matchesSearch = searchTerms.every(function (term) {
+                return rowText.includes(term);
+            });
+            row.style.display = matchesSearch ? '' : 'none';
+        });
+        updateCustomerCount();
+    }
+
+    function updateCustomerCount() {
+        const visibleRows = document.querySelectorAll(".user-table tbody tr:not([style*='display: none'])");
+        const totalCustomers = visibleRows.length;
+        document.getElementById("customerCount").innerText = "Listelenen Reçetelerinizin Sayısı: " + totalCustomers;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        updateCustomerCount();
+    });
+</script>

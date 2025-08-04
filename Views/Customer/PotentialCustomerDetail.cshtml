@@ -1,0 +1,3216 @@
+@using System.Security.Claims
+@using System.Globalization
+@using System.Linq
+@using DinkToPdf;
+@using DinkToPdf.Contracts;
+@functions {
+private string GetStatusClass(string status)
+{
+switch (status)
+{
+case "Ziyaret":
+return "badge-primary"; // Blue
+case "Telefon":
+return "badge-success"; // Green
+case "Email":
+return "badge-info"; // Light Blue
+case "Numune":
+return "badge-danger"; // Red
+case "Görev":
+return "badge-dark"; // Red
+default:
+return "badge-secondary"; // Gray
+}
+}
+}
+
+
+@{
+var firstName = User.FindFirst("FirstName")?.Value ?? string.Empty;
+var lastName = User.FindFirst("LastName")?.Value ?? string.Empty;
+ViewBag.UserName = $"{firstName} {lastName}";
+var isYonetici = User.IsInRole("Yönetici");
+bool isYetkili = User.IsInRole("Yönetici") || User.IsInRole("Denetlemeci");
+
+
+}
+<link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<link rel="stylesheet" type="text/css" href="~/css/detailscustomer.css" />
+<div class="container my-5">
+    <h2 class="display-4 text-center">Potansiyel ❓ Müşteri Detayları</h2>
+    <hr>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-lg">
+                <div class="card-header text-white" style="background-color: #1A1C2E;">
+
+                    <h3 class="card-title m-0"><i class="fa fa-info-circle" aria-hidden="true"></i> Temel Bilgiler
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Ad:</strong> @Model.Customer.Name</p>
+                    <p><strong>Sektör:</strong> @Model.Customer.Sector</p>
+                    <p><strong>Şehir:</strong> @Model.Customer.City</p>
+                    <p><strong>İlçe:</strong> @Model.Customer.District</p>
+                    <p><strong>Not:</strong> @Model.Customer.Note</p>
+                    <p><strong>Müşteri Sorumlusu:</strong> @Model.Customer.CreatedBy</p>
+                    
+                    @if (isYetkili)
+                    {
+                        <button class="btn btn-outline-primary" data-toggle="modal" data-target="#addNoteModal"
+                        data-customer-id="@Model.Customer.Id" data-note="@Model.Customer.Note">
+                        Not Ekle<i class="fa fa-sticky-note-o" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn btn-outline-success" data-toggle="modal" data-target="#editCustomerModal">
+                        <i class="fa fa-pencil-alt"></i>
+                    </button>
+             
+                   
+                    <button class="btn btn-warning" data-toggle="modal" data-target="#editCustomerCreatedByModal">
+                        Müşteri Sorumlusu Değiştir <i class="fa fa-pencil-alt"></i>
+                    </button>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-white" style="background-color: #1A1C2E;">
+                    <h3 class="card-title m-0"><i class="fa fa-users"></i> İrtibat</h3>
+                </div>
+                @if (!(bool)ViewBag.CanViewContacts)
+                {
+                    <div class="alert alert-dark text-center">
+                        <i class="fa fa-exclamation-circle"></i> İrtibat bilgileri, randevuyu sahiplenen kişi tarafından görüntülenebilmektedir.
+                    </div>
+                }
+                <div class="table-responsive @(ViewBag.CanViewContacts ? "" : "blurred")">
+                <div class="card-body">
+                    <a class="btn btn-outline-secondary mb-3" data-toggle="modal" data-target="#addContactModal">
+                        <i class="fa fa-plus-circle"></i> Yeni İrtibat
+                    </a>
+                   
+                        <table class="table table-hover" id="contactsTable">
+                            <thead>
+                                <tr>
+                                    <th>Id</th>
+                                    <th>Ünvan</th>
+                                    <th>İsim Soyisim</th>
+                                    <th>E-Posta</th>
+                                    <th>Cinsiyet</th>
+                                    <th>Telefon Numarası</th>
+                                    <th>Onay Durumu</th>
+                                    <th>İşlemler</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.Contacts == null || !Model.Contacts.Any())
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center">
+                                            <div class="alert alert-danger">
+                                                <i class="fa-solid fa-warning"></i> Henüz hiç irtibat eklenmedi. Lütfen İrtibat ekleyin!
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    foreach (var contact in Model.Contacts)
+                                    {
+                                        <tr>
+                                            <td>@contact.Id</td>
+                                            <td>@contact.Title</td>
+                                            <td>@contact.FullName</td>
+                                            <td>@contact.Email</td>
+                                            <td>@contact.Gender</td>
+                                            <td>@contact.PhoneNumber</td>
+                                            <td>
+                                                <span class="badge change-approval @(contact.IsApproved ? " badge-success"
+                                                : "badge-warning" )" data-id="@contact.Id" data-status="@contact.IsApproved"
+                                                style="cursor: pointer;">
+                                                @(contact.IsApproved ? "Onaylı ✅ " : "Onaysız ⚠️")
+                                            </span>
+                                              
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-success" data-toggle="modal"
+                                                        data-target="#editContactModal" data-contact-id="@contact.Id">
+                                                    <i class="fa fa-pencil-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+    </div>
+    <div class="row g-4 mt-4">
+        <div class="col-md-12">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header text-white" style="background-color: #1A1C2E;">
+                    <h3 class="card-title m-0"><i class="fa fa-map-marker"></i> Görsel Galeri</h3>
+                </div>
+                <div class="card-body">
+                    @if (isYetkili)
+                    {
+                    <a class="btn btn-outline-secondary mb-3" data-toggle="modal" data-target="#addImageModal">
+                        <i class="fa fa-plus-circle"></i> Görsel Ekle
+                    </a>
+                }
+                    @if (Model.Customer.Images != null && Model.Customer.Images.Any())
+                    {
+                    <div class="gallery">
+                        @for (int i = 0; i < Model.Customer.Images.Count; i++) { <div class="gallery-item">
+                            <a href="@Model.Customer.Images[i].Path" data-lightbox="image-gallery"
+                                data-title="Görsel @(i + 1)">
+                                <img src="@Model.Customer.Images[i].Path" alt="Görsel @(i + 1)" class="gallery-image" />
+                            </a>
+                            <div class="description-wrapper">
+                                <p class="image-description" id="description-@i">@Model.Customer.Images[i].Description</p>
+                                <span class="toggle-button" id="toggle-button-@i" onclick="toggleDescription(@i)">Detay Gör</span>
+                                <span class="toggle-button delete-image">Sil</span>
+                            </div>
+                            
+                            <!-- Açıklama ekleniyor -->
+                         
+                    </div>
+                    }
+                </div>
+
+                }
+                else
+                {
+                <div class="alert alert-warning text-center">
+                    <i class="fa-solid fa-info-circle"></i> Henüz hiçbir görsel eklenmedi.
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="addImageModal" tabindex="-1" role="dialog" aria-labelledby="addImageModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addImageModalLabel">Müşteri Görsel Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addImageForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <!-- Gizli Müşteri ID -->
+                    <input type="hidden" id="customerId" name="customerId" value="@Model.Customer.Id" />
+
+                    <div class="form-group">
+                        <label for="uploadedImages">Görseller:</label>
+                        <input type="file" id="uploadedImages" name="uploadedImages" class="form-control" multiple
+                            accept="image/*" required>
+                        <small class="form-text text-muted">Birden fazla görsel seçebilirsiniz.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                    <button type="submit" class="btn btn-primary">Görselleri Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Edit Visit Record Modal -->
+<div class="modal fade" id="editMissionModal" tabindex="-1" aria-labelledby="editMissionModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editMissionModalLabel">Görev Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editMissionForm">
+                    <input type="hidden" id="editMissionId" name="Id" />
+
+                    <div class="form-group">
+                        <label for="editMissionPlannedDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control" id="editMissionPlannedDate" name="PlannedDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editMissionActualDate">Ziyaret Tarihi</label>
+                        <input type="date" class="form-control" id="editMissionActualDate" name="ActualDate" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editMissionDescription">Açıklama</label>
+                        <textarea class="form-control" id="editMissionDescription" name="Information"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="missionModal" tabindex="-1" aria-labelledby="missionModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="missionModalLabel">Görev Oluştur</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="missionForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="plannedMissionDate">Görev Planlama Tarihi</label>
+                        <input type="date" class="form-control plannedVisitDate" id="plannedMissionDate" name="PlannedDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="missionDate">Görev Gerçekleşme Tarihi</label>
+                        <input type="date" class="form-control" id="missionDate" name="ActualDate" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="missionDescription">Açıklama</label>
+                        <textarea class="form-control" id="missionDescription" name="Information"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row g-4 mt-4">
+    <div class="col-md-12">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header text-white" style="background-color: #1A1C2E;">
+                <h3 class="card-title m-0"><i class="fa fa-map-marker"></i> Lokasyonlar</h3>
+            </div>
+            <div class="card-body">
+                @if (isYetkili)
+                {
+                <a class="btn btn-outline-secondary mb-3" data-toggle="modal" data-target="#addLocationModal">
+                    <i class="fa fa-plus-circle"></i> Yeni Lokasyon
+                </a>
+            }
+                <div class="table-responsive">
+                    @if (Model.Locations != null && Model.Locations.Any())
+                    {
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Tanım</th>
+                                <th>Adres</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var location in Model.Locations)
+                            {
+                            <tr>
+                                <td>@location.Id</td>
+                                <td>@location.Description</td>
+                                <td>@location.Address</td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-success" data-toggle="modal"
+                                        data-target="#editLocationModal" data-location-id="@location.Id">
+                                        <i class="fa fa-pencil-alt"></i>
+                                    </button>
+                                    @if (isYonetici)
+                                    {
+                                    <button class="btn btn-sm btn-outline-danger delete-location"
+                                        data-id="@location.Id">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                    }
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                    }
+                    else
+                    {
+                    <div class="alert alert-warning text-center">
+                        <i class="fa-solid fa-info-circle"></i> Henüz hiçbir lokasyon bilgisi eklenmedi.
+
+                    </div>
+
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addNoteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Not Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addNoteForm">
+                    <div class="form-group">
+                        <label for="note">Not (Maksimum 100 karakter):</label>
+                        <textarea id="note" class="form-control" rows="3" maxlength="100" required></textarea>
+                        <small class="form-text text-muted">
+                            Kalan karakter: <span id="remainingCharacters">100</span>
+                        </small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Kapat</button>
+                <button type="button" class="btn btn-primary" id="saveNoteButton">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mt-4">
+    <div class="col-md-12">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header text-white" style="background-color: #1A1C2E;">
+                <h3 class="card-title m-0"><i class="fa fa-file-alt"></i> Kayıtlar</h3>
+            </div>
+            <div class="card-body">
+                @if (isYetkili)
+                {
+                     <a class="btn btn-dark mb-3" data-toggle="modal" data-target="#missionModal">
+                        <i class="fa fa-book" aria-hidden="true"></i> Görev Oluştur
+                    </a>
+                <a class="btn btn-outline-primary mb-3" data-toggle="modal" data-target="#visitRecordModal">
+                    <i class="fa fa-car" aria-hidden="true"></i> Ziyaret Kaydı Oluştur
+                </a>
+                <a class="btn btn-outline-success mb-3" data-toggle="modal" data-target="#phoneCallRecordModal">
+                    <i class="fa fa-volume-control-phone" aria-hidden="true"></i> Telefon Arama Kaydı Oluştur
+                </a>
+                <a class="btn btn-outline-info mb-3" data-toggle="modal" data-target="#emailRecordModal">
+                    <i class="fa fa-envelope" aria-hidden="true"></i> E-Posta Kaydı Oluştur
+                </a>
+                <a class="btn btn-outline-danger mb-3" data-toggle="modal" data-target="#sampleRecordModal">
+                    <i class="fa fa-microscope"></i> Numune Çalışma Kaydı Oluştur
+                </a>
+            }
+                <div class="table-responsive">
+                    <table class="table table-responsive-lg">
+                        <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>Olay</th>
+                                <th>Planlama Tarihi</th>
+                                <th>Gerçekleşme Tarihi</th>
+                                <th>Açıklama</th>
+                                <th>Durum</th>  @if (isYetkili)
+                                {
+                                <th>İşlemler</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @model CustomerDetailViewModel
+
+                        <tbody>
+                            @if (Model.Records != null && Model.Records.Any())
+                            {
+                            // Id'ye göre azalan sırada sıralama yapılıyor
+                            foreach (var record in Model.Records.OrderByDescending(r => r.Id))
+                            {
+                            if (record != null)
+                            {
+                            <tr>
+                                <td>@record.Id</td>
+                                <td>
+                                    <span class="badge @GetStatusClass(record.Status)">
+                                        @record.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (record.PlannedDate.HasValue)
+                                    {
+                                    @record.PlannedDate.Value.ToString("dd/MM/yyyy")
+                                    }
+                                    else
+                                    {
+                                    <span>Planlanmadı</span>
+                                    }
+                                </td>
+                                <td>
+                                 
+                                    @if (record.ActualDate.HasValue)
+                                    {
+                                    <button class="btn btn-sm btn-warning " data-record-id="@record.Id"
+                                        >
+                                        @record.ActualDate.Value.ToString("dd/MM/yyyy")
+                                        <i class="fa fa-check-square" aria-hidden="true"></i>
+                                    </button>
+                                    }
+                                    else
+                                    {  
+                                    <button class="btn btn-sm btn-outline-dark "
+                                        data-record-id="@record.Id" >
+                                       Henüz gerçekleşmedi
+                                        <i class="fa fa-hourglass" aria-hidden="true"></i>
+                                    </button>
+                                
+                                    }
+                                </td>
+
+                                <td>@record.Information</td>
+                                <!-- Kullanıcı bilgilerini saklayan gizli inputlar -->
+                                <input type="hidden" id="createdBy1" value="@($"{User.FindFirst("FirstName")?.Value} {User.FindFirst("LastName")?.Value}")" />
+
+                                <input type="hidden" id="userId"
+                                    value="@User.FindFirstValue(ClaimTypes.NameIdentifier)" />
+
+                                <!-- Sahiplen butonu -->
+                                <td>
+                                    <button class="btn btn-sm btn-primary assign-customer" data-id="@Model.Customer.Id"
+                                        data-owned="@Model.Customer.IsOwned.ToString().ToLower()">
+                                        @if (Model.Customer.IsOwned)
+                                        {
+                                        <span> @Model.Customer.CreatedBy tarafından sahiplenildi</span>
+                                        }
+                                        else
+                                        {
+                                        <span>Sahiplen</span>
+                                        }
+                                    </button>
+                                </td>
+
+                                <form method="post" asp-action="AssignCustomer">
+                                    <input type="hidden" id="userId" value="@ViewData[" UserId"]" />
+
+                                </form>
+
+                                <td>
+                                    @if (isYetkili)
+                                    {
+                                    <button class="btn btn-sm btn-outline-success edit-record-button"
+                                        data-record-id="@record.Id" data-record-status="@record.Status">
+                                        <i class="fa fa-pencil-alt"></i>
+                                    </button>
+                                }
+                                    @if (isYonetici)
+                                    {
+                                    <button class="btn btn-sm btn-outline-danger delete-record" data-id="@record.Id">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                    }
+                                </td>
+
+                            </tr>
+                            }
+                            }
+                            }
+                            else
+                            {
+                            <tr>
+                                <div class="alert alert-warning text-center">
+                                    <i class="fa-solid fa-info-circle"></i> Henüz hiç kayıt eklenmedi.
+
+                                </div>
+                            </tr>
+                            }
+                        </tbody>
+                        </tbody>
+                    </table>
+
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<div class="row g-4 mt-4">
+    <div class="col-md-12">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header text-white" style="background-color: #1A1C2E;">
+                <h3 class="card-title m-0">
+                    <i class="fa-solid fa-database"></i> LOG Kayıtları
+                </h3>
+            </div>
+            @if (!(bool)ViewBag.CanViewContacts)
+            {
+                <div class="alert alert-dark text-center">
+                    <i class="fa fa-exclamation-circle"></i> Log Kayıtları, randevuyu sahiplenen kişi tarafından görüntülenebilmektedir.
+                </div>
+            }
+            <div class="card-body">
+                <div class="table-responsive @(ViewBag.CanViewContacts ? "" : "blurred")">
+                @if (Model.ChangeLogs != null && Model.ChangeLogs.Any())
+                {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tarih</th>
+                                <th>Alan</th>
+                                <th>Eski Değer</th>
+                                <th>Yeni Değer</th>
+                                <th>İşlem Türü</th>
+                                <th>Değiştiren</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var log in Model.ChangeLogs)
+                            {
+                            var buttonClass = log.OperationType switch
+                            {
+                            "Oluşturuldu" => "btn-success", // Yeşil
+                            "Güncellendi" => "btn-warning", // Sarı
+                            "Silindi" => "btn-danger",
+                            "Transfer Edildi" => "btn-info", // Kırmızı
+                            _ => "btn-secondary" // Varsayılan nötr renk
+                            };
+
+                            <tr>
+                                <td>@log.ChangedAt.ToString("dd MMM yyyy HH.mm", new
+                                    System.Globalization.CultureInfo("tr-TR"))</td>
+
+                                <td>@LogHelper.GetTranslatedColumnName(log.ColumnName)</td>
+                                <td>@log.OldValue</td>
+                                <td>@log.NewValue</td>
+                                <td>
+                                    <button class="btn @buttonClass btn-sm">
+                                        @log.OperationType
+                                    </button>
+                                </td>
+                                <td>@log.ChangedBy</td>
+
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                }
+                else
+                {
+                <div class="alert alert-warning text-center">
+                    <i class="fa-solid fa-info-circle"></i> Log kaydı bulunamadı.
+                </div>
+                }
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="mt-4">
+    <a class="btn btn-dark" href="@Url.Action("PotentialCustomerList","Customer")">
+        <i class="fa fa-arrow-left"></i> Müşteri Listesine Geri Dön
+    </a>
+</div>
+</div>
+
+
+
+
+<div class="modal fade" id="addContactModal" tabindex="-1" aria-labelledby="addContactModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addContactModalLabel">Yeni İrtibat Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addContactForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="contactTitle">Görevi</label>
+                        <input type="text" class="form-control" id="contactTitle" name="Title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactFullName">İsim Soyisim</label>
+                        <input type="text" class="form-control" id="contactFullName" name="FullName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactGender">Cinsiyet</label>
+                        <select class="form-control" id="contactGender" name="Gender" required>
+                            <option value="">Seçiniz</option>
+                            <option value="Erkek">Erkek</option>
+                            <option value="Kadın">Kadın</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="contactPhoneNumber">Telefon Numarası:</label>
+                        <input
+                          type="tel"
+                          class="form-control"
+                          id="contactPhoneNumber"
+                          name="PhoneNumber"
+                          required
+                          oninput="formatPhoneNumber(this)"
+                          placeholder="0 545 555 55 55"
+                          maxlength="15"
+                        />
+                        
+                    </div>
+                    <div class="form-group">
+                        <label for="contactEmail">E-Posta</label>
+                        <input type="email" class="form-control" id="contactEmail" name="Email"
+                            pattern="^[a-zA-Z0-9._%+-]+\u0040[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                            title="Lütfen geçerli bir email adresi giriniz.">
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Visit Record Modal -->
+<div class="modal fade" id="editVisitRecordModal" tabindex="-1" aria-labelledby="editVisitRecordModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editVisitRecordModalLabel">Ziyaret Kaydı Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editVisitRecordForm">
+                    <input type="hidden" id="editVisitRecordId" name="Id" />
+
+                    <div class="form-group">
+                        <label for="editVisitPlannedDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control" id="editVisitPlannedDate" name="PlannedDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editVisitActualDate">Ziyaret Tarihi</label>
+                        <input type="date" class="form-control" id="editVisitActualDate" name="ActualDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editVisitDescription">Açıklama</label>
+                        <textarea class="form-control" id="editVisitDescription" name="Information"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Phone Call Record Modal -->
+<div class="modal fade" id="editPhoneCallRecordModal" tabindex="-1" aria-labelledby="editPhoneCallRecordModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editPhoneCallRecordModalLabel">Telefon Arama Kaydı Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editPhoneCallRecordForm">
+                    <input type="hidden" id="editPhoneCallRecordId" name="Id" />
+
+                    <div class="form-group">
+                        <label for="editPhoneCallPlannedDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control" id="editPhoneCallPlannedDate" name="PlannedDate"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPhoneCallActualDate">Arama Tarihi</label>
+                        <input type="date" class="form-control" id="editPhoneCallActualDate" name="ActualDate" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editPhoneCallDescription">Açıklama</label>
+                        <textarea class="form-control" id="editPhoneCallDescription" name="Information"
+                            required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add Location Modal -->
+<div class="modal fade" id="addLocationModal" tabindex="-1" aria-labelledby="addLocationModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addLocationModalLabel">Yeni Lokasyon Ekle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addLocationForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="locationDescription">Tanım</label>
+                        <input type="text" class="form-control" id="locationDescription" name="Description" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="locationAddress">Adres</label>
+                        <input type="text" class="form-control" id="locationAddress" name="Address" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="visitRecordModal" tabindex="-1" aria-labelledby="visitRecordModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="visitRecordModalLabel">Ziyaret Kaydı Oluştur</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="visitRecordForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="plannedVisitDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control plannedVisitDate" id="plannedVisitDate" name="PlannedDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDate">Ziyaret Tarihi</label>
+                        <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDescription">Açıklama</label>
+                        <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="phoneCallRecordModal" tabindex="-1" aria-labelledby="phoneCallRecordModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="phoneCallRecordModalLabel">Telefon Arama Kaydı Oluştur</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="phoneCallRecordForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="plannedVisitDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control plannedVisitDate" id="plannedVisitDate" name="PlannedDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDate">Arama Tarihi</label>
+                        <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDescription">Açıklama</label>
+                        <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- Edit Email Record Modal -->
+<div class="modal fade" id="editEmailRecordModal" tabindex="-1" aria-labelledby="editEmailRecordModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editEmailRecordModalLabel">E-Posta Kaydı Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editEmailRecordForm">
+                    <input type="hidden" id="editEmailRecordId" name="Id" />
+
+                    <div class="form-group">
+                        <label for="editEmailPlannedDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control" id="editEmailPlannedDate" name="PlannedDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editEmailActualDate">Gönderim Tarihi</label>
+                        <input type="date" class="form-control" id="editEmailActualDate" name="ActualDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editEmailDescription">Açıklama</label>
+                        <textarea class="form-control" id="editEmailDescription" name="Information"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div><!-- Edit Email Record Modal -->
+<div class="modal fade" id="editSampleRecordModal" tabindex="-1" aria-labelledby="editSampleRecordModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editSampleRecordModalLabel">Numune Kaydı Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editSampleRecordForm">
+                    <input type="hidden" id="editSampleId" name="Id" />
+
+                    <div class="form-group">
+                        <label for="editSamplePlannedDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control" id="editSamplePlannedDate" name="PlannedDate" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editSampleActualDate">Gönderim Tarihi</label>
+                        <input type="date" class="form-control" id="editSampleActualDate" name="ActualDate">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editSampleDescription">Açıklama</label>
+                        <textarea class="form-control" id="editSampleDescription" name="Information"
+                            required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="emailRecordModal" tabindex="-1" aria-labelledby="emailRecordModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="emailRecordModalLabel">E-Posta Kaydı Oluştur</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="emailRecordForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="plannedVisitDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control plannedVisitDate" id="plannedVisitDate" name="PlannedDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDate">E-posta Gönderim Tarihi</label>
+                        <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDescription">Açıklama</label>
+                        <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="sampleRecordModal" tabindex="-1" aria-labelledby="sampleRecordModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sampleRecordModalLabel">Numune Çalışma Kaydı Oluştur</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="sampleRecordForm">
+                    <input type="hidden" id="customerId" name="CustomerId" value="@Model.Customer.Id" />
+                    <div class="form-group">
+                        <label for="plannedVisitDate">Planlama Tarihi</label>
+                        <input type="date" class="form-control plannedVisitDate" id="plannedVisitDate" name="PlannedDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDate">Gerçekleşme Tarihi</label>
+                        <input type="date" class="form-control" id="visitDate" name="ActualDate" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="visitDescription">Açıklama</label>
+                        <textarea class="form-control" id="visitDescription" name="Information"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Contact Modal -->
+<div class="modal fade" id="editContactModal" tabindex="-1" aria-labelledby="editContactModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editContactModalLabel">İrtibat Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editContactForm">
+                    <input type="hidden" id="editContactId" name="Id" value="1" />
+                    <input type="hidden" id="editContactCustomerId" name="CustomerId" value="2" />
+
+                    <div class="form-group">
+                        <label for="editContactTitle">Ünvan</label>
+                        <input type="text" class="form-control" id="editContactTitle" name="Title">
+
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editContactFullName">İsim Soyisim</label>
+                        <input type="text" class="form-control" id="editContactFullName" name="FullName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editContactGender">Cinsiyet</label>
+                        <select class="form-control" id="editContactGender" name="Gender" required>
+
+                            <option value="Erkek">Erkek</option>
+                            <option value="Kadın">Kadın</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editContactPhoneNumber">Telefon Numarası</label>
+                        <input type="tel" class="form-control" id="editContactPhoneNumber" name="PhoneNumber" required
+                            pattern="[0-9]*">
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="editContactEmail">E-Posta</label>
+                        <input type="email" class="form-control" id="editContactEmail" name="Email">
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Edit Location Modal -->
+<div class="modal fade" id="editLocationModal" tabindex="-1" aria-labelledby="editLocationModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editLocationModalLabel">Lokasyon Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editLocationForm">
+                    <input type="hidden" id="editLocationId" name="Id" />
+                    <input type="hidden" id="editLocationCustomerId" name="CustomerId" />
+                    <div class="form-group">
+                        <label for="editLocationDescription">Tanım</label>
+                        <input type="text" class="form-control" id="editLocationDescription" name="Description"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLocationAddress">Adres</label>
+                        <input type="text" class="form-control" id="editLocationAddress" name="Address" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="addCustomerImageModal" tabindex="-1" aria-labelledby="addCustomerImageModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addCustomerImageModalLabel">Add Customer Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addCustomerImageForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="customerId" class="form-label">Customer ID</label>
+                        <input type="number" class="form-control" id="customerId" name="CustomerId" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="uploadedImages" class="form-label">Upload Images</label>
+                        <input type="file" class="form-control" id="uploadedImages" name="UploadedImages" multiple>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1" aria-labelledby="editCustomerModalLabel" aria-hidden="true"
+    data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCustomerModalLabel">Müşteri Düzenle</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editCustomerForm">
+                    <div class="form-group">
+                        <label for="editCustomerName">Ad</label>
+                        <input type="text" class="form-control" id="editCustomerName" name="Name"
+                            value="@Model.Customer.Name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCustomerSector">Sektör</label>
+                        <div class="input-group">
+                            <select class="form-control" id="editCustomerSector" name="Sector" required>
+                                <option value="">Seçiniz</option>
+                                @if (ViewBag.Sectors != null)
+                                {
+                                @foreach (var sector in ViewBag.Sectors)
+                                {
+                                if (sector.Name == Model.Customer.Sector)
+                                {
+                                <option value="@sector.Name" selected>@sector.Name</option>
+                                }
+                                else
+                                {
+                                <option value="@sector.Name">@sector.Name</option>
+                                }
+                                }
+                                }
+                                else
+                                {
+                                <option value="">Veri yüklenemedi</option>
+                                }
+                            </select>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-outline-danger"
+                                    id="deleteEditSectorButton">Sil</button>
+                            </div>
+                        </div>
+                        <div class="invalid-feedback">Lütfen sektörü seçin.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCustomerNewSector">Yeni Sektör Ekle</label>
+                        <input type="text" class="form-control" id="editCustomerNewSector" name="newSector">
+                        <button type="button" class="btn btn-outline-dark mt-2" id="addEditSectorButton">Sektör Ekle<i
+                                class="fa fa-plus" aria-hidden="true"></i></button>
+                        <div class="invalid-feedback">Lütfen yeni sektör adını girin.</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCustomerCity">Şehir</label>
+                        <select class="form-control" id="editCustomerCity" name="City" required>
+                            <option value="">Seçiniz</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCustomerDistrict">İlçe</label>
+                        <select class="form-control" id="editCustomerDistrict" name="District" required>
+                            <option value="">Seçiniz</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" name="Id" value="@Model.Customer.Id" />
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg" id="submitButton">
+                        Kaydet <i class="fa fa-save" aria-hidden="true"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="editCustomerCreatedByModal" tabindex="-1" aria-labelledby="editCustomerCreatedByModalLabel"
+    aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCustomerCreatedByModalLabel">Müşteri Sorumlusu Değiştir
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editCustomerCreatedByForm">
+                    <div class="form-group">
+                        <label for="createdById">Müşteri Sorumlusu</label>
+                        <select class="form-control" id="createdById" name="CreatedById" required>
+                            <option value="">Seçiniz</option>
+                            @foreach (var user in ViewBag.Users)
+                            {
+                            <option value="@user.Id">@user.FirstName @user.LastName</option>
+                            }
+                            }
+                        </select>
+                    </div>
+
+                    <input type="hidden" name="Id" value="@Model.Customer.Id" />
+                    <input type="hidden" name="CreatedBy" id="createdBy" value="" />
+                    <button type="submit" class="btn btn-outline-dark mb-3 btn-lg">Kaydet <i class="fa fa-save"
+                            aria-hidden="true"></i></button>
+                </form>
+            </div>
+
+
+
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css">
+
+<!-- Select2 CSS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+
+<!-- jQuery (Select2 için gerekli) -->
+
+
+<!-- Select2 JavaScript -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+    function setTodayAsDefault(selector) {
+        $(selector).val(new Date().toISOString().split('T')[0]); // YYYY-MM-DD formatında ayarlar
+    }
+
+    $('.modal').on('shown.bs.modal', function () {
+        // Modal içindeki plannedVisitDate input'unu güncelle
+        $(this).find('.plannedVisitDate').val(new Date().toISOString().split('T')[0]);
+    });
+});
+    $(document).ready(function () {
+        $('.table').on('click', '.change-approval', function () {
+            const badge = $(this);
+            const contactId = badge.data('id');
+            const currentStatus = badge.data('status') === true || badge.data('status') === 'True';
+            const newStatus = !currentStatus;
+
+
+            Swal.fire({
+                title: 'Onay Durumunu Değiştir',
+                text: `Bu irtibatın durumunu '${currentStatus ? 'Onaysız ⚠️' : 'Onaylı ✅'}' olarak değiştirmek istiyor musunuz?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Evet, değiştir!',
+                cancelButtonText: 'Hayır, vazgeç'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/customer/ApproveContact',
+                        type: 'POST',
+                        contentType: 'application/x-www-form-urlencoded',
+                        data: { id: contactId }, // Sadece "id" gönderiliyor
+                        success: function (response) {
+                            if (response.success) {
+                                // Onay durumu başarıyla değişti
+                                badge.data('status', response.isApproved);
+                                badge.text(response.isApproved ? 'Onaylı ✅' : 'Onaysız ⚠️');
+                                badge.removeClass('badge-success badge-warning');
+                                badge.addClass(response.isApproved ? 'badge-success' : 'badge-warning');
+
+                                Toastify({
+                                    text: response.message,
+                                    duration: 3000,
+                                    close: false,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: response.isApproved ? "#28a745" : "#28a745",
+                                    stopOnFocus: true
+                                }).showToast();
+                            } else {
+                                Toastify({
+                                    text: response.message,
+                                    duration: 3000,
+                                    close: false,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#dc3545",
+                                    stopOnFocus: true
+                                }).showToast();
+                            }
+                        },
+                        error: function () {
+                            Toastify({
+                                text: 'Onay değiştirmek için yetkinizin bulunduğundan emin olun.',
+                                duration: 3000,
+                                close: false,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#dc3545",
+                                stopOnFocus: true
+                            }).showToast();
+                        }
+                    });
+                }
+            });
+        });
+    });
+    $('.assign-customer').on('click', function () {
+    const button = $(this);
+    const customerId = button.data('id');
+    const createdBy = $('#createdBy1').val(); // Kullanıcı adını veya bilgiyi al
+    const createdById = $('#userId').val(); // Kullanıcı ID'sini al
+
+    if (!createdBy || !createdById) {
+        Toastify({
+            text: "Kullanıcı bilgileri eksik.",
+            duration: 3000,
+            gravity: "top",
+            position: "center",
+            backgroundColor: "#ff0000",
+        }).showToast();
+        return;
+    }
+
+    Swal.fire({
+        title: "Randevuyu sahiplenmek istediğinizden emin misiniz?",
+        text: "Randevuyu sahiplenerek, belirtilen tarih ve saatte ilgili müşteri ziyaretini gerçekleştireceğinizi teyit eder misiniz?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "Evet, Müşteri ziyaretini gerçekleştireceğimi teyit ediyorum.",
+        cancelButtonText: "İptal"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/Customer/AssignCustomer',
+                method: 'POST',
+                data: { id: customerId, createdBy, createdById },
+                success: function (result) {
+                    if (result.success) {
+                        Toastify({
+                            text: result.message,
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "green",
+                        }).showToast();
+                        button.data('owned', true);
+                        button.html('<span>Sahiplenildi</span>');
+                    } else {
+                        Toastify({
+                            text: result.message || "Bir hata oluştu.",
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "red",
+                        }).showToast();
+                    }
+                },
+                error: function (xhr) {
+                    Toastify({
+                        text: `Sunucu hatası: ${xhr.responseText || "Bilinmeyen bir hata oluştu."}`,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "red",
+                    }).showToast();
+                }
+            });
+        }
+    });
+});
+     $(document).ready(function () {
+    // Tüm not butonlarını kontrol et
+    $("button[data-target='#addNoteModal']").each(function () {
+        const note = $(this).data("note"); // Mevcut notu al
+        if (note) {
+            $(this).text("Notu Güncelle").append(' <i class="fa fa-edit"></i>'); // Buton metni
+        } else {
+            $(this).text("Not Ekle").append(' <i class="fa fa-plus"></i>'); // Buton metni
+        }
+    });
+});
+function formatPhoneNumber(input) {
+    let value = input.value.replace(/\D/g, ""); // Tüm harf ve özel karakterleri kaldır
+
+    // Başında 0 yoksa ekle
+    if (!value.startsWith("0")) {
+      value = "0" + value;
+    }
+
+    // Formatı uygula
+    let formatted = "";
+    if (value.length > 0) {
+      formatted = value.substring(0, 1); // İlk hane (0)
+    }
+    if (value.length > 1) {
+      formatted += " " + value.substring(1, 4); // Alan kodu
+    }
+    if (value.length > 4) {
+      formatted += " " + value.substring(4, 7); // İlk üçlü grup
+    }
+    if (value.length > 7) {
+      formatted += " " + value.substring(7, 9); // İlk ikili grup
+    }
+    if (value.length > 9) {
+      formatted += " " + value.substring(9, 11); // Son ikili grup
+    }
+
+    input.value = formatted;
+  }
+function toggleDescription(index) {
+    var description = document.getElementById('description-' + index);
+    var toggleButton = document.getElementById('toggle-button-' + index);
+
+    if (description.classList.contains('expanded')) {
+        description.classList.remove('expanded');
+        toggleButton.innerText = 'Detay Gör'; // Metni Detay Gör olarak değiştir
+    } else {
+        description.classList.add('expanded');
+        toggleButton.innerText = 'Detay Gizle'; // Metni Detay Gizle olarak değiştir
+    }
+}
+
+
+    $(document).ready(function () {
+        $('#createdById').change(function () {
+        var selectedUserName = $('#createdById option:selected').text();
+        console.log('Selected User Name:', selectedUserName); // Debugging
+        $('#createdBy').val(selectedUserName);
+    });
+    $('#editCustomerCreatedByForm').on('submit', function (event) {
+        event.preventDefault();
+
+        // Form gönderilmeden önce `#createdBy` alanını güncelle
+        var selectedUserName = $('#createdById option:selected').text();
+        $('#createdBy').val(selectedUserName);
+
+        var formData = $(this).serialize();
+        const submitButton = $("#submitButton");
+
+        $.ajax({
+            url: '@Url.Action("EditCustomerCreatedBy", "Customer")',
+            type: 'POST',
+            data: formData,
+
+            beforeSend: function () {
+                submitButton.prop('disabled', true);
+            },
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: "Müşteri sorumlusu başarıyla değiştirildi.",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#28a745",
+                        stopOnFocus: true
+                    }).showToast();
+
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    var errorMessages = response.errors ? response.errors.join(", ") : response.message;
+                    Toastify({
+                        text: errorMessages,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545",
+                        stopOnFocus: true
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                Toastify({
+                    text: 'Bir hata oluştu: ' + jqXHR.responseText + " (Status: " + textStatus + ", Error: " + errorThrown + ")",
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#dc3545",
+                    stopOnFocus: true
+                }).showToast();
+            },
+            complete: function () {
+                setTimeout(function () {
+                    submitButton.prop('disabled', false);
+                }, 1500);
+            }
+        });
+    });
+
+    function normalize(str) {
+            return str ? str.trim().toLocaleLowerCase('tr-TR') : '';
+        }
+
+        // Razor'dan gelen seçili şehir ve ilçe bilgileri (encode edilmeden)
+        var selectedCity = "@Html.Raw(Model.Customer.City)";
+        var selectedDistrict = "@Html.Raw(Model.Customer.District)";
+
+        // Şehir dropdown'unu doldur
+        $.get('@Url.Action("GetCities", "Customer")', function (data) {
+            var cityDropdown = $('#editCustomerCity');
+            cityDropdown.empty().append('<option value="">Seçiniz</option>'); // Varsayılan seçenek
+
+            data.forEach(function (city) {
+                cityDropdown.append($('<option>', {
+                    value: city,
+                    text: city,
+                    selected: normalize(city) === normalize(selectedCity)
+                }));
+            });
+
+            // İlçeleri seçili şehir için doldur
+            if (selectedCity) {
+                loadDistricts(selectedCity, selectedDistrict);
+            }
+        });
+
+        // Şehir seçildiğinde ilçeleri güncelle
+        $('#editCustomerCity').change(function () {
+            var cityName = $(this).val();
+            if (cityName) {
+                loadDistricts(cityName, null);
+            } else {
+                $('#editCustomerDistrict').empty().append('<option value="">Seçiniz</option>');
+            }
+        });
+
+        // İlçe dropdown'unu doldur
+        function loadDistricts(city, selectedDistrict) {
+            $.get('@Url.Action("GetDistricts", "Customer")', { city: city })
+                .done(function (data) {
+                    var districtDropdown = $('#editCustomerDistrict');
+                    districtDropdown.empty().append('<option value="">Seçiniz</option>'); // Varsayılan
+
+                    data.forEach(function (district) {
+                        districtDropdown.append($('<option>', {
+                            value: district,
+                            text: district,
+                            selected: normalize(district) === normalize(selectedDistrict)
+                        }));
+                    });
+
+                    if (!selectedDistrict) {
+                        districtDropdown.prop('selectedIndex', 0);
+                    }
+                })
+                .fail(function () {
+                    alert('İlçeler yüklenemedi. Lütfen daha sonra tekrar deneyin.');
+                });
+        }
+
+        // Tüm teklifleri seç/kaldır
+        document.getElementById('selectAllOffers').addEventListener('change', function () {
+            const checkboxes = document.querySelectorAll('.offer-checkbox');
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = this.checked;
+            });
+        });
+    });
+
+
+    $(document).ready(function () {
+        $('#addImageForm').on('submit', function (event) {
+            event.preventDefault();
+
+            var formData = new FormData(this); // Form verilerini al
+
+            $.ajax({
+                url: '/Customer/AddImageToCustomer', // Controller'daki action metodu
+                type: 'POST',
+                data: formData,
+                processData: false, // Dosya yüklemek için gerekli
+                contentType: false, // Dosya yüklemek için gerekli
+                success: function (response) {
+                    if (response.success) {
+                        Toastify({
+                            text: "Görseller başarıyla eklendi.",
+                            duration: 3000,
+                            gravity: "top", // Toast mesajının konumu
+                            position: "right", // Sağ üstte görüntülenecek
+                            backgroundColor: "#28a745", // Başarılı işlem rengi
+                        }).showToast();
+
+                        $('#addImageModal').modal('hide'); // Modalı kapat
+                        setTimeout(function () {
+                            location.reload(); // Sayfayı yenile
+                        }, 3000); // Toast mesajından sonra yenileme
+                    } else {
+                        Toastify({
+                            text: "Hata: " + response.message,
+                            duration: 3000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#dc3545", // Hata rengi
+                        }).showToast();
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error('Görseller eklenirken bir hata oluştu:', error);
+                    Toastify({
+                        text: "Bu işlem için yetkinizin olduğundan emin olun !",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#dc3545", // Hata rengi
+                    }).showToast();
+                }
+            });
+        });
+    });
+
+
+
+
+    $(document).ready(function () {
+        $('.delete-image').click(function () {
+            var imageIndex = $(this).data('id');
+
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu görsel silinecek!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Evet, Sil',
+                cancelButtonText: 'Hayır, İptal Et'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '/Customer/DeleteImage',
+                        type: 'POST',
+                        data: { customerId: '@Model.Customer.Id', imageIndex: imageIndex },
+                        success: function (response) {
+                            if (response.success) {
+                                Toastify({
+                                    text: "Görsel başarıyla silindi!",
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "green",
+                                    close: false
+                                }).showToast();
+
+                                // Görseli ve butonu DOM'dan kaldır
+                                $('.delete-image[data-id="' + imageIndex + '"]').closest('.gallery-item').remove();
+                            } else {
+                                Toastify({
+                                    text: "Görsel silinemedi: " + response.message,
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "red",
+                                    close: false
+                                }).showToast();
+                            }
+                        },
+                        error: function (err) {
+                            Toastify({
+                                text: 'Hata oluştu: ' + (err.responseJSON?.message || 'Yetkiniz olduğunuzdan emin olun !'),
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "red",
+                                close: false
+                            }).showToast();
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    $('#editContactModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Button that triggered the modal
+        var contactId = button.data('contact-id'); // Extract info from data-* attributes
+
+        console.log("Contact ID for edit:", contactId); // Debugging
+
+        // Make an AJAX request to get the contact data
+        $.get('@Url.Action("GetContact", "Customer")', { id: contactId })
+            .done(function (data) {
+                console.log("Received contact data:", data); // Debugging
+                if (data) {
+                    // Populate the modal fields with the data
+                    $('#editContactId').val(data.id);
+                    $('#editContactCustomerId').val(data.customerId);
+                    $('#editContactTitle').val(data.title);
+                    $('#editContactFullName').val(data.fullName);
+                    $('#editContactGender').val(data.gender);
+                    $('#editContactPhoneNumber').val(data.phoneNumber);
+                    $('#editContactEmail').val(data.email);
+                } else {
+                    alert('Contact not found.');
+                }
+            })
+            .fail(function (jqXHR, textStatus, errorThrown) {
+                console.error("Failed to load contact data:", jqXHR.responseText); // Debugging
+                alert('Failed to load contact data.');
+            });
+    });
+
+    // Lokasyon silme işlemi
+    $(document).on('click', '.delete-location', function () {
+        var locationId = $(this).data('id');
+
+        // Swal ile silme işlemi için onay alın
+        Swal.fire({
+            title: 'Bu lokasyonu silmek istediğinize emin misiniz?',
+            text: "Bu işlem geri alınamaz!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'Hayır, vazgeç'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Kullanıcı silme işlemini onayladıysa AJAX çağrısını yap
+                $.ajax({
+                    url: '@Url.Action("DeleteLocation", "Customer")',
+                    type: 'POST',
+                    data: { id: locationId },
+                    success: function (result) {
+                        if (result.success) {
+                            // Toastify ile başarı mesajı göster
+                            Toastify({
+                                text: "Lokasyon başarıyla silindi.",
+                                duration: 3000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                            }).showToast();
+
+                            // Toast gösterim süresi bittikten sonra sayfayı yeniden yükle
+                            setTimeout(function () {
+                                location.reload();
+                            }, 1500); // Bekleme süresi 3 saniye
+                        } else {
+                            // Toastify ile hata mesajı göster
+                            Toastify({
+                                text: "Silme işlemi yapılamadı: " + result.message,
+                                duration: 5000,
+                                close: false,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                            }).showToast();
+                        }
+                    },
+                    error: function () {
+                        // Toastify ile hata mesajı göster
+                        Toastify({
+                            text: "Lokasyon silinirken bir hata oluştu.",
+                            duration: 5000,
+                            close: false,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                        }).showToast();
+                    }
+                });
+            }
+        });
+    });  $("#addNoteForm").on("submit", function (e) {
+    e.preventDefault(); // Sayfa yenilemeyi engelle
+});$("#addNoteModal").off("show.bs.modal").on("show.bs.modal", function (event) {
+    const button = $(event.relatedTarget); // Modal'ı açan butona erişim
+    const note = button.data("note"); // Mevcut notu al
+    const customerId = button.data("customer-id"); // Müşteri ID'sini al
+
+    const modal = $(this);
+    modal.find("#note").val(note || ""); // Not varsa doldur, yoksa boş bırak
+    modal.find("#saveNoteButton").data("customer-id", customerId); // Kaydet butonuna müşteri ID'sini ata
+
+    // Modal başlığını ve düğme metnini güncelle
+    if (note) {
+        modal.find(".modal-title").text("Notu Düzenle");
+        modal.find("#saveNoteButton").text("Notu Güncelle");
+    } else {
+        modal.find(".modal-title").text("Not Ekle");
+        modal.find("#saveNoteButton").text("Notu Kaydet");
+    }
+});
+$('#editMissionForm').on('submit', function (event) {
+            event.preventDefault();
+            var formData = $(this).serialize();
+
+            $.ajax({
+                url: '@Url.Action("Editrecord", "Customer")',
+                type: 'POST',
+                data: formData,
+                success: function (response) {
+                    if (response.success) {
+                        Toastify({
+                            text: "Görev başarıyla güncellendi.",
+                            duration: 3000,
+
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#4CAF50",
+                        }).showToast();
+                        setTimeout(function () {
+                            location.reload();
+                        }, 1500);
+                    } else {
+                        var errorMessages = response.errors ? response.errors.join("\n") : response.message;
+                        Toastify({
+                            text: errorMessages,
+                            duration: 5000,
+
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#FF0000",
+                        }).showToast();
+                    }
+                },
+                error: function (jqXHR) {
+                    Toastify({
+                        text: "Bir hata oluştu: " + jqXHR.responseText,
+                        duration: 5000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            });
+        });
+$("#saveNoteButton").on("click", function () {
+    const note = $("#note").val().trim();
+    const customerId = $(this).data("customer-id");
+
+    if (note) {
+        $.ajax({
+            url: "/customer/AddNoteToCustomer",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ note: note, customerId: customerId }),
+            success: function () {
+                Toastify({
+                    text: "Not başarıyla kaydedildi!",
+                    duration: 3000,
+                    close: false,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "green",
+                }).showToast();
+
+                setTimeout(() => {
+        $("#addNoteModal").modal("hide");
+        location.reload();
+    }, 2000); // 2 saniye bekle
+            },
+            error: function (xhr) {
+                Toastify({
+                    text: "Hata: " + xhr.responseText,
+                    duration: 3000,
+                    close: false,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "red",
+                }).showToast();
+            },
+        });
+    } else {
+        Toastify({
+            text: "Not alanı boş bırakılamaz!",
+            duration: 3000,
+            close: false,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "red",
+        }).showToast();
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const noteTextarea = document.getElementById('note');
+    const remainingCharacters = document.getElementById('remainingCharacters');
+    const maxLength = 100;
+
+    noteTextarea.addEventListener('input', function () {
+        const currentLength = noteTextarea.value.length;
+        const remaining = maxLength - currentLength;
+        remainingCharacters.textContent = remaining >= 0 ? remaining : 0;
+    });
+});
+
+    $('#editContactEmail').on('input', function () {
+        var emailValue = $(this).val().toLowerCase(); // E-posta değerini küçük harfe çevir
+        if (emailValue.includes('byb')) {
+            showToast("'byb' kelimesini e-posta adresinde kullanamazsınız!", "#FF0000");
+            $(this).val(emailValue.replace(/byb/gi, '')); // "byb" ifadesini kaldır
+        }
+    });
+    $('#addEditSectorButton').on('click', function () {
+        var newSectorName = $('#editCustomerNewSector').val();
+        if (newSectorName) {
+            $.ajax({
+                url: '@Url.Action("AddSector", "Customer")',
+                type: 'POST',
+                data: { name: newSectorName },
+                success: function (result) {
+                    if (result.success) {
+                        Toastify({
+                            text: "Sektör başarıyla eklendi.",
+                            duration: 3000,
+                            backgroundColor: "#4CAF50",
+
+                            gravity: "top",
+                            position: "right",
+                        }).showToast();
+                        $('#editCustomerSector').append(new Option(newSectorName, newSectorName));
+                        $('#editCustomerNewSector').val('');
+                    } else {
+                        Toastify({
+                            text: result.message,
+                            duration: 3000,
+                            backgroundColor: "#FF0000",
+
+                            gravity: "top",
+                            position: "right",
+                        }).showToast();
+                    }
+                },
+                error: function () {
+                    Toastify({
+                        text: "Sektör eklenirken bir hata oluştu.",
+                        duration: 3000,
+                        backgroundColor: "#FF0000",
+
+                        gravity: "top",
+                        position: "right",
+                    }).showToast();
+                }
+            });
+        } else {
+            Toastify({
+                text: "Lütfen yeni sektör adını girin.",
+                duration: 3000,
+                backgroundColor: "#FF0000",
+
+                gravity: "top",
+                position: "right",
+            }).showToast();
+        }
+    });
+    $('#deleteEditSectorButton').on('click', function () {
+        var sectorName = $('#editCustomerSector').val();
+        if (sectorName) {
+            Swal.fire({
+                title: 'Emin misiniz?',
+                text: "Bu sektörü silmek istediğinize emin misiniz?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Evet, sil!',
+                cancelButtonText: 'İptal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteSectorByName", "Customer")',
+                        type: 'POST',
+                        data: { name: sectorName },
+                        success: function (result) {
+                            if (result.success) {
+                                Toastify({
+                                    text: "Sektör başarıyla silindi.",
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#4CAF50",
+                                }).showToast();
+
+                                setTimeout(function () {
+                                    $('#editCustomerSector option[value="' + sectorName + '"]').remove();
+                                }, 1500); // 1500 ms bekleme süresi
+                            } else {
+                                Toastify({
+                                    text: "Silme işlemi yapılamadı: " + result.message,
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#FF0000",
+                                }).showToast();
+                            }
+                        },
+                        error: function () {
+                            Toastify({
+                                text: "Sektör silinirken bir hata oluştu.",
+                                duration: 5000,
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#FF0000",
+                            }).showToast();
+                        }
+                    });
+                }
+            });
+        } else {
+            Toastify({
+                text: "Lütfen silmek istediğiniz sektörü seçin.",
+                duration: 3000,
+                backgroundColor: "#FF0000",
+                gravity: "top",
+                position: "right",
+            }).showToast();
+        }
+    });
+    $('#contactEmail').on('input', function () {
+        var emailValue = $(this).val().toLowerCase(); // E-posta değerini küçük harfe çevir
+        if (emailValue.includes('byb')) {
+            showToast("'byb' kelimesini e-posta adresinde kullanamazsınız!", "#FF0000");
+            $(this).val(emailValue.replace(/byb/gi, '')); // "byb" ifadesini kaldır
+        }
+    });
+    $('#editContactForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '@Url.Action("EditContact", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    // Toastify ile başarı mesajı gösterme
+                    Toastify({
+                        text: "Güncelleme başarıyla gerçekleşti!",
+                        duration: 3000, // 3 saniye gösterim süresi
+                        // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                    }).showToast();
+
+                    // Toast gösterim süresi bittikten sonra sayfayı yeniden yükler
+                    setTimeout(function () {
+                        location.reload(); // Sayfayı yenile
+                    }, 1500);
+                } else {
+                    var errorMessages = response.errors ? response.errors.join("\n") : response.message;
+                    // Toastify ile hata mesajı gösterme
+                    Toastify({
+                        text: errorMessages,
+                        duration: 5000, // 5 saniye gösterim süresi
+                        // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                // Toastify ile hata mesajı gösterme
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText,
+                    duration: 5000, // 5 saniye gösterim süresi
+                    // Kapatma düğmesi
+                    gravity: "top", // Toast konumu üstte
+                    position: "right", // Ortada konumlandırma
+                    backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                }).showToast();
+            }
+        });
+
+    });
+
+
+
+    $('#editCustomerForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+        $.ajax({
+            url: '@Url.Action("EditCustomer", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    // Toastify ile başarı mesajı gösterme
+                    Toastify({
+                        text: "Müşteri bilgileri başarıyla güncellendi.",
+                        duration: 3000, // Mesajın 3000 ms (3 saniye) boyunca gösterilmesi
+                        close: false, // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                    }).showToast();
+
+                    // 1.5 saniye bekleyip sayfayı yenile
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500); // Bekleme süresi 1500 ms
+                } else {
+                    var errorMessages = response.errors ? response.errors.join(", ") : response.message;
+
+                    // Toastify ile hata mesajı gösterme
+                    Toastify({
+                        text: "Hata: " + errorMessages,
+                        duration: 5000, // Mesajın 5000 ms (5 saniye) boyunca gösterilmesi
+                        close: false, // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                // Toastify ile genel hata mesajı gösterme
+                Toastify({
+                    text: 'Bir hata oluştu: ' + jqXHR.responseText + " (Status: " + textStatus + ", Error: " + errorThrown + ")",
+                    duration: 5000, // Mesajın 5000 ms (5 saniye) boyunca gösterilmesi
+                    close: false, // Kapatma düğmesi
+                    gravity: "top", // Toast konumu üstte
+                    position: "right", // Ortada konumlandırma
+                    backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                }).showToast();
+            }
+        });
+    });
+
+
+
+
+
+    $('#addContactForm').submit(function (event) {
+        event.preventDefault();
+        var emailValue = $('#contactEmail').val().toLowerCase();
+        var contactData = $(this).serialize();
+        var $submitButton = $(this).find(':submit');
+
+        // 1️⃣ "byb" kontrolü
+        if (emailValue.includes('byb')) {
+            showToast("'byb' kelimesi e-posta adresinde bulunamaz!", "#FF0000");
+            return false; // Form gönderimini durdur
+        }
+
+        // Submit butonunu devre dışı bırak
+        $submitButton.prop('disabled', true);
+
+        // 2️⃣ AJAX POST isteği
+        $.post('/customer/AddContact', contactData, function (response) {
+            if (response.success) {
+                showToast("İrtibat başarıyla eklendi.", "#4CAF50");
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                $submitButton.prop('disabled', false);
+                showToast(response.message, "#FF0000");
+            }
+        }).fail((jqXHR) => {
+            $submitButton.prop('disabled', false);
+            showToast("Bir hata oluştu: " + jqXHR.responseText, "#FF0000");
+        });
+
+        return false; // Form gönderimini durdur
+    });
+
+
+    // Edit location modal show event
+    $('#editLocationModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget);
+        var locationId = button.data('location-id');
+
+        console.log("Location ID for edit:", locationId); // Debugging
+
+        $.get('@Url.Action("GetLocation", "Customer")', { id: locationId })
+            .done(function (data) {
+                console.log("Received location data:", data); // Debugging
+                if (data) {
+                    $('#editLocationId').val(data.id);
+                    $('#editLocationCustomerId').val(data.customerId);
+                    $('#editLocationDescription').val(data.description);
+                    $('#editLocationAddress').val(data.address);
+                } else {
+                    alert('Veri bulunamadı.');
+                }
+            })
+            .fail(function () {
+                alert('Veri yüklenemedi, lütfen tekrar deneyin.');
+            });
+    });
+
+
+    // Add location form submit
+    // Lokasyon ekleme işlemi
+    $('#addLocationForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+        var $submitButton = $(this).find(':submit'); // Formdaki submit butonunu seç
+
+        // Butonu devre dışı bırak
+        $submitButton.prop('disabled', true);
+
+        $.ajax({
+            url: '@Url.Action("AddLocation", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: "Lokasyon başarıyla eklendi.",
+                        duration: 3000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#4CAF50",
+                    }).showToast();
+
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500); // Bekleme süresi 1500 ms
+                } else {
+                    // Hata durumunda butonu tekrar aktif hale getir
+                    $submitButton.prop('disabled', false);
+                    Toastify({
+                        text: response.message,
+                        duration: 5000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                // Hata durumunda butonu tekrar aktif hale getir
+                $submitButton.prop('disabled', false);
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText + " (Status: " + textStatus + ", Error: " + errorThrown + ")",
+                    duration: 5000,
+
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#FF0000",
+                }).showToast();
+            }
+        });
+    });
+
+
+    // Edit location form submit
+    $('#editLocationForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '@Url.Action("EditLocation", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    // Toastify ile başarı mesajı gösterme
+                    Toastify({
+                        text: "Lokasyon başarıyla güncellendi.",
+                        duration: 3000, // 3 saniye gösterim süresi
+                        // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                    }).showToast();
+
+                    // Toast gösterim süresi bittikten sonra sayfayı yeniden yükler
+                    setTimeout(function () {
+                        location.reload(); // Sayfayı yenile
+                    }, 1500); // Bekleme süresini 1500 ms olarak ayarla
+                } else {
+                    // Toastify ile hata mesajı gösterme
+                    Toastify({
+                        text: response.message,
+                        duration: 5000, // 5 saniye gösterim süresi
+                        // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                // Toastify ile hata mesajı gösterme
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText + " (Status: " + textStatus + ", Error: " + errorThrown + ")",
+                    duration: 5000, // 5 saniye gösterim süresi
+                    // Kapatma düğmesi
+                    gravity: "top", // Toast konumu üstte
+                    position: "right", // Ortada konumlandırma
+                    backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                }).showToast();
+            }
+        });
+
+    });
+
+    $('.set-today-btn').on('click', function () {
+        var $button = $(this);
+        var recordId = $button.data('record-id');
+        var isTodaySet = $button.data('is-today-set');
+        var actualDate = isTodaySet ? null : new Date().toISOString().split('T')[0];
+
+        $.ajax({
+            url: '@Url.Action("SetActualDate", "Customer")',
+            type: 'POST',
+            data: { id: recordId, actualDate: actualDate },
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: isTodaySet ? "Gerçekleşme tarihi temizlendi." : "Gerçekleşme tarihi başarıyla güncellendi.",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#4CAF50",
+                    }).showToast();
+
+                    // Durumu güncelle ve butonu değiştir
+                    if (isTodaySet) {
+                        // Tarihi temizle - "Bugün Gerçekleşti Olarak Ayarla" butonuna döndür
+                        $button
+                            .removeClass('btn-warning')
+                            .addClass('btn-outline-dark')
+                            .html('Bugün Gerçekleşti Olarak Ayarla <i class="fa fa-check" aria-hidden="true"></i>');
+                        $button.data('is-today-set', false);
+                    } else {
+                        // Tarihi ayarla - Bugünün tarihi ve yeni stil ile güncelle
+                        var today = new Date();
+                        var day = String(today.getDate()).padStart(2, '0');
+                        var month = String(today.getMonth() + 1).padStart(2, '0'); // Aylar 0'dan başladığı için +1 eklenir
+                        var year = today.getFullYear();
+                        var todayFormatted = day + '/' + month + '/' + year; // "dd/MM/yyyy" formatında
+
+                        $button
+                            .removeClass('btn-outline-dark')
+                            .addClass('btn-warning')
+                            .html(todayFormatted + ' <i class="fa fa-check-square" aria-hidden="true"></i>');
+                        $button.data('is-today-set', true);
+                    }
+                } else {
+                    Toastify({
+                        text: response.message,
+                        duration: 5000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText,
+                    duration: 5000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#FF0000",
+                }).showToast();
+            }
+        });
+    });
+
+   // Event listener for edit buttons
+   $('.edit-record-button').on('click', function () {
+            var recordId = $(this).data('record-id');
+            var recordStatus = $(this).data('record-status');
+
+            // Determine which modal to show based on status
+            switch (recordStatus) {
+                case "Ziyaret":
+                    openVisitEditModal(recordId);
+                    break;
+                case "Telefon":
+                    openPhoneCallEditModal(recordId);
+                    break;
+                case "Email":
+                    openEmailEditModal(recordId); // Implement this similarly
+                    break;
+                case "Numune":
+                    openSampleEditModal(recordId); // Implement this similarly
+                    break;
+                case "Görev":
+                    openMissionEditModal(recordId); // Implement this similarly
+                    break;
+                default:
+                    alert('Geçersiz kayıt türü!');
+            }
+        });
+
+        function openMissionEditModal(recordId) {
+            $.get('@Url.Action("GetRecord", "Customer")', { id: recordId })
+                .done(function (data) {
+                    if (data) {
+                        $('#editMissionId').val(data.id);
+                        $('#editMissionPlannedDate').val(data.plannedDate);
+                        $('#editMissionActualDate').val(data.actualDate);
+                        $('#editMissionDescription').val(data.information);
+                        $('#editMissionModal').modal('show');
+                    } else {
+                        alert('Kayıt bulunamadı.');
+                    }
+                })
+                .fail(function () {
+                    alert('Veri yüklenemedi, lütfen tekrar deneyin.');
+                });
+        }
+
+    function openVisitEditModal(recordId) {
+        $.get('@Url.Action("GetRecord", "Customer")', { id: recordId })
+            .done(function (data) {
+                if (data) {
+                    $('#editVisitRecordId').val(data.id);
+                    $('#editVisitPlannedDate').val(data.plannedDate);
+                    $('#editVisitActualDate').val(data.actualDate);
+                    $('#editVisitDescription').val(data.information);
+                    $('#editVisitRecordModal').modal('show');
+                } else {
+                    alert('Kayıt bulunamadı.');
+                }
+            })
+            .fail(function () {
+                alert('Veri yüklenemedi, lütfen tekrar deneyin.');
+            });
+    }
+
+    function openEmailEditModal(recordId) {
+        $.get('@Url.Action("GetRecord", "Customer")', { id: recordId })
+            .done(function (data) {
+                if (data) {
+                    $('#editEmailRecordId').val(data.id);
+                    $('#editEmailPlannedDate').val(data.plannedDate);
+                    $('#editEmailActualDate').val(data.actualDate);
+                    $('#editEmailDescription').val(data.information);
+                    $('#editEmailRecordModal').modal('show');
+                } else {
+                    alert('Kayıt bulunamadı.');
+                }
+            })
+            .fail(function () {
+                alert('Veri yüklenemedi, lütfen tekrar deneyin.');
+            });
+    }
+
+    function openPhoneCallEditModal(recordId) {
+        $.get('@Url.Action("GetRecord", "Customer")', { id: recordId })
+            .done(function (data) {
+                if (data) {
+                    $('#editPhoneCallRecordId').val(data.id);
+                    $('#editPhoneCallPlannedDate').val(data.plannedDate);
+                    $('#editPhoneCallActualDate').val(data.actualDate);
+                    $('#editPhoneCallDescription').val(data.information);
+                    $('#editPhoneCallRecordModal').modal('show');
+                } else {
+                    alert('Kayıt bulunamadı.');
+                }
+            })
+            .fail(function () {
+                alert('Veri yüklenemedi, lütfen tekrar deneyin.');
+            });
+    }
+
+    function openSampleEditModal(recordId) {
+        $.get('@Url.Action("GetRecord", "Customer")', { id: recordId })
+            .done(function (data) {
+                if (data) {
+                    $('#editSampleId').val(data.id);
+                    $('#editSamplePlannedDate').val(data.plannedDate);
+                    $('#editSampleActualDate').val(data.actualDate);
+                    $('#editSampleDescription').val(data.information);
+                    $('#editSampleRecordModal').modal('show');
+                } else {
+                    alert('Kayıt bulunamadı.');
+                }
+            })
+            .fail(function () {
+                alert('Veri yüklenemedi, lütfen tekrar deneyin.');
+            });
+    }
+
+
+    $('#editSampleRecordForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '@Url.Action("Editrecord", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    // Toastify ile başarı mesajı gösterme
+                    Toastify({
+                        text: "Numune başarıyla güncellendi.",
+                        duration: 3000, // 3 saniye gösterim süresi
+                        // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                    }).showToast();
+
+                    // Sayfayı yenileme
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    var errorMessages = response.errors ? response.errors.join("\n") : response.message;
+                    // Toastify ile hata mesajı gösterme
+                    Toastify({
+                        text: errorMessages,
+                        duration: 5000, // 5 saniye gösterim süresi
+                        // Kapatma düğmesi
+                        gravity: "top", // Toast konumu üstte
+                        position: "right", // Ortada konumlandırma
+                        backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR) {
+                // Toastify ile hata mesajı gösterme
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText,
+                    duration: 5000, // 5 saniye gösterim süresi
+                    // Kapatma düğmesi
+                    gravity: "top", // Toast konumu üstte
+                    position: "right", // Ortada konumlandırma
+                    backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                }).showToast();
+            }
+        });
+    });
+
+    $('#editEmailRecordForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '@Url.Action("Editrecord", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: "E-Posta kaydı başarıyla güncellendi.",
+                        duration: 3000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#4CAF50",
+                    }).showToast();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    var errorMessages = response.errors ? response.errors.join("\n") : response.message;
+                    Toastify({
+                        text: errorMessages,
+                        duration: 5000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR) {
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText,
+                    duration: 5000,
+
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#FF0000",
+                }).showToast();
+            }
+        });
+    });
+
+
+    $('#editVisitRecordForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '@Url.Action("Editrecord", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: "Ziyaret kaydı başarıyla güncellendi.",
+                        duration: 3000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#4CAF50",
+                    }).showToast();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    var errorMessages = response.errors ? response.errors.join("\n") : response.message;
+                    Toastify({
+                        text: errorMessages,
+                        duration: 5000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR) {
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText,
+                    duration: 5000,
+
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#FF0000",
+                }).showToast();
+            }
+        });
+    });
+
+    $('#editPhoneCallRecordForm').on('submit', function (event) {
+        event.preventDefault();
+        var formData = $(this).serialize();
+
+        $.ajax({
+            url: '@Url.Action("Editrecord", "Customer")',
+            type: 'POST',
+            data: formData,
+            success: function (response) {
+                if (response.success) {
+                    Toastify({
+                        text: "Telefon kaydı başarıyla güncellendi.",
+                        duration: 3000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#4CAF50",
+                    }).showToast();
+                    setTimeout(function () {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    var errorMessages = response.errors ? response.errors.join("\n") : response.message;
+                    Toastify({
+                        text: errorMessages,
+                        duration: 5000,
+
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            },
+            error: function (jqXHR) {
+                Toastify({
+                    text: "Bir hata oluştu: " + jqXHR.responseText,
+                    duration: 5000,
+
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: "#FF0000",
+                }).showToast();
+            }
+        });
+    });
+
+    // Initialize form submissions for different record types
+    $(document).ready(function () {
+        handleFormSubmit('#visitRecordForm', 'Ziyaret', '@Url.Action("AddRecord", "Customer")');
+        handleFormSubmit('#sampleRecordForm', 'Numune', '@Url.Action("AddRecord", "Customer")');
+        handleFormSubmit('#emailRecordForm', 'Email', '@Url.Action("AddRecord", "Customer")');
+        handleFormSubmit('#phoneCallRecordForm', 'Telefon', '@Url.Action("AddRecord", "Customer")');
+        handleFormSubmit('#missionForm', 'Görev', '@Url.Action("AddRecord", "Customer")');
+    });
+    $(document).on('click', '.delete-record', function () {
+        var recordId = $(this).data('id'); // Silinecek kaydın ID'sini al
+
+        // SweetAlert ile onay penceresi göster
+        Swal.fire({
+            title: 'Emin misiniz?',
+            text: "Bu kaydı silmek istediğinizden emin misiniz?",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'İptal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Eğer onay verilmişse AJAX isteği başlat
+                $.ajax({
+                    url: '@Url.Action("DeleteRecord", "Customer")',
+                    type: 'POST',
+                    data: { id: recordId },
+                    success: function (result) {
+                        if (result.success) {
+                            // Toastify ile başarı mesajı gösterme
+                            Toastify({
+                                text: "Kayıt başarıyla silindi.",
+                                duration: 3000,
+
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                            }).showToast();
+
+                            setTimeout(function () {
+                                location.reload();
+                            }, 1500); // Bekleme süresi 1500 ms
+                        } else {
+                            Toastify({
+                                text: "Silme işlemi yapılamadı: " + result.message,
+                                duration: 5000,
+
+                                gravity: "top",
+                                position: "right",
+                                backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                            }).showToast();
+                        }
+                    },
+                    error: function () {
+                        Toastify({
+                            text: "Kayıt silinirken bir hata oluştu.",
+                            duration: 5000,
+
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                        }).showToast();
+                    }
+                });
+            }
+        });
+    });
+    $(document).on('click', '.delete-contact', function () {
+        var contactId = $(this).data('id');
+
+        // Swal ile silme işlemi için onay al
+        Swal.fire({
+            title: 'Bu irtibatı silmek istediğinize emin misiniz?',
+            text: "Bu işlem geri alınamaz!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Evet, sil!',
+            cancelButtonText: 'Hayır, vazgeç'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Eğer kullanıcı onayladıysa AJAX ile silme işlemini gerçekleştir
+                $.ajax({
+                    url: '@Url.Action("DeleteContact", "Customer")',
+                    type: 'POST',
+                    data: { id: contactId },
+                    success: function (result) {
+                        if (result.success) {
+                            // Toastify ile başarı mesajı gösterme
+                            Toastify({
+                                text: "İrtibat başarıyla silindi.",
+                                duration: 3000, // 3 saniye gösterim süresi
+                                gravity: "top", // Toast konumu üstte
+                                position: "right", // Ortada konumlandırma
+                                backgroundColor: "#4CAF50", // Başarı mesajı için yeşil renk
+                            }).showToast();
+
+                            // Toast gösterim süresi bittikten sonra sayfayı yeniden yükler
+                            setTimeout(function () {
+                                location.reload(); // Sayfayı yenile
+                            }, 1500); // Bekleme süresini 3000 ms olarak ayarla
+                        } else {
+                            // Toastify ile hata mesajı gösterme
+                            Toastify({
+                                text: "Silme işlemi yapılamadı: " + result.message,
+                                duration: 5000, // 5 saniye gösterim süresi
+                                // Kapatma düğmesi
+                                gravity: "top", // Toast konumu üstte
+                                position: "right", // Ortada konumlandırma
+                                backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                            }).showToast();
+                        }
+                    },
+                    error: function (err) {
+                        // Toastify ile hata mesajı gösterme
+                        Toastify({
+                            text: "İrtibat silinirken bir hata oluştu.",
+                            duration: 5000, // 5 saniye gösterim süresi
+                            // Kapatma düğmesi
+                            gravity: "top", // Toast konumu üstte
+                            position: "right", // Ortada konumlandırma
+                            backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+                        }).showToast();
+                    }
+                });
+            }
+        });
+    });
+
+
+    $('.dropdown-toggle').on('click', function () {
+        $(this).next('.dropdown-menu').toggle();
+    });
+
+    function restoreButton(button, text, className) {
+        $(button).text(text).attr('class', className); // Buton eski metin ve sınıfına geri döndürülüyor
+    }
+
+    function showErrorToast(message) {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: "#FF0000"
+        }).showToast();
+    }
+
+
+    // DOM Elemanlarını Seçme
+    const mobileCameraButton = document.getElementById('mobileCameraButton');
+    const mobileCameraInput = document.getElementById('mobileCameraInput');
+
+
+    // Kamera Açma Butonuna Tıklayınca Kamera Input'unu Aç
+    mobileCameraButton.addEventListener('click', () => {
+        mobileCameraInput.click(); // Kamera Input'u tetiklenir
+    });
+
+
+
+    document.getElementById("cameraButton").addEventListener("click", function () {
+        document.getElementById("mobileCameraInput").click();
+    });
+
+    // Seçilen resmi önizleme olarak göster
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var selectElement = document.getElementById("city");
+
+        // Sayfa yüklendiğinde ilk kontrol
+        updateSelectBackground(selectElement);
+
+        // Seçim yapıldığında veya değiştirildiğinde arka plan rengini güncelle
+        selectElement.addEventListener("change", function () {
+            updateSelectBackground(selectElement);
+        });
+
+        function updateSelectBackground(element) {
+            if (element.value === "") { // Eğer değer boşsa (ilk seçenek)
+                element.style.backgroundColor = "#f4cccc"; // Kırmızı arka plan
+            } else {
+                element.style.backgroundColor = "#ffffff"; // Beyaz arka plan
+            }
+        }
+    });
+
+
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleColorOptions();
+    });
+
+
+
+
+
+    // Sayı girişini noktalı formatta göstermek için
+    function formatInputWithDots(inputId) {
+        document.getElementById(inputId).addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\./g, ''); // Noktaları kaldır
+            // Yalnızca sayısal karakterleri kontrol et
+            if (value !== '' && /^[0-9]+$/.test(value)) {
+                e.target.value = value.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); // Üçlü gruplara böl ve nokta koy
+            } else if (value === '') {
+                e.target.value = ''; // Eğer giriş boşsa hiçbir işlem yapma
+            }
+        });
+    }
+
+    // Hem orderQuantity hem de editOrderQuantity için formatlama işlevini uygula
+    formatInputWithDots('orderQuantity');
+    formatInputWithDots('editOrderQuantity');
+
+    // Form submit edilmeden önce noktaları kaldır
+    $('form').on('submit', function (e) {
+        // 'orderQuantity' ve 'editOrderQuantity' alanındaki noktaları temizle
+        let orderQuantityInput = document.getElementById('orderQuantity');
+        if (orderQuantityInput) {
+            orderQuantityInput.value = orderQuantityInput.value.replace(/\./g, ''); // Noktaları kaldır ve backend'e temiz değer gönder
+        }
+
+        let editOrderQuantityInput = document.getElementById('editOrderQuantity');
+        if (editOrderQuantityInput) {
+            editOrderQuantityInput.value = editOrderQuantityInput.value.replace(/\./g, ''); // Noktaları kaldır ve backend'e temiz değer gönder
+        }
+
+
+
+
+        $('#Price').on('input', function () {
+            var value = $(this).val();
+            // Noktayı virgüle çevir
+            value = value.replace(/\./g, ',');
+            $(this).val(value);
+            // Sadece sayılar, virgül ve nokta kabul et (maksimum 7 karakter, virgülden sonra en fazla 4 basamak)
+            if (!/^\d{0,3}([.,]\d{0,5})?$/.test(value)) {
+                $(this).val(value.slice(0, -1)); // Geçersiz karakter varsa son karakteri sil
+            }
+        });
+
+
+        // Form submit edilmeden önce noktaları kaldır
+        $('form').on('submit', function (e) {
+            // 'orderQuantity' alanındaki noktaları temizle
+            let input = document.getElementById('orderQuantity');
+            if (input) {
+                input.value = input.value.replace(/\./g, ''); // Noktaları kaldır ve backend'e temiz değer gönder
+            }
+        });
+
+
+        // Select2'den seçilen verileri (hem id hem de text) FormData'ya ekleyen fonksiyon
+        function appendSelect2TextAndIdToForm(elementId, fieldIdName, fieldTextName, formData) {
+            // Seçilen id değerini al
+            var selectedId = $('#' + elementId).val();
+
+            // Seçilen text değerini al
+            var selectedText = $('#' + elementId + ' option:selected').text();
+
+            // Eğer id değeri varsa formData'ya ekle
+            if (selectedId && selectedId.length > 0) {
+                formData.append(fieldIdName, selectedId); // ID değerini ekle
+            }
+
+            // Eğer text değeri varsa formData'ya ekle
+            if (selectedText && selectedText.length > 0) {
+                formData.append(fieldTextName, selectedText); // Text değerini ekle
+            }
+        }
+
+    });
+
+    // Select2'den seçilen verileri (text değerlerini) FormData'ya ekleyen fonksiyon
+    function appendSelect2TextToForm(elementId, fieldName, formData) {
+        var selectedValue = $('#' + elementId).val();
+        if (selectedValue && selectedValue.length > 0) {
+            formData.append(fieldName, selectedValue);
+        }
+    }
+
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var recordRows = document.querySelectorAll("table.table-hover tbody tr");
+
+        recordRows.forEach(function (row) {
+            var statusCell = row.querySelector("td:nth-child(2) span");
+            var status = statusCell ? statusCell.textContent.trim() : "";
+
+            switch (status) {
+                case "Visit Record":
+                    statusCell.classList.add("status-ziyaret");
+                    break;
+                case "Phone Call Record":
+                    statusCell.classList.add("status-telefon");
+                    break;
+                case "Email Record":
+                    statusCell.classList.add("status-email");
+                    break;
+                case "Sample Record":
+                    statusCell.classList.add("status-numune");
+                    break;
+                default:
+                    if (statusCell) {
+                        statusCell.classList.add("status-default");
+                    }
+                    break;
+            }
+        });
+    });
+
+
+
+
+    // Baskılı durumu değiştiğinde renk seçeneklerini güncelle
+    $('#editisPrinted').on('change', function () {
+        edittoggleColorOptions();
+    });
+    // Select2'ye yeni seçenek ekleme ve seçili yapma fonksiyonu
+    function setSelect2Option(selector, id, text) {
+        var optionExists = $(selector).find(`option[value='${id}']`).length > 0;
+        if (optionExists) {
+            $(selector).val(id).trigger('change');
+        } else {
+            var newOption = new Option(text, id, true, true);
+            $(selector).append(newOption).trigger('change');
+        }
+    }
+
+    // Select2'den seçilen verileri (hem id hem de text) FormData'ya ekleyen fonksiyon
+    function appendSelect2TextAndIdToForm(elementId, fieldIdName, fieldTextName, formData) {
+        var selectedId = $('#' + elementId).val();
+        var selectedText = $('#' + elementId + ' option:selected').text();
+
+        if (selectedId) {
+            formData.append(fieldIdName, selectedId); // ID değerini ekle
+        } else {
+            // Toastify ile hata mesajı gösterme
+            Toastify({
+                text: fieldIdName + ' alanı zorunludur.',
+                duration: 3000, // 3 saniye gösterim süresi
+                // Kapatma düğmesi
+                gravity: "top", // Toast konumu üstte
+                position: "right", // Ortada konumlandırma
+                backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+            }).showToast();
+        }
+
+        if (selectedText) {
+            formData.append(fieldTextName, selectedText); // Text değerini ekle
+        } else {
+            // Toastify ile hata mesajı gösterme
+            Toastify({
+                text: fieldTextName + ' alanı zorunludur.',
+                duration: 3000, // 3 saniye gösterim süresi
+                // Kapatma düğmesi
+                gravity: "top", // Toast konumu üstte
+                position: "right", // Ortada konumlandırma
+                backgroundColor: "#FF0000", // Hata mesajı için kırmızı renk
+            }).showToast();
+        }
+    }
+
+
+
+    // Reusable function for form submission with Toastify notifications
+    function handleFormSubmit(formSelector, recordType, actionUrl) {
+        $(formSelector).on('submit', function (event) {
+            event.preventDefault();
+            const customerId = $(this).find('input[name="CustomerId"]').val(); // Customer ID'yi al
+
+            // Önce CheckCustomerContact ile kontrol et
+            $.ajax({
+                url: '@Url.Action("CheckCustomerContact", "Customer")', // CheckCustomerContact metodunun URL'si
+                type: 'POST',
+                data: { customerId: customerId },
+                success: function (response) {
+                    if (response.hasContact) {
+                        // Eğer irtibat kaydı varsa formu gönder
+                        $.ajax({
+                            url: actionUrl, // Form gönderim URL'si
+                            type: 'POST',
+                            data: $(formSelector).serialize() + `&recordType=${recordType}`, // Form verilerini gönder
+                            success: function (response) {
+                                if (response.success) {
+                                    // Başarı mesajı
+                                    Toastify({
+                                        text: `${recordType} kaydı başarıyla eklendi.`,
+                                        duration: 3000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "#4CAF50",
+                                    }).showToast();
+
+                                    // Sayfayı 1 saniye sonra yenile
+                                    setTimeout(function () {
+                                        location.reload();
+                                    }, 1000);
+                                } else {
+                                    // Hata mesajlarını göster
+                                    const errorMessages = response.errors ? response.errors.join("\n") : `${recordType} kaydı eklenirken bir hata oluştu.`;
+                                    Toastify({
+                                        text: errorMessages,
+                                        duration: 5000,
+                                        gravity: "top",
+                                        position: "right",
+                                        backgroundColor: "#FF0000",
+                                    }).showToast();
+                                }
+                            },
+                            error: function (jqXHR) {
+                                // Beklenmeyen hata
+                                Toastify({
+                                    text: `Bir hata oluştu: ${jqXHR.responseText}`,
+                                    duration: 5000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "#FF0000",
+                                }).showToast();
+                            }
+                        });
+                    } else {
+                        // Eğer irtibat kaydı yoksa hata mesajı göster
+                        Toastify({
+                            text: response.message || "Bu müşteri için irtibat kaydı bulunamadığından işlem yapılamaz.",
+                            duration: 5000,
+                            gravity: "top",
+                            position: "right",
+                            backgroundColor: "#FF0000",
+                        }).showToast();
+                    }
+                },
+                error: function () {
+                    // CheckCustomerContact hatası
+                    Toastify({
+                        text: "Müşteri kontrolü sırasında bir hata oluştu.",
+                        duration: 5000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "#FF0000",
+                    }).showToast();
+                }
+            });
+        });
+    }
+
+
+
+    function loadDistricts(city, selectedDistrict) {
+        $.get('@Url.Action("GetDistricts", "Customer")', { city: city })
+            .done(function (data) {
+                var districtDropdown = $('#editCustomerDistrict');
+                districtDropdown.empty().append('<option value="">Seçiniz</option>'); // Varsayılan seçenek ekle
+
+                data.forEach(function (district) {
+                    districtDropdown.append($('<option>', {
+                        value: district,
+                        text: district,
+                        selected: district === selectedDistrict // İlçe seçili ise selected yap
+                    }));
+                });
+
+                // Eğer seçili ilçe yoksa ilk seçeneği seçili yap
+                if (!selectedDistrict) {
+                    districtDropdown.prop('selectedIndex', 0);
+                }
+            })
+            .fail(function () {
+                alert('İlçeler yüklenemedi. Lütfen daha sonra tekrar deneyin.');
+            });
+    }
+
+
+    // Delete contact
+
+    // Delete record
+
+
+
+
+
+
+    // Toastify mesajını göstermek için yardımcı bir fonksiyon ekledik
+    function showToast(message, backgroundColor = "#FF0000") {
+        Toastify({
+            text: message,
+            duration: 3000,
+            gravity: "top",
+            position: "right",
+            backgroundColor: backgroundColor,
+        }).showToast();
+    }
+
+
+    const textarea = document.getElementById("description");
+    const wordLimit = 30;
+
+    textarea.addEventListener("keydown", function (event) {
+        const words = textarea.value.trim().split(/\s+/).filter(word => word.length > 0);
+
+        if (words.length >= wordLimit && event.key !== "Backspace" && event.key !== "Delete") {
+            event.preventDefault(); // Yeni tuş girişini durdur
+            document.getElementById("wordCountMessage").style.display = "inline";
+        } else {
+            document.getElementById("wordCountMessage").style.display = "none";
+        }
+    });
+    // Yeni sektör ekleme işlemi
+   
+
+
+</script>

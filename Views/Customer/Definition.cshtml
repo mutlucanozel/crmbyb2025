@@ -1,0 +1,422 @@
+@model crm.Models.GeneralInfoViewModel
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Bilgiler</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+
+        <h2 class="display-4 text-center">CRM Tanım </h2>
+        <hr />
+
+        <div class="row g-4">
+
+
+            <div class="col-md-6">
+                <!-- Yönetici Notu -->
+                <h3 class="centered-text">Ana Sayfa Bilgilendirme Notu</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Not</th>
+                                <th>İşlemler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>@Model.AdminNotification.Id</td>
+                                <td>@Model.AdminNotification.Notification</td>
+                                <td>
+                                    <button class="btn btn-warning" data-toggle="modal"
+                                        data-target="#updateNotificationModal">
+                                        Düzenle <i class="fa fa-pencil" aria-hidden="true"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal -->
+            <div class="modal fade" id="updateNotificationModal" tabindex="-1" role="dialog"
+                aria-labelledby="updateNotificationModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="updateNotificationModalLabel">Bilgilendirme Notunu Güncelle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form id="notificationForm">
+                            <div class="modal-body">
+                                <input type="hidden" id="notificationId" value="@Model.AdminNotification.Id" />
+                                <div class="form-group">
+                                    <label for="notificationText">Not</label>
+                                    <textarea class="form-control" id="notificationText" name="Notification" rows="3"
+                                        required>
+                                        @Html.Raw(Model.AdminNotification.Notification)
+                                    </textarea>
+
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="modal fade" id="addNotificationModal" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Bilgilendirme Notu</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <form id="notificationForm">
+                            <div class="modal-body">
+                                <input type="hidden" id="notificationId" value="@Model.AdminNotification?.Id" />
+                                <div class="form-group">
+                                    <label for="Notification">Not</label>
+                                    <textarea class="form-control" id="Notification" rows="3"
+                                        required>@Model.AdminNotification?.Notification ?? ""</textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <div class="col-md-6">
+                <!-- MailInfo Table -->
+                <h3 class="centered-text">Bilgilendirilecek Mail Bilgileri</h3>
+                <div class="table-responsive">
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>mail</th>
+                                <th>
+                                    <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addMailInfoModal">Yeni
+                                        Mail
+                                        Ekle <i class="fa fa-plus" aria-hidden="true"></i></button>
+                                </th>
+                            </tr>
+                        </thead>
+                        @foreach (var item in Model.MailInfos)
+                        {
+                        <tr>
+                            <td>@item.Id</td>
+                            <td>@item.Mail</td>
+                            <td>
+                                <button class="btn btn-warning btn-edit-mail" data-id="@item.Id">Düzenle <i
+                                        class="fa fa-pencil" aria-hidden="true"></i></button>
+                                <!-- Silme işlemi için data-id kullanarak buton -->
+                                <button class="btn btn-danger btn-delete-mail" data-id="@item.Id">Sil <i
+                                        class="fa fa-trash" aria-hidden="true"></i></button>
+                            </td>
+                        </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- DeliveryMethod Table -->
+          
+
+           
+
+            <!-- Modals -->
+            <!-- Add AdhesiveInfo Modal -->
+
+            <div class="modal fade" id="addMailInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="addMailInfoModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addMailInfoModalLabel">Yeni Mail Bilgisi Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateMailInfo">
+                                <div class="form-group">
+                                    <label for="Mail">Mail</label>
+                                    <input type="email" class="form-control" id="Mail" name="Mail" required>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Add DeliveryMethod Modal -->
+            
+
+            <!-- Add OrderMethod Modal -->
+           
+            <!-- Modals -->
+            <!-- Edit AdhesiveInfo Modal -->
+
+
+
+            <div class="modal fade" id="editMailInfoModal" tabindex="-1" role="dialog"
+                aria-labelledby="editMailInfoModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editMailInfoModalLabel">Mail Bilgisi Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editMailInfoForm">
+                                <input type="hidden" id="editMailInfoId" name="Id" />
+                                <div class="form-group">
+                                    <label for="editMailInfoModal">Mail</label>
+                                    <input type="email" class="form-control" id="editMailInfoMail" name="Mail" required>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit DeliveryMethod Modal -->
+            
+            <!-- Edit AdditionalProcessing Modal -->
+
+            <!-- Edit OrderMethod Modal -->
+            
+
+
+            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+            <script>
+                $(document).ready(function () {
+                    // Modal açıldığında mevcut verileri doldur
+                    $('.btn-edit').on('click', function () {
+                        const id = $(this).data('id');
+                        const notification = $(this).data('notification');
+
+                        $('#notificationId').val(id);
+                        $('#notificationText').val(notification);
+                    });
+
+                    // Form gönderildiğinde
+                    $('#notificationForm').on('submit', function (e) {
+                        e.preventDefault();
+
+                        const notificationData = {
+                            Id: $('#notificationId').val(),
+                            Notification: $('#notificationText').val()
+                        };
+
+                        $.ajax({
+                            url: '/Customer/SaveNotification', // Backend endpoint
+                            type: 'POST',
+                            contentType: 'application/json',
+                            data: JSON.stringify(notificationData),
+                            success: function (response) {
+                                Toastify({
+                                    text: "Not başarıyla kaydedildi!",
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "green",
+                                }).showToast();
+                                $('#notificationModal').modal('hide');
+                                location.reload();
+                            },
+                            error: function (xhr) {
+                                Toastify({
+                                    text: "Hata: " + (xhr.responseJSON?.message || "Bir sorun oluştu!"),
+                                    duration: 3000,
+                                    gravity: "top",
+                                    position: "right",
+                                    backgroundColor: "red",
+                                }).showToast();
+                            }
+                        });
+                    });
+                });
+
+
+
+
+                $(document).ready(function () {
+
+
+
+
+                    // DeliveryMethod silme işlemi
+                   
+
+                    // OrderMethod silme işlemi
+                   
+                    $('.btn-delete-mail').on('click', function () {
+                        var id = $(this).data('id');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post('/Customer/DeleteMailInfo/' + id, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                    var swalMessage = '@TempData["SwalMessage"]';
+                    if (swalMessage) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: swalMessage,
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                    }
+                });
+
+                $('#editMailInfoForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Customer/UpdateMailInfo', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+
+
+                // DeliveryMethod Düzenleme
+                
+                $('.btn-edit-mail').on('click', function () {
+                    var id = $(this).data('id');
+                    $.get('/Customer/GetMailInfoById/' + id, function (data) {
+                        $('#editMailInfoId').val(data.id);
+                        $('#editMailInfoMail').val(data.mail);
+                        $('#editMailInfoModal').modal('show');
+                    });
+                });
+
+                // OrderMethod Düzenleme
+              
+                document.querySelectorAll('.btn-delete').forEach(button => {
+                    button.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        const url = this.getAttribute('href');
+                        Swal.fire({
+                            title: 'Silmek istediğinize emin misiniz?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonText: 'Evet, sil!',
+                            cancelButtonText: 'Hayır, iptal et'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                $.post(url, function (response) {
+                                    if (response.success) {
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Başarıyla silindi!',
+                                            showConfirmButton: false,
+                                            timer: 1500
+                                        }).then(() => {
+                                            location.reload();
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Silme işlemi başarısız!',
+                                            text: response.message
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    });
+                });
+
+            </script>
+</body>
+
+</html>

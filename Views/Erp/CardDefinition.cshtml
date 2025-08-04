@@ -1,0 +1,379 @@
+@model crm.Models.GeneralInfoViewModel
+@{
+var swalMessage = TempData["SwalMessage"] as string;
+var swalIcon = !string.IsNullOrEmpty(swalMessage) && swalMessage.Contains("başarı") ? "success" : "error";
+}
+
+@if (!string.IsNullOrEmpty(swalMessage))
+{
+<script>
+    Swal.fire({
+        icon: '@swalIcon',
+        title: '@swalMessage',
+        showConfirmButton: false,
+        timer: 1500
+    });
+</script>
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genel Bilgiler</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bungee+Tint&family=New+Amsterdam&family=Noto+Sans+Hanunoo&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="~/css/definition.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h2 class="display-4 text-center">Stok Kart Tanım </h2>
+        <hr />
+        <div class="row g-4">
+
+
+
+            <div class="col-md-12">
+                <!-- OrderMethod Table -->
+                <h3 class="centered-text">Stok Kart</h3>
+
+                <div class="table-responsive">
+
+
+                    <table class="user-table table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Adı</th>
+                                <th>Kağıt Cinsi</th>
+                                <th>Kağıt Markası</th>
+                                <th>Tutkal Cinsi</th>
+                                <th> <button class="btn btn-success btn-lg-custom" data-toggle="modal"
+                                        data-target="#addStockCardModal">Stok Kart Ekle <i class="fa fa-plus"
+                                            aria-hidden="true"></i></button></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.StockCards)
+                            {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>@item.Name</td>
+                                <td>@Model.PaperInfos.FirstOrDefault(p => p.Id == item.PaperTypeId)?.Name</td>
+                                <td>@Model.PaperBrands.FirstOrDefault(p => p.Id == item.PaperBrandId)?.Name</td>
+                                <td>@Model.AdhesiveInfos.FirstOrDefault(a => a.Id == item.AdhesiveTypeId)?.Name</td>
+
+                                <td>
+                                    <button class="btn btn-warning btn-edit-stockcard" data-id="@item.Id">Düzenle
+                                        <i class="fa fa-pencil" aria-hidden="true"></i></button>
+                                    <!-- Silme işlemi için data-id kullanarak buton -->
+                                    <button class="btn btn-danger btn-delete-stockcard" data-id="@item.Id">Sil <i
+                                            class="fa fa-trash" aria-hidden="true"></i></button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal fade" id="addStockCardModal" tabindex="-1" role="dialog"
+                aria-labelledby="addStockCardModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 claass="modal-title" id="addStockCardModalLabel"> Stok Kart Ekle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form asp-action="CreateStockCard">
+                                <div class="form-group">
+                                    <label for="StockCardName">Adı</label>
+                                    <input type="text" class="form-control" id="StockCardName" name="Name" required
+                                        readonly>
+
+                                </div>
+                                <!-- Paper Brand -->
+                                <div class="form-group">
+                                    <label for="StockCardPaperBrand">Kağıt Markası</label>
+                                    <select class="form-control select2" id="StockCardPaperBrand" name="PaperBrandId"
+                                        required>
+                                        <option value="">Seçiniz</option>
+                                        @foreach (var brand in Model.PaperBrands)
+                                        {
+                                        <option value="@brand.Id">@brand.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="StockCardPaperType">Kağıt Türü</label>
+                                    <select class="form-control select2" id="StockCardPaperType" name="PaperTypeId"
+                                        required>
+                                        <option value="">Seçiniz</option>
+                                        @foreach (var type in Model.PaperInfos)
+                                        {
+                                        <option value="@type.Id">@type.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+
+
+                                <!-- Adhesive Type -->
+                                <div class="form-group">
+                                    <label for="StockCardAdhesiveType">Tutkal Cinsi</label>
+                                    <select class="form-control select2" id="StockCardAdhesiveType"
+                                        name="AdhesiveTypeId" required>
+                                        <option value="">Seçiniz</option>
+                                        @foreach (var adhesive in Model.AdhesiveInfos)
+                                        {
+                                        <option value="@adhesive.Id">@adhesive.Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="modal fade" id="editStockCardModal" tabindex="-1" role="dialog"
+                aria-labelledby="editStockCardModalLabel" aria-hidden="true" data-backdrop="static"
+                data-keyboard="false">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="editStockCardModalLabel">Stok Kart Düzenle</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Kapat">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="editStockCardForm">
+                                <input type="hidden" id="editStockCardId" name="Id" />
+
+                                <div class="form-group">
+                                    <label for="editStockCardName">Adı</label>
+                                    <input type="text" class="form-control" id="editStockCardName" name="name" required
+                                        readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label for="editStockCardPaperBrand">Kağıt Markası</label>
+                                    <select class="form-control select2" id="editStockCardPaperBrand"
+                                        name="PaperBrandId" required>
+                                        <option value="">Seçiniz</option>
+                                        @foreach (var brand in Model.PaperBrands)
+                                        {
+                                        <option value="@brand.Id">@brand.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <!-- Kağıt Türü -->
+                                <div class="form-group">
+                                    <label for="editStockCardPaperType">Kağıt Türü</label>
+                                    <select class="form-control select2" id="editStockCardPaperType" name="PaperTypeId"
+                                        required>
+                                        <option value="">Seçiniz</option>
+                                        @foreach (var type in Model.PaperInfos)
+                                        {
+                                        <option value="@type.Id">@type.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <!-- Kağıt Markası -->
+
+                                <!-- Tutkal Cinsi -->
+                                <div class="form-group">
+                                    <label for="editStockCardAdhesiveType">Tutkal Cinsi</label>
+                                    <select class="form-control select2" id="editStockCardAdhesiveType"
+                                        name="AdhesiveTypeId" required>
+                                        <option value="">Seçiniz</option>
+                                        @foreach (var adhesive in Model.AdhesiveInfos)
+                                        {
+                                        <option value="@adhesive.Id">@adhesive.Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                                    <button type="submit" class="btn btn-primary">Güncelle</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+            <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+            <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+            <script>
+
+                function updateStockCardName() {
+                    const paperType = $('#StockCardPaperType option:selected').text();
+                    const paperBrand = $('#StockCardPaperBrand option:selected').text();
+                    const adhesiveType = $('#StockCardAdhesiveType option:selected').text();
+
+                    if (paperType && paperBrand && adhesiveType) {
+                        $('#StockCardName').val(`${paperBrand} / ${paperType} / ${adhesiveType}`);
+                    } else {
+                        $('#StockCardName').val('');
+                    }
+                }
+
+                function updateEditStockCardName() {
+                    const paperType = $('#editStockCardPaperType option:selected').text();
+                    const paperBrand = $('#editStockCardPaperBrand option:selected').text();
+                    const adhesiveType = $('#editStockCardAdhesiveType option:selected').text();
+
+                    if (paperType && paperBrand && adhesiveType) {
+                        $('#editStockCardName').val(`${paperBrand} / ${paperType} / ${adhesiveType}`);
+                    } else {
+                        $('#editStockCardName').val('');
+                    }
+                }
+
+
+
+                $('#editStockCardPaperType, #editStockCardPaperBrand, #editStockCardAdhesiveType').on('change', updateEditStockCardName);
+                $('#StockCardPaperType, #StockCardPaperBrand, #StockCardAdhesiveType').on('change', updateStockCardName);
+
+                $(document).on('click', '.btn-delete-stockcard', function () {
+                    console.log("Delete button clicked!");  // Bu satır ile tıklamanın tetiklenip tetiklenmediğini kontrol edin
+                    var id = $(this).data('id');
+                    Swal.fire({
+                        title: 'Silmek istediğinize emin misiniz?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Evet, sil!',
+                        cancelButtonText: 'Hayır, iptal et'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            $.post('/erp/DeleteStockCard/' + id, function (response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarıyla silindi!',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    }).then(() => {
+                                        location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Silme işlemi başarısız!',
+                                        text: response.message
+                                    });
+                                }
+                            });
+                        }
+                    });
+
+                });
+
+                $('#editStockCardForm').on('submit', function (event) {
+                    event.preventDefault();
+                    var formData = $(this).serialize();
+                    $.post('/Erp/UpdateStockCard', formData, function (response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Başarıyla güncellendi!',
+                                showConfirmButton: false,
+                                timer: 1500
+                            }).then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Güncelleme başarısız!',
+                                text: response.message
+                            });
+                        }
+                    });
+                });
+
+
+                $(document).ready(function () {
+                    $('.select2').select2({
+                        width: '100%',
+                        placeholder: "Seçiniz",
+                        allowClear: false,
+                        dropdownParent: $('#addStockCardModal')
+                    });
+
+                    $('.select2').on('select2:open', function () {
+                        // Select2 açıldığında input'a otomatik focus
+                        setTimeout(function () {
+                            document.querySelector('.select2-container--open .select2-search__field').focus();
+                        }, 0);
+                    });
+                });
+
+
+                $('#editStockCardModal').on('shown.bs.modal', function () {
+                    $('#editStockCardPaperType, #editStockCardPaperBrand, #editStockCardAdhesiveType').select2({
+                        width: '100%',
+                        placeholder: "Seçiniz",
+                        allowClear: false,
+                        dropdownParent: $('#editStockCardModal')
+                    });
+                });
+
+                $(document).on('click', '.btn-edit-stockcard', function () {
+    var id = $(this).data('id');
+
+    $.get('/ERP/GetStockCardById/' + id, function (data) {
+        $('#editStockCardId').val(data.id);
+        $('#editStockCardName').val(data.name);
+
+        $('#editStockCardModal').modal('show');
+
+        // Modal açıldıktan sonra select2 initialize edilmiş olacak
+        setTimeout(function () {
+            $('#editStockCardPaperType').val(data.paperTypeId).trigger('change');
+            $('#editStockCardPaperBrand').val(data.paperBrandId).trigger('change');
+            $('#editStockCardAdhesiveType').val(data.adhesiveTypeId).trigger('change');
+        }, 300); // bekleme süresi önemli
+    });
+});
+
+
+
+
+
+
+
+            </script>
+</body>
+
+</html>
